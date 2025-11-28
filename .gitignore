@@ -1,0 +1,70 @@
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+
+# React Native
+mobile/.expo/
+mobile/.expo-shared/
+mobile/android/app/build/
+mobile/android/build/
+mobile/ios/build/
+mobile/ios/Pods/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+
+# macOS
+.DS_Store
+
+# iOS
+*.xcworkspace
+!default.xcworkspace
+*.xcuserstate
+DerivedData/
+
+# Android
+*.apk
+*.aab
+local.properties
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.iws
+*.iml
+*.ipr
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Backend (Gradle)
+backend/.gradle/
+backend/build/
+backend/*/build/
+backend/bin/
+backend/out/
+backend/.gradle-cache/
+
+# TypeScript
+*.tsbuildinfo
+
+# Testing
+coverage/
+.nyc_output/
+
+# Misc
+.cache/
+
+# Claude Code local settings
+.claude/settings.local*.json

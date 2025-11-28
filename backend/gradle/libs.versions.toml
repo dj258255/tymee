@@ -1,0 +1,64 @@
+[versions]
+# Spring Framework
+spring-boot = "3.5.8"
+spring-framework = "6.2.1"
+spring-security = "6.4.2"
+spring-dependency-management = "1.1.7"
+
+# Database
+h2 = "2.3.232"
+postgresql = "42.7.4"
+
+# JWT
+jjwt = "0.12.6"
+
+# Validation
+jakarta-validation = "3.1.0"
+
+# Utilities
+commons-lang3 = "3.17.0"
+lombok = "1.18.36"
+
+# Testing
+junit = "5.11.4"
+mockito = "5.15.2"
+
+[libraries]
+# Spring Boot Starters (versions managed by Spring Boot BOM)
+spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web" }
+spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
+spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation" }
+spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security" }
+spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
+
+# Spring Framework
+spring-context = { module = "org.springframework:spring-context", version.ref = "spring-framework" }
+spring-tx = { module = "org.springframework:spring-tx", version.ref = "spring-framework" }
+spring-security-test = { module = "org.springframework.security:spring-security-test", version.ref = "spring-security" }
+
+# JWT
+jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwt" }
+jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwt" }
+jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
+
+# Database
+h2 = { module = "com.h2database:h2", version.ref = "h2" }
+postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
+
+# Validation
+jakarta-validation = { module = "jakarta.validation:jakarta.validation-api", version.ref = "jakarta-validation" }
+
+# Utilities
+commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
+lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
+
+# Testing
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito" }
+
+[plugins]
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
+lombok = { id = "io.freefair.lombok", version = "9.1.0" }

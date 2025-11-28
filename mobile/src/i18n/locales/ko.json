@@ -1,0 +1,99 @@
+{
+  "common": {
+    "confirm": "확인",
+    "cancel": "취소",
+    "save": "저장",
+    "delete": "삭제",
+    "edit": "수정",
+    "close": "닫기",
+    "back": "뒤로"
+  },
+  "tabs": {
+    "timer": "타이머",
+    "store": "스토어",
+    "group": "모임",
+    "study": "공부기록",
+    "more": "더보기"
+  },
+  "pomodoro": {
+    "work": "집중 시간",
+    "shortBreak": "짧은 휴식",
+    "longBreak": "긴 휴식",
+    "start": "시작",
+    "pause": "일시정지",
+    "reset": "초기화",
+    "completed": "완료",
+    "focusTime": "집중 시간",
+    "timerMinutes": "{{minutes}}분 타이머"
+  },
+  "settings": {
+    "title": "설정",
+    "general": "일반",
+    "support": "지원",
+    "appInfo": "앱 정보",
+    "theme": "테마",
+    "notifications": "알림 설정",
+    "announcements": "공지사항",
+    "help": "도움말",
+    "version": "버전",
+    "profile": "내 프로필",
+    "studying": "공부하는 중...",
+    "payment": "결제"
+  },
+  "payment": {
+    "title": "결제",
+    "myPencils": "내 연필",
+    "myBallpens": "내 볼펜",
+    "pencils": "연필",
+    "ballpens": "볼펜",
+    "buyPencils": "연필 구매하기",
+    "buyBallpens": "볼펜 구매하기",
+    "history": "결제 내역"
+  },
+  "theme": {
+    "title": "테마 선택",
+    "light": "라이트 모드",
+    "dark": "다크 모드",
+    "system": "시스템 설정"
+  },
+  "profile": {
+    "title": "내 프로필",
+    "nickname": "닉네임 설정",
+    "profilePhoto": "프로필 사진",
+    "statusMessage": "상태 메시지",
+    "language": "언어 및 지역",
+    "blockUsers": "사용자 차단",
+    "logout": "로그아웃",
+    "deleteAccount": "회원 탈퇴",
+    "logoutConfirm": "정말 로그아웃 하시겠습니까?",
+    "deleteConfirm": "탈퇴 시 모든 데이터가 삭제됩니다.\n정말 탈퇴하시겠습니까?",
+    "user": "사용자"
+  },
+  "permissions": {
+    "title": "앱 사용을 위한\n권한을 허용해주세요",
+    "subtitle": "더 나은 서비스 제공을 위해\n아래 권한이 필요합니다",
+    "calendar": "캘린더",
+    "calendarDesc": "일정 기록 및 관리를 위해 필요합니다",
+    "notification": "알림",
+    "notificationDesc": "타이머 완료 알림을 받기 위해 필요합니다",
+    "camera": "카메라",
+    "cameraDesc": "프로필 사진 촬영을 위해 필요합니다",
+    "required": "필수",
+    "allowAll": "모두 허용하기",
+    "start": "시작하기"
+  },
+  "study": {
+    "title": "공부 기록"
+  },
+  "store": {
+    "title": "스토어"
+  },
+  "group": {
+    "title": "모임"
+  },
+  "language": {
+    "korean": "한국어",
+    "english": "English",
+    "japanese": "日本語"
+  }
+}

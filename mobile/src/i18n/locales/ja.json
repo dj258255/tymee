@@ -1,0 +1,99 @@
+{
+  "common": {
+    "confirm": "確認",
+    "cancel": "キャンセル",
+    "save": "保存",
+    "delete": "削除",
+    "edit": "編集",
+    "close": "閉じる",
+    "back": "戻る"
+  },
+  "tabs": {
+    "timer": "タイマー",
+    "store": "ストア",
+    "group": "グループ",
+    "study": "学習記録",
+    "more": "もっと見る"
+  },
+  "pomodoro": {
+    "work": "集中時間",
+    "shortBreak": "短い休憩",
+    "longBreak": "長い休憩",
+    "start": "開始",
+    "pause": "一時停止",
+    "reset": "リセット",
+    "completed": "完了",
+    "focusTime": "集中時間",
+    "timerMinutes": "{{minutes}}分タイマー"
+  },
+  "settings": {
+    "title": "設定",
+    "general": "一般",
+    "support": "サポート",
+    "appInfo": "アプリ情報",
+    "theme": "テーマ",
+    "notifications": "通知設定",
+    "announcements": "お知らせ",
+    "help": "ヘルプ",
+    "version": "バージョン",
+    "profile": "マイプロフィール",
+    "studying": "勉強中...",
+    "payment": "決済"
+  },
+  "payment": {
+    "title": "決済",
+    "myPencils": "私の鉛筆",
+    "myBallpens": "私のボールペン",
+    "pencils": "鉛筆",
+    "ballpens": "ボールペン",
+    "buyPencils": "鉛筆を購入",
+    "buyBallpens": "ボールペンを購入",
+    "history": "決済履歴"
+  },
+  "theme": {
+    "title": "テーマを選択",
+    "light": "ライトモード",
+    "dark": "ダークモード",
+    "system": "システム設定"
+  },
+  "profile": {
+    "title": "マイプロフィール",
+    "nickname": "ニックネーム設定",
+    "profilePhoto": "プロフィール写真",
+    "statusMessage": "ステータスメッセージ",
+    "language": "言語と地域",
+    "blockUsers": "ユーザーブロック",
+    "logout": "ログアウト",
+    "deleteAccount": "アカウント削除",
+    "logoutConfirm": "本当にログアウトしますか？",
+    "deleteConfirm": "退会するとすべてのデータが削除されます。\n本当に退会しますか？",
+    "user": "ユーザー"
+  },
+  "permissions": {
+    "title": "アプリを使用するために\n権限を許可してください",
+    "subtitle": "より良いサービスを提供するために\n以下の権限が必要です",
+    "calendar": "カレンダー",
+    "calendarDesc": "スケジュール管理に必要です",
+    "notification": "通知",
+    "notificationDesc": "タイマー完了通知に必要です",
+    "camera": "カメラ",
+    "cameraDesc": "プロフィール写真撮影に必要です",
+    "required": "必須",
+    "allowAll": "すべて許可",
+    "start": "始める"
+  },
+  "study": {
+    "title": "学習記録"
+  },
+  "store": {
+    "title": "ストア"
+  },
+  "group": {
+    "title": "グループ"
+  },
+  "language": {
+    "korean": "한국어",
+    "english": "English",
+    "japanese": "日本語"
+  }
+}

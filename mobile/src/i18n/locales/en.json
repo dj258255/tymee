@@ -1,0 +1,99 @@
+{
+  "common": {
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "back": "Back"
+  },
+  "tabs": {
+    "timer": "Timer",
+    "store": "Store",
+    "group": "Group",
+    "study": "Study Record",
+    "more": "More"
+  },
+  "pomodoro": {
+    "work": "Focus Time",
+    "shortBreak": "Short Break",
+    "longBreak": "Long Break",
+    "start": "Start",
+    "pause": "Pause",
+    "reset": "Reset",
+    "completed": "Completed",
+    "focusTime": "Focus Time",
+    "timerMinutes": "{{minutes}}min Timer"
+  },
+  "settings": {
+    "title": "Settings",
+    "general": "General",
+    "support": "Support",
+    "appInfo": "App Info",
+    "theme": "Theme",
+    "notifications": "Notifications",
+    "announcements": "Announcements",
+    "help": "Help",
+    "version": "Version",
+    "profile": "My Profile",
+    "studying": "Studying...",
+    "payment": "Payment"
+  },
+  "payment": {
+    "title": "Payment",
+    "myPencils": "My Pencils",
+    "myBallpens": "My Ballpens",
+    "pencils": "Pencils",
+    "ballpens": "Ballpens",
+    "buyPencils": "Buy Pencils",
+    "buyBallpens": "Buy Ballpens",
+    "history": "Payment History"
+  },
+  "theme": {
+    "title": "Select Theme",
+    "light": "Light Mode",
+    "dark": "Dark Mode",
+    "system": "System Default"
+  },
+  "profile": {
+    "title": "My Profile",
+    "nickname": "Nickname",
+    "profilePhoto": "Profile Photo",
+    "statusMessage": "Status Message",
+    "language": "Language & Region",
+    "blockUsers": "Blocked Users",
+    "logout": "Logout",
+    "deleteAccount": "Delete Account",
+    "logoutConfirm": "Are you sure you want to logout?",
+    "deleteConfirm": "All data will be deleted.\nAre you sure you want to delete your account?",
+    "user": "User"
+  },
+  "permissions": {
+    "title": "Please allow\npermissions to use the app",
+    "subtitle": "The following permissions are required\nfor better service",
+    "calendar": "Calendar",
+    "calendarDesc": "Required for managing study schedules",
+    "notification": "Notifications",
+    "notificationDesc": "Required for timer completion alerts",
+    "camera": "Camera",
+    "cameraDesc": "Required for profile photo",
+    "required": "Required",
+    "allowAll": "Allow All",
+    "start": "Get Started"
+  },
+  "study": {
+    "title": "Study Record"
+  },
+  "store": {
+    "title": "Store"
+  },
+  "group": {
+    "title": "Group"
+  },
+  "language": {
+    "korean": "한국어",
+    "english": "English",
+    "japanese": "日本語"
+  }
+}

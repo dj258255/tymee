@@ -143,7 +143,7 @@ const ProfileScreen: React.FC<{onBack: () => void}> = ({onBack}) => {
         {/* Profile Section - Crazy Arcade Style */}
         <View style={styles.profileSection}>
           {/* Profile Card - 스토어에서 꾸미기 가능 */}
-          <ProfileCard isDark={isDark} size="large" />
+          <ProfileCard isDark={isDark} size="small" />
 
           {/* Status Message (별도 카드) */}
           <View style={styles.statusCard}>

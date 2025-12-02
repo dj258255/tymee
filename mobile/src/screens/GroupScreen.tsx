@@ -130,7 +130,7 @@ const GroupScreen: React.FC = () => {
   ];
 
   const renderCommunity = () => (
-    <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.tabContent} contentContainerStyle={{paddingBottom: 100}} showsVerticalScrollIndicator={false}>
       <View style={styles.postsContainer}>
         {communityPosts.map(post => (
           <TouchableOpacity
@@ -191,7 +191,7 @@ const GroupScreen: React.FC = () => {
   );
 
   const renderGroup = () => (
-    <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.tabContent} contentContainerStyle={{paddingBottom: 100}} showsVerticalScrollIndicator={false}>
       <View style={styles.groupsContainer}>
         {groupRooms.map(room => (
           <TouchableOpacity
@@ -242,7 +242,7 @@ const GroupScreen: React.FC = () => {
   );
 
   const renderCompetition = () => (
-    <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.tabContent} contentContainerStyle={{paddingBottom: 100}} showsVerticalScrollIndicator={false}>
       <View style={[styles.comingSoon, {backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF'}]}>
         <Icon name="trophy-outline" size={64} color={isDark ? '#3A3A3A' : '#E0E0E0'} />
         <Text style={[styles.comingSoonTitle, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>

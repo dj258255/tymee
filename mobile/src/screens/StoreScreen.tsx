@@ -317,7 +317,7 @@ const StoreScreen: React.FC = () => {
       {/* 상품 그리드 */}
       <ScrollView
         style={styles.itemsScroll}
-        contentContainerStyle={styles.itemsContainer}
+        contentContainerStyle={[styles.itemsContainer, {paddingBottom: 100}]}
         showsVerticalScrollIndicator={false}>
         <View style={styles.grid}>
           {filteredItems.map(item => (

@@ -1,10 +1,14 @@
-export type TimerMode = 'WORK' | 'SHORT_BREAK' | 'LONG_BREAK';
+export type TimerMode = 'FOCUS' | 'BREAK';
+export type AppMode = 'FREE' | 'CONCENTRATION'; // 자유 모드 | 집중 모드
+export type TabName = 'Timer' | 'Store' | 'Group' | 'StudyRecord' | 'More';
 
 export interface TimerSettings {
-  workDuration: number; // in minutes
-  shortBreakDuration: number; // in minutes
-  longBreakDuration: number; // in minutes
-  sessionsUntilLongBreak: number;
+  appMode: AppMode; // 앱 모드
+  focusDuration: number; // 집중 시간 (분)
+  breakDuration: number; // 휴식 시간 (분)
+  cycleCount: number; // 집중 모드일 때 반복 횟수
+  blockedTabs: TabName[]; // 집중 모드일 때 차단할 탭들
+  blockedApps: string[]; // 집중 모드일 때 차단할 앱들 (번들 ID)
 }
 
 export interface PomodoroSession {

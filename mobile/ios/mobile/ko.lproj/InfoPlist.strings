@@ -1,2 +1,2 @@
-/* Korean localization */
-CFBundleDisplayName = "타이미";
+/* App Display Name */
+"CFBundleDisplayName" = "타이미";

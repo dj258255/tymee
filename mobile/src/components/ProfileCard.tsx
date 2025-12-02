@@ -19,6 +19,8 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   const iconSize = isLarge ? 24 : 18;
   const levelFontSize = isLarge ? 13 : 11;
   const nicknameFontSize = isLarge ? 16 : 13;
+  const titleSlotSize = isLarge ? 52 : 45; // 칭호 정사각형 크기
+  const nicknameCardHeight = isLarge ? 32 : 28; // 닉네임 카드 높이
 
   const CardContent = (
     <View style={[styles.cardFrame, {borderColor: isDark ? '#FFD700' : '#F59E0B'}]}>
@@ -37,10 +39,10 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
             <Icon name="rocket" size={avatarSize * 0.5} color="#FFFFFF" />
           </View>
 
-          {/* Center: Badge, Tier, Nickname */}
-          <View style={styles.centerContent}>
-            {/* Top Row: Badge, Tier */}
-            <View style={styles.badgeTierRow}>
+          {/* Center & Right: Grid Layout */}
+          <View style={styles.gridContainer}>
+            {/* Top Row: Badge, Tier, Title */}
+            <View style={styles.topRow}>
               {/* Badge */}
               <View style={styles.badgeContainer}>
                 <View
@@ -90,47 +92,162 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
                   플래티넘
                 </Text>
               </View>
+
+              {/* Title */}
+              <View style={styles.titleOuterContainer}>
+                <View style={styles.titleContainer}>
+                  {/* Badge Icon Box */}
+                  <View
+                    style={[
+                      styles.titleBadgeBox,
+                      {
+                        backgroundColor: isDark ? '#2A1A2A' : '#F3E5F5',
+                        borderColor: isDark ? '#3A2A3A' : '#E1BEE7',
+                      },
+                    ]}>
+                    <Icon name="ribbon" size={isLarge ? 14 : 12} color="#9C27B0" />
+                  </View>
+                  {/* Title Text Box */}
+                  <View
+                    style={[
+                      styles.titleTextBox,
+                      {
+                        backgroundColor: isDark ? '#2A1A2A' : '#F3E5F5',
+                        borderColor: isDark ? '#3A2A3A' : '#E1BEE7',
+                      },
+                    ]}>
+                    <Text
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.5}
+                      style={[
+                        styles.titleText,
+                        {
+                          color: isDark ? '#CE93D8' : '#9C27B0',
+                          fontSize: isLarge ? 11 : 10,
+                        },
+                      ]}>
+                      집중의 달인
+                    </Text>
+                  </View>
+                </View>
+              </View>
             </View>
 
-            {/* Bottom: Nickname Card */}
-            <View
-              style={[
-                styles.nicknameCard,
-                {
-                  backgroundColor: isDark ? '#2A2A2A' : '#F5F5F5',
-                  borderColor: isDark ? '#3A3A3A' : '#E0E0E0',
-                },
-              ]}>
-              <Text
+            {/* Bottom Row: Nickname, Guild */}
+            <View style={styles.bottomRow}>
+              {/* Nickname */}
+              <View
                 style={[
-                  styles.profileName,
+                  styles.nicknameCard,
                   {
-                    color: isDark ? '#FFFFFF' : '#1A1A1A',
-                    fontSize: nicknameFontSize,
+                    backgroundColor: isDark ? '#2A2A2A' : '#F5F5F5',
+                    borderColor: isDark ? '#3A3A3A' : '#E0E0E0',
+                    height: nicknameCardHeight,
+                    flex: 0.75,
                   },
                 ]}>
-                타이미유저
-              </Text>
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={[
+                    styles.profileName,
+                    {
+                      color: isDark ? '#FFFFFF' : '#1A1A1A',
+                      fontSize: nicknameFontSize,
+                    },
+                  ]}>
+                  타이미유저
+                </Text>
+              </View>
+
+              {/* Guild */}
+              <View style={styles.guildContainer}>
+                {/* Guild Icon Box */}
+                <View
+                  style={[
+                    styles.guildIconBox,
+                    {
+                      backgroundColor: isDark ? '#1A2A3A' : '#E3F2FD',
+                      borderColor: isDark ? '#2A3A4A' : '#BBDEFB',
+                      height: nicknameCardHeight,
+                    },
+                  ]}>
+                  <Icon name="people" size={isLarge ? 16 : 14} color={isDark ? '#64B5F6' : '#1976D2'} />
+                </View>
+                {/* Guild Name Box */}
+                <View
+                  style={[
+                    styles.guildNameBox,
+                    {
+                      backgroundColor: isDark ? '#1A2A3A' : '#E3F2FD',
+                      borderColor: isDark ? '#2A3A4A' : '#BBDEFB',
+                      height: nicknameCardHeight,
+                    },
+                  ]}>
+                  <Text
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.5}
+                    style={[
+                      styles.guildName,
+                      {
+                        color: isDark ? '#64B5F6' : '#1976D2',
+                        fontSize: isLarge ? 13 : 12,
+                      },
+                    ]}>
+                    집중왕들
+                  </Text>
+                </View>
+              </View>
             </View>
           </View>
 
-          {/* Right: Title */}
-          <View
-            style={[
-              styles.titleSlot,
-              {backgroundColor: isDark ? '#2A1A2A' : '#F3E5F5'},
-            ]}>
-            <Icon name="ribbon" size={isLarge ? 16 : 12} color="#9C27B0" />
-            <Text
+          {/* Remove old rightColumn */}
+          <View style={{display: 'none'}}>
+            <View
               style={[
-                styles.titleText,
+                styles.titleSlot,
                 {
-                  color: isDark ? '#CE93D8' : '#9C27B0',
-                  fontSize: isLarge ? 10 : 9,
+                  backgroundColor: isDark ? '#2A1A2A' : '#F3E5F5',
+                  width: titleSlotSize,
+                  height: titleSlotSize,
                 },
               ]}>
-              집중의 달인
-            </Text>
+              <Icon name="ribbon" size={isLarge ? 14 : 11} color="#9C27B0" />
+              <Text
+                style={[
+                  styles.titleText,
+                  {
+                    color: isDark ? '#CE93D8' : '#9C27B0',
+                    fontSize: isLarge ? 9 : 8,
+                  },
+                ]}>
+                집중의{'\n'}달인
+              </Text>
+            </View>
+            {/* Guild Badge */}
+            <View
+              style={[
+                styles.guildBadge,
+                {
+                  backgroundColor: isDark ? '#1A2A3A' : '#E3F2FD',
+                  borderColor: isDark ? '#2A3A4A' : '#BBDEFB',
+                  height: nicknameCardHeight,
+                },
+              ]}>
+              <Icon name="people" size={isLarge ? 11 : 9} color={isDark ? '#64B5F6' : '#1976D2'} />
+              <Text
+                style={[
+                  styles.guildName,
+                  {
+                    color: isDark ? '#64B5F6' : '#1976D2',
+                    fontSize: isLarge ? 9 : 8,
+                  },
+                ]}>
+                집중왕들
+              </Text>
+            </View>
           </View>
 
           {onPress && (
@@ -178,6 +295,20 @@ const styles = StyleSheet.create({
     gap: 10,
     alignItems: 'center',
   },
+  gridContainer: {
+    flex: 1,
+    gap: 8,
+  },
+  topRow: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
   centerContent: {
     flex: 1,
     justifyContent: 'space-between',
@@ -186,7 +317,7 @@ const styles = StyleSheet.create({
   badgeTierRow: {
     flexDirection: 'row',
     gap: 8,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
   },
   badgeContainer: {
     flexDirection: 'row',
@@ -227,33 +358,98 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: -0.3,
   },
+  titleOuterContainer: {
+    paddingLeft: 6,
+    paddingTop: 6,
+  },
+  titleContainer: {
+    position: 'relative',
+    alignItems: 'flex-start',
+  },
+  titleBadgeBox: {
+    position: 'absolute',
+    top: -6,
+    left: -6,
+    borderRadius: 6,
+    borderWidth: 1,
+    padding: 3,
+    zIndex: 1,
+  },
+  titleTextBox: {
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingVertical: 6,
+    paddingLeft: 12,
+    paddingRight: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 50,
+  },
   titleSlot: {
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 8,
+    gap: 2,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#E1BEE7',
-    minWidth: 50,
   },
   titleText: {
     fontWeight: '700',
     textAlign: 'center',
+    lineHeight: 12,
+  },
+  rightColumn: {
+    gap: 8,
+    justifyContent: 'space-between',
+    alignSelf: 'stretch',
   },
   nicknameCard: {
-    paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 8,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    flex: 1,
   },
   profileName: {
     fontWeight: '800',
     letterSpacing: -0.3,
+    textAlign: 'center',
+  },
+  guildContainer: {
+    flexDirection: 'row',
+    gap: 4,
+    flex: 1,
+  },
+  guildIconBox: {
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+  },
+  guildNameBox: {
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    flex: 1,
+  },
+  guildBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    flexShrink: 0,
+  },
+  guildName: {
+    fontWeight: '700',
+    letterSpacing: -0.2,
     textAlign: 'center',
   },
 });

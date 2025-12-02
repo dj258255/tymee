@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="splash_background">#F3F8FF</color>
+    <color name="brand_blue">#42A5F5</color>
+    <color name="bootsplash_background">#e3f2fd</color>
+</resources>

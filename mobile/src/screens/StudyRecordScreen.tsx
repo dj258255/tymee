@@ -10,12 +10,14 @@ import {
   Platform,
   PermissionsAndroid,
   Alert,
+  Modal,
 } from 'react-native';
 import {useTranslation} from 'react-i18next';
 import {useThemeStore} from '../store/themeStore';
 import {safeGetColorScheme, safeAddAppearanceListener} from '../utils/appearance';
 import Icon from '@react-native-vector-icons/ionicons';
 import RNCalendarEvents from 'react-native-calendar-events';
+import StudyStoryCard from '../components/StudyStoryCard';
 
 interface StudyEvent {
   id: string;
@@ -32,6 +34,7 @@ const StudyRecordScreen: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [calendarEvents, setCalendarEvents] = useState<StudyEvent[]>([]);
   const [hasCalendarPermission, setHasCalendarPermission] = useState(false);
+  const [showStoryCard, setShowStoryCard] = useState(false);
 
   useEffect(() => {
     const task = InteractionManager.runAfterInteractions(() => {
@@ -80,23 +83,42 @@ const StudyRecordScreen: React.FC = () => {
     }
   };
 
-  // 해당 월의 모든 날짜 가져오기
+  // 해당 월의 모든 날짜 가져오기 (이전 달과 다음 달 날짜 포함)
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
-    const days = [];
+    const days: Array<{date: Date; isCurrentMonth: boolean}> = [];
 
-    // 첫 주의 빈 칸 추가
+    // 이전 달의 마지막 날짜들 추가
     const firstDayOfWeek = firstDay.getDay();
-    for (let i = 0; i < firstDayOfWeek; i++) {
-      days.push(null);
+    if (firstDayOfWeek > 0) {
+      const prevMonthLastDay = new Date(year, month, 0);
+      const prevMonthLastDate = prevMonthLastDay.getDate();
+      for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+        days.push({
+          date: new Date(year, month - 1, prevMonthLastDate - i),
+          isCurrentMonth: false,
+        });
+      }
     }
 
-    // 실제 날짜 추가
+    // 현재 월의 날짜 추가
     for (let i = 1; i <= lastDay.getDate(); i++) {
-      days.push(new Date(year, month, i));
+      days.push({
+        date: new Date(year, month, i),
+        isCurrentMonth: true,
+      });
+    }
+
+    // 다음 달의 첫 날짜들 추가 (6주 그리드를 채우기 위해)
+    const remainingDays = 42 - days.length; // 6주 × 7일 = 42일
+    for (let i = 1; i <= remainingDays; i++) {
+      days.push({
+        date: new Date(year, month + 1, i),
+        isCurrentMonth: false,
+      });
     }
 
     return days;
@@ -134,22 +156,30 @@ const StudyRecordScreen: React.FC = () => {
   // 선택된 날짜의 이벤트 (예시 데이터)
   const getEventsForSelectedDate = () => {
     // 실제로는 calendarEvents에서 필터링
+    // selectedDate를 복사해서 사용 (원본 수정 방지)
+    const eventDate = new Date(selectedDate);
     return [
       {
         id: '1',
         title: '수학 공부',
-        startDate: new Date(selectedDate.setHours(14, 0)),
-        endDate: new Date(selectedDate.setHours(15, 30)),
+        startDate: new Date(eventDate.setHours(14, 0, 0, 0)),
+        endDate: new Date(eventDate.setHours(15, 30, 0, 0)),
         duration: 90,
       },
       {
         id: '2',
         title: '영어 단어 암기',
-        startDate: new Date(selectedDate.setHours(16, 0)),
-        endDate: new Date(selectedDate.setHours(17, 0)),
+        startDate: new Date(eventDate.setHours(16, 0, 0, 0)),
+        endDate: new Date(eventDate.setHours(17, 0, 0, 0)),
         duration: 60,
       },
     ];
+  };
+
+  // 총 공부 시간 계산
+  const getTotalStudyTime = () => {
+    const events = getEventsForSelectedDate();
+    return events.reduce((total, event) => total + event.duration, 0);
   };
 
   const daysInMonth = getDaysInMonth(currentDate);
@@ -158,7 +188,10 @@ const StudyRecordScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.container, {backgroundColor: isDark ? '#121212' : '#FAFAFA'}]}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={{paddingBottom: 100}}
+        showsVerticalScrollIndicator={false}>
         {/* 헤더 */}
         <View style={styles.header}>
           <View>
@@ -209,37 +242,41 @@ const StudyRecordScreen: React.FC = () => {
 
           {/* 날짜 그리드 */}
           <View style={styles.daysGrid}>
-            {daysInMonth.map((day, index) => {
-              const isSelected = isSameDay(day, selectedDate);
-              const isTodayDate = isToday(day);
+            {daysInMonth.map((dayInfo, index) => {
+              const {date, isCurrentMonth} = dayInfo;
+              const isSelected = isSameDay(date, selectedDate);
+              const isTodayDate = isToday(date);
 
               return (
                 <TouchableOpacity
                   key={index}
                   style={styles.dayCell}
-                  onPress={() => day && setSelectedDate(day)}
-                  disabled={!day}>
-                  {day && (
-                    <>
-                      <View style={[
-                        styles.dayTextContainer,
-                        isSelected && styles.selectedDayContainer,
-                        isSelected && {backgroundColor: '#007AFF'},
-                      ]}>
-                        <Text style={[
-                          styles.dayText,
-                          {color: isDark ? '#FFFFFF' : '#1A1A1A'},
-                          isSelected && {color: '#FFFFFF', fontWeight: '700'},
-                          isTodayDate && !isSelected && {color: '#007AFF', fontWeight: '700'},
-                        ]}>
-                          {day.getDate()}
-                        </Text>
-                      </View>
-                      {/* 공부 기록이 있는 날 표시 (예시) */}
-                      {day.getDate() % 3 === 0 && !isSelected && (
-                        <View style={[styles.eventDot, {backgroundColor: '#4CAF50'}]} />
-                      )}
-                    </>
+                  onPress={() => {
+                    setSelectedDate(date);
+                    // 이전/다음 달 날짜 클릭 시 월 자동 변경
+                    if (!isCurrentMonth) {
+                      setCurrentDate(date);
+                    }
+                  }}>
+                  <View style={[
+                    styles.dayTextContainer,
+                    isSelected && styles.selectedDayContainer,
+                    isSelected && {backgroundColor: '#007AFF'},
+                  ]}>
+                    <Text style={[
+                      styles.dayText,
+                      {color: isDark ? '#FFFFFF' : '#1A1A1A'},
+                      // 이전/다음 달 날짜는 연한 회색으로 표시
+                      !isCurrentMonth && {color: isDark ? '#3A3A3A' : '#CCCCCC'},
+                      isSelected && {color: '#FFFFFF', fontWeight: '700'},
+                      isTodayDate && !isSelected && {color: '#007AFF', fontWeight: '700'},
+                    ]}>
+                      {date.getDate()}
+                    </Text>
+                  </View>
+                  {/* 공부 기록이 있는 날 표시 (현재 월만) */}
+                  {isCurrentMonth && date.getDate() % 3 === 0 && !isSelected && (
+                    <View style={[styles.eventDot, {backgroundColor: '#4CAF50'}]} />
                   )}
                 </TouchableOpacity>
               );
@@ -288,6 +325,16 @@ const StudyRecordScreen: React.FC = () => {
           )}
         </View>
 
+        {/* 오공완 자랑하기 버튼 */}
+        {getEventsForSelectedDate().length > 0 && (
+          <TouchableOpacity
+            style={[styles.storyButton, {backgroundColor: '#FF5252'}]}
+            onPress={() => setShowStoryCard(true)}>
+            <Icon name="share-social" size={24} color="#FFFFFF" />
+            <Text style={styles.storyButtonText}>오공완 자랑하기</Text>
+          </TouchableOpacity>
+        )}
+
         {/* 일정 추가 버튼 */}
         <TouchableOpacity
           style={[styles.addButton, {backgroundColor: '#007AFF'}]}
@@ -296,6 +343,21 @@ const StudyRecordScreen: React.FC = () => {
           <Text style={styles.addButtonText}>학습 일정 추가</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* 스토리 카드 모달 */}
+      <Modal
+        visible={showStoryCard}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowStoryCard(false)}>
+        <StudyStoryCard
+          isDark={isDark}
+          selectedDate={selectedDate}
+          totalStudyTime={getTotalStudyTime()}
+          studyCount={getEventsForSelectedDate().length}
+          onClose={() => setShowStoryCard(false)}
+        />
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -412,7 +474,7 @@ const styles = StyleSheet.create({
   },
   eventsSection: {
     paddingHorizontal: 20,
-    paddingBottom: 100,
+    paddingBottom: 20,
   },
   eventsSectionTitle: {
     fontSize: 18,
@@ -465,6 +527,26 @@ const styles = StyleSheet.create({
   },
   emptyStateText: {
     fontSize: 14,
+  },
+  storyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 20,
+    marginBottom: 12,
+    paddingVertical: 16,
+    borderRadius: 12,
+    gap: 8,
+    shadowColor: '#FF5252',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  storyButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   addButton: {
     flexDirection: 'row',

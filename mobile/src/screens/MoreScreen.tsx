@@ -19,6 +19,8 @@ import PencilIcon from '../components/PencilIcon';
 import BallpenIcon from '../components/BallpenIcon';
 import BuyBallpensScreen from './BuyBallpensScreen';
 import PaymentHistoryScreen from './PaymentHistoryScreen';
+import GuildScreen from './GuildScreen';
+import FriendsListScreen from './FriendsListScreen';
 
 const packageJson = require('../../package.json');
 
@@ -29,6 +31,8 @@ const MoreScreen: React.FC = () => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showBuyBallpensModal, setShowBuyBallpensModal] = useState(false);
   const [showPaymentHistoryModal, setShowPaymentHistoryModal] = useState(false);
+  const [showGuildModal, setShowGuildModal] = useState(false);
+  const [showFriendsModal, setShowFriendsModal] = useState(false);
 
   useEffect(() => {
     const task = InteractionManager.runAfterInteractions(() => {
@@ -71,7 +75,7 @@ const MoreScreen: React.FC = () => {
       ]}>
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, {paddingBottom: 100}]}
         showsVerticalScrollIndicator={false}>
         {/* 프로필 섹션 - Crazy Arcade Style */}
         <View style={styles.section}>
@@ -80,6 +84,63 @@ const MoreScreen: React.FC = () => {
             size="small"
             onPress={() => setShowProfileModal(true)}
           />
+        </View>
+
+        {/* 소셜 섹션 */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, {color: isDark ? '#FFFFFF' : '#000000'}]}>
+            소셜
+          </Text>
+          <View
+            style={[
+              styles.optionContainer,
+              {backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF'},
+            ]}>
+            <TouchableOpacity
+              style={styles.optionItem}
+              onPress={() => setShowGuildModal(true)}>
+              <View style={styles.optionLeft}>
+                <Icon name="people-outline" size={24} color={isDark ? '#FFFFFF' : '#1A1A1A'} />
+                <Text
+                  style={[
+                    styles.optionLabel,
+                    {color: isDark ? '#FFFFFF' : '#000000'},
+                  ]}>
+                  길드
+                </Text>
+              </View>
+              <Icon
+                name="chevron-forward"
+                size={20}
+                color={isDark ? '#666666' : '#AAAAAA'}
+              />
+            </TouchableOpacity>
+            <View
+              style={[
+                styles.divider,
+                {backgroundColor: isDark ? '#2A2A2A' : '#E0E0E0'},
+              ]}
+            />
+            <TouchableOpacity
+              style={styles.optionItem}
+              onPress={() => setShowFriendsModal(true)}>
+              <View style={styles.optionLeft}>
+                <Icon name="person-outline" size={24} color={isDark ? '#FFFFFF' : '#1A1A1A'} />
+                <Text
+                  style={[
+                    styles.optionLabel,
+                    {color: isDark ? '#FFFFFF' : '#000000'},
+                  ]}>
+                  친구 목록
+                </Text>
+              </View>
+              <Icon
+                name="chevron-forward"
+                size={20}
+                color={isDark ? '#666666' : '#AAAAAA'}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* 결제 섹션 */}
@@ -403,6 +464,22 @@ const MoreScreen: React.FC = () => {
         animationType="slide"
         onRequestClose={() => setShowPaymentHistoryModal(false)}>
         <PaymentHistoryScreen onBack={() => setShowPaymentHistoryModal(false)} />
+      </Modal>
+
+      {/* Guild Modal */}
+      <Modal
+        visible={showGuildModal}
+        animationType="slide"
+        onRequestClose={() => setShowGuildModal(false)}>
+        <GuildScreen onBack={() => setShowGuildModal(false)} />
+      </Modal>
+
+      {/* Friends List Modal */}
+      <Modal
+        visible={showFriendsModal}
+        animationType="slide"
+        onRequestClose={() => setShowFriendsModal(false)}>
+        <FriendsListScreen onBack={() => setShowFriendsModal(false)} />
       </Modal>
     </SafeAreaView>
   );

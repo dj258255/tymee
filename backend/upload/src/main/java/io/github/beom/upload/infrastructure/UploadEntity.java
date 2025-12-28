@@ -1,6 +1,6 @@
 package io.github.beom.upload.infrastructure;
 
-import io.github.beom.infrastructure.persistence.BaseEntity;
+import io.github.beom.core.persistence.BaseEntity;
 import io.github.beom.upload.domain.Upload;
 import io.github.beom.upload.domain.UploadStatus;
 import jakarta.persistence.*;

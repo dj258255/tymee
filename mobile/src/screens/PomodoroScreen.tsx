@@ -1,8 +1,7 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   TouchableOpacity,
   ScrollView,
   Platform,
@@ -15,14 +14,24 @@ import {
   FlatList,
   ActivityIndicator,
   Alert,
+  AppState,
+  AppStateStatus,
+  PermissionsAndroid,
 } from 'react-native';
 import Icon from '@react-native-vector-icons/ionicons';
 import {usePomodoroStore} from '../store/pomodoroStore';
 import {useThemeStore} from '../store/themeStore';
 import TimeTimer from '../components/TimeTimer';
-import {TimerMode, TabName} from '../types/pomodoro';
+import {TimerMode, TabName, AlarmSoundType} from '../types/pomodoro';
+import AlarmService, {ALARM_SOUNDS, AlarmSound} from '../modules/AlarmService';
 import {safeGetColorScheme, safeAddAppearanceListener} from '../utils/appearance';
 import AppBlocker from '../modules/AppBlocker';
+import LiveActivity, {LiveActivityTimerMode, LiveActivityColors} from '../modules/LiveActivity';
+import FocusTimer, {FocusTimerColors} from '../modules/FocusTimer';
+import {getPomodoroTheme} from '../themes/pomodoroThemes';
+import {sp, hp, fp, iconSize, touchSize} from '../utils/responsive';
+import {getStyles} from './PomodoroScreen.styles';
+import {REWARD_CONFIG} from '../store/currencyStore';
 
 const PomodoroScreen: React.FC = () => {
   const [systemColorScheme, setSystemColorScheme] = useState<'light' | 'dark'>('light');
@@ -32,7 +41,7 @@ const PomodoroScreen: React.FC = () => {
   const [tempBreakDuration, setTempBreakDuration] = useState('5');
   const [tempCycleCount, setTempCycleCount] = useState('4');
   const [tempAppMode, setTempAppMode] = useState<'FREE' | 'CONCENTRATION'>('FREE');
-  const [tempBlockedTabs, setTempBlockedTabs] = useState<TabName[]>(['Store', 'Group', 'StudyRecord', 'More']);
+  const [tempBlockedTabs, setTempBlockedTabs] = useState<TabName[]>(['Matching', 'Community', 'StudyRecord', 'More']);
   const [tempBlockedApps, setTempBlockedApps] = useState<string[]>([]);
   const [showUnlockPrompt, setShowUnlockPrompt] = useState(false);
   const [showAppSelector, setShowAppSelector] = useState(false);
@@ -40,6 +49,37 @@ const PomodoroScreen: React.FC = () => {
   const [loadingApps, setLoadingApps] = useState(false);
   const [appBlockerPermission, setAppBlockerPermission] = useState<string>('notDetermined');
   const [accessibilityPermission, setAccessibilityPermission] = useState(false);
+
+  // 화면 잠금 감지 상태
+  const [isScreenLocked, setIsScreenLocked] = useState(false);
+  const [lockStudyTime, setLockStudyTime] = useState(0); // 화면 잠금 중 공부한 시간 (초)
+  const [showFocusResult, setShowFocusResult] = useState(false); // 집중 결과 모달
+  const [focusResultTime, setFocusResultTime] = useState(0); // 결과 모달에 표시할 집중 시간
+  const [showFocusCard, setShowFocusCard] = useState(false); // 집중 완료 카드 표시
+  const [showMemoModal, setShowMemoModal] = useState(false); // 세션 메모 모달
+  const [sessionMemo, setSessionMemo] = useState(''); // 세션 메모 입력값
+  const [showTimerHelpModal, setShowTimerHelpModal] = useState(false); // 타이머 도움말 모달
+  const [showModeChangeConfirm, setShowModeChangeConfirm] = useState(false); // 집중→자유 모드 전환 확인 모달
+  const [pendingModeChange, setPendingModeChange] = useState<'FREE' | 'CONCENTRATION' | null>(null); // 대기 중인 모드 변경
+  const [showLockSettingsModal, setShowLockSettingsModal] = useState(false); // 집중모드 시작 전 잠금 설정 모달
+  const [tempLockEnabled, setTempLockEnabled] = useState(false); // 임시 잠금 활성화 여부 (기본 off)
+  const [tempStartBlockedTabs, setTempStartBlockedTabs] = useState<TabName[]>([]); // 시작 시 차단할 탭 (기본 없음)
+
+  // 알람 설정 state
+  const [tempAlarmEnabled, setTempAlarmEnabled] = useState(true);
+  const [tempAlarmSound, setTempAlarmSound] = useState<AlarmSoundType | string>('default');
+  const [tempAlarmVibration, setTempAlarmVibration] = useState(true);
+  const [tempBreakAlarmEnabled, setTempBreakAlarmEnabled] = useState(true);
+  const [timerSettingsView, setTimerSettingsView] = useState<'main' | 'alarmSound'>('main');
+  const [alarmSounds, setAlarmSounds] = useState<AlarmSound[]>(ALARM_SOUNDS);
+
+  // Live Activity 상태 (iOS)
+  const [liveActivitySupported, setLiveActivitySupported] = useState(false);
+  const liveActivityActive = useRef(false);
+
+  // Android 알림 상태
+  const [androidTimerSupported, setAndroidTimerSupported] = useState(false);
+  const androidTimerActive = useRef(false);
 
   useEffect(() => {
     const task = InteractionManager.runAfterInteractions(() => {
@@ -57,11 +97,25 @@ const PomodoroScreen: React.FC = () => {
   }, []);
 
   const {themeMode} = useThemeStore();
+  // 뽀모도로 세션은 pomodoroStore에서 가져옴
+  const pomodoroSessions = usePomodoroStore(state => state.sessions);
 
   const isDark =
     themeMode === 'system'
       ? systemColorScheme === 'dark'
       : themeMode === 'dark';
+
+  // 오늘 집중 세션 통계
+  const todayString = new Date().toISOString().split('T')[0];
+  const todayFocusSessions = pomodoroSessions.filter(s => {
+    const sessionDate = new Date(s.startTime).toISOString().split('T')[0];
+    return sessionDate === todayString && s.mode === 'FOCUS';
+  });
+  const todayTotalMinutes = todayFocusSessions.reduce((sum, s) => {
+    const duration = (new Date(s.endTime).getTime() - new Date(s.startTime).getTime()) / 60000;
+    return sum + Math.round(duration);
+  }, 0);
+  const todayCompletedSessions = todayFocusSessions.filter(s => s.completed).length;
   const {width, height} = useWindowDimensions();
   const isLandscape = width > height;
 
@@ -73,6 +127,7 @@ const PomodoroScreen: React.FC = () => {
     currentCycle,
     settings,
     isFullscreen,
+    pendingSessionId,
     setTimeLeft,
     setIsRunning,
     setIsFullscreen,
@@ -80,6 +135,8 @@ const PomodoroScreen: React.FC = () => {
     reset,
     setMode,
     updateSettings,
+    addMemoToSession,
+    clearPendingSession,
   } = usePomodoroStore();
 
   // Initialize temp values from settings
@@ -88,7 +145,7 @@ const PomodoroScreen: React.FC = () => {
     setTempBreakDuration((settings.breakDuration || 5).toString());
     setTempCycleCount((settings.cycleCount || 4).toString());
     setTempAppMode(settings.appMode || 'FREE');
-    setTempBlockedTabs(settings.blockedTabs || ['Store', 'Group', 'StudyRecord', 'More']);
+    setTempBlockedTabs(settings.blockedTabs || ['Matching', 'Community', 'StudyRecord', 'More']);
     setTempBlockedApps(settings.blockedApps || []);
   }, [settings]);
 
@@ -112,22 +169,400 @@ const PomodoroScreen: React.FC = () => {
     checkPermission();
   }, []);
 
+  // Live Activity 지원 확인 (iOS)
+  useEffect(() => {
+    const checkLiveActivitySupport = async () => {
+      if (Platform.OS === 'ios') {
+        const supported = await LiveActivity.isActivitySupported();
+        setLiveActivitySupported(supported);
+      }
+    };
+    checkLiveActivitySupport();
+  }, []);
+
+  // 알람 사운드 목록 초기화
+  useEffect(() => {
+    const loadAlarmSounds = () => {
+      const sounds = AlarmService.getAllSounds();
+      setAlarmSounds(sounds);
+    };
+    loadAlarmSounds();
+  }, []);
+
+  // Android 타이머 알림 지원 확인
+  useEffect(() => {
+    const checkAndroidTimerSupport = async () => {
+      if (Platform.OS === 'android') {
+        const supported = await FocusTimer.isSupported();
+        console.log('Android Timer Supported:', supported);
+        setAndroidTimerSupported(supported);
+      }
+    };
+    checkAndroidTimerSupport();
+  }, []);
+
+  // Live Activity 시작/종료/업데이트 관리 - iOS
+  // ref를 사용하여 timeLeft의 최신 값을 항상 참조
+  const timeLeftRef = useRef(timeLeft);
+  timeLeftRef.current = timeLeft;
+
+  // 타이머 시작 시점의 초기 시간 저장 (Live Activity의 targetDuration으로 사용)
+  const initialTimeLeftRef = useRef<number | null>(null);
+
+  // Live Activity 시작 시점의 endTime 저장 (시간 동기화용)
+  const liveActivityEndTimeRef = useRef<number | null>(null);
+
+  // 타이머가 멈춰있고 timeLeft가 변경되면 초기값 업데이트 (설정 변경 시)
+  useEffect(() => {
+    if (!isRunning) {
+      initialTimeLeftRef.current = timeLeft;
+      console.log(`⏱️ Initial timeLeft updated: ${timeLeft}s`);
+    }
+  }, [timeLeft, isRunning]);
+
+
+  // 알림/Live Activity에 전달할 모드 계산
+  // - 자유 모드(appMode='FREE'):
+  //   - 집중시간(mode='FOCUS'): 'FREE_FOCUS' (빨강)
+  //   - 휴식시간(mode='BREAK'): 'FREE_BREAK' (초록)
+  // - 집중 모드(appMode='CONCENTRATION'): mode(FOCUS/BREAK) 그대로 전달
+  const getNotificationTimerMode = (): LiveActivityTimerMode => {
+    if (settings.appMode === 'FREE') {
+      return mode === 'FOCUS' ? 'FREE_FOCUS' : 'FREE_BREAK';
+    }
+    return mode; // 'FOCUS' 또는 'BREAK'
+  };
+
+  // 테마 색상 가져오기
+  const getThemeColors = (): LiveActivityColors & FocusTimerColors => {
+    const theme = getPomodoroTheme(settings.pomodoroTheme || 'default');
+    return {
+      focusColor: theme.focusColor,
+      breakColor: theme.breakColor,
+    };
+  };
+
+  // 이전 isRunning 값 추적
+  const prevIsRunningForLiveActivity = useRef<boolean | null>(null);
+
+  useEffect(() => {
+    const manageLiveActivity = async () => {
+      if (Platform.OS !== 'ios') return;
+
+      const wasRunning = prevIsRunningForLiveActivity.current;
+      // settings에서 직접 시간 계산 (store의 timeLeft가 아닌 설정값 기준)
+      const configuredDuration = mode === 'FOCUS'
+        ? settings.focusDuration * 60
+        : settings.breakDuration * 60;
+
+      console.log(`[LA Debug] isRunning=${isRunning}, wasRunning=${wasRunning}, timeLeft=${timeLeft}, configuredDuration=${configuredDuration}s, liveActivitySupported=${liveActivitySupported}, liveActivityActive=${liveActivityActive.current}`);
+
+      // isRunning 상태 변화가 있을 때만 처리 (매초 timeLeft 변화는 무시)
+      const isRunningChanged = wasRunning !== isRunning;
+
+      // liveActivitySupported가 아직 false면 대기
+      if (!liveActivitySupported) {
+        prevIsRunningForLiveActivity.current = isRunning;
+        return;
+      }
+
+      const liveActivityMode = getNotificationTimerMode();
+
+      if (isRunning && !liveActivityActive.current) {
+        // 타이머가 실행 중인데 Live Activity가 없으면 시작
+        // 시작 시점: timeLeft가 totalDuration과 같을 때 시작하는 것이 정상
+        // 하지만 이미 진행 중이면 timeLeft < configuredDuration일 수 있음
+        const totalDuration = configuredDuration; // 설정된 전체 시간
+        const currentTimeLeft = timeLeft; // 현재 남은 시간
+
+        try {
+          // 기존 Activity 종료 (있으면)
+          await LiveActivity.endActivity();
+
+          // 새로 시작 - 현재 남은 시간과 설정된 전체 시간을 각각 전달
+          const themeColors = getThemeColors();
+          console.log(`🚀 Starting Live Activity: currentTimeLeft=${currentTimeLeft}s, totalDuration=${totalDuration}s, mode=${liveActivityMode}, focusDuration=${settings.focusDuration}min`);
+          await LiveActivity.startActivity(liveActivityMode, currentTimeLeft, themeColors, totalDuration);
+          liveActivityActive.current = true;
+          // 시작 시점의 총 시간 저장 (일시정지/재개 시 참조)
+          initialTimeLeftRef.current = totalDuration;
+          // endTime 저장 (시간 동기화용) - 현재 시간 + 남은 시간
+          liveActivityEndTimeRef.current = Date.now() + currentTimeLeft * 1000;
+        } catch (error) {
+          console.log('Failed to start Live Activity:', error);
+        }
+      } else if (!isRunning && wasRunning === true && liveActivityActive.current && isRunningChanged) {
+        // 일시정지: Live Activity 업데이트 (종료하지 않음)
+        console.log(`⏸️ Pausing Live Activity: timeLeft=${timeLeft}s`);
+        LiveActivity.updateActivity(timeLeft, false).catch(() => {});
+        // 일시정지 시 endTime 초기화 (재개 시 다시 계산)
+        liveActivityEndTimeRef.current = null;
+      } else if (isRunning && wasRunning === false && liveActivityActive.current && isRunningChanged) {
+        // 재개: 설정이 변경되었는지 확인
+        const savedInitialTime = initialTimeLeftRef.current;
+        const settingsChanged = savedInitialTime !== null &&
+          Math.abs(savedInitialTime - configuredDuration) > 5; // 설정값 변경 여부 체크
+
+        if (settingsChanged) {
+          // 설정이 변경됨 -> Live Activity 재시작
+          console.log(`🔄 Settings changed (${savedInitialTime}s -> ${configuredDuration}s), restarting Live Activity`);
+          try {
+            await LiveActivity.endActivity();
+            const themeColors = getThemeColors();
+            await LiveActivity.startActivity(liveActivityMode, timeLeft, themeColors, configuredDuration);
+            initialTimeLeftRef.current = configuredDuration;
+            // 새 endTime 저장
+            liveActivityEndTimeRef.current = Date.now() + timeLeft * 1000;
+          } catch (error) {
+            console.log('Failed to restart Live Activity:', error);
+          }
+        } else {
+          // 설정 변경 없음 -> 단순 재개
+          console.log(`▶️ Resuming Live Activity: timeLeft=${timeLeft}s`);
+          LiveActivity.updateActivity(timeLeft, true).catch(() => {});
+          // 재개 시 새 endTime 저장
+          liveActivityEndTimeRef.current = Date.now() + timeLeft * 1000;
+        }
+      }
+
+      // 상태 업데이트는 마지막에
+      prevIsRunningForLiveActivity.current = isRunning;
+    };
+    manageLiveActivity();
+  }, [isRunning, liveActivitySupported, mode, settings.appMode, settings.focusDuration, settings.breakDuration, timeLeft]);
+
+  // 타이머 완료 또는 리셋 시 Live Activity 종료
+  useEffect(() => {
+    if (!liveActivitySupported || Platform.OS !== 'ios') return;
+
+    // timeLeft가 0이면 종료
+    if (timeLeft === 0 && liveActivityActive.current) {
+      LiveActivity.endActivity().catch(() => {});
+      liveActivityActive.current = false;
+      prevIsRunningForLiveActivity.current = null;
+    }
+  }, [timeLeft, liveActivitySupported]);
+
+  // 설정 변경 시 Live Activity 종료 (일시정지 상태에서 설정 변경하면 초기화)
+  // 이전 설정값 추적
+  const prevSettingsRef = useRef({
+    focusDuration: settings.focusDuration,
+    breakDuration: settings.breakDuration,
+  });
+
+  useEffect(() => {
+    if (!liveActivitySupported || Platform.OS !== 'ios') return;
+
+    const prevSettings = prevSettingsRef.current;
+    const settingsChanged =
+      prevSettings.focusDuration !== settings.focusDuration ||
+      prevSettings.breakDuration !== settings.breakDuration;
+
+    // 설정이 변경되었고, 타이머가 멈춰있고, Live Activity가 활성화되어 있으면 종료
+    if (settingsChanged && !isRunning && liveActivityActive.current) {
+      console.log(`🔧 Settings changed while paused, ending Live Activity`);
+      LiveActivity.endActivity().catch(() => {});
+      liveActivityActive.current = false;
+      prevIsRunningForLiveActivity.current = null;
+      initialTimeLeftRef.current = null; // 초기 시간도 리셋
+    }
+
+    // 현재 설정값 저장
+    prevSettingsRef.current = {
+      focusDuration: settings.focusDuration,
+      breakDuration: settings.breakDuration,
+    };
+  }, [settings.focusDuration, settings.breakDuration, isRunning, liveActivitySupported]);
+
+  // iOS: Live Activity는 ProgressView(timerInterval:)과 Text(timerInterval:)을 사용하여
+  // iOS가 자동으로 실시간 업데이트하므로 매초 업데이트가 필요 없음
+  // 일시정지/재개 시에만 상태 업데이트 필요 (위의 manageLiveActivity에서 처리)
+
+  // iOS: 앱이 포그라운드로 돌아올 때 시간 동기화
+  // Live Activity의 endTime 기준으로 앱의 timeLeft를 맞춤 (시간 오차 방지)
+  useEffect(() => {
+    if (!liveActivitySupported || Platform.OS !== 'ios') return;
+
+    const handleAppStateChange = async (nextAppState: AppStateStatus) => {
+      if (nextAppState === 'active' && isRunning && liveActivityActive.current) {
+        const isActive = await LiveActivity.isActivityActive();
+
+        if (isActive && liveActivityEndTimeRef.current) {
+          // Live Activity가 활성화되어 있으면 endTime 기준으로 앱 타이머 동기화
+          const now = Date.now();
+          const remainingMs = liveActivityEndTimeRef.current - now;
+          const syncedTimeLeft = Math.max(0, Math.ceil(remainingMs / 1000));
+
+          const currentTimeLeft = timeLeftRef.current;
+          const timeDiff = Math.abs(syncedTimeLeft - currentTimeLeft);
+
+          // 1초 이상 차이나면 동기화
+          if (timeDiff >= 1 && syncedTimeLeft > 0) {
+            console.log(`🔄 Syncing app timer with Live Activity: ${currentTimeLeft}s -> ${syncedTimeLeft}s (diff: ${timeDiff}s)`);
+            setTimeLeft(syncedTimeLeft);
+          }
+        } else if (!isActive && liveActivityActive.current) {
+          // Live Activity가 사라졌으면 (시스템이 종료했을 수 있음) 다시 시작
+          const currentTimeLeft = timeLeftRef.current;
+          const liveActivityMode = getNotificationTimerMode();
+          const themeColors = getThemeColors();
+          const totalDuration = initialTimeLeftRef.current || currentTimeLeft;
+
+          console.log(`📱 App became active, restarting Live Activity: currentTimeLeft=${currentTimeLeft}s, totalDuration=${totalDuration}s`);
+          try {
+            await LiveActivity.startActivity(liveActivityMode, currentTimeLeft, themeColors, totalDuration);
+            // 새 endTime 저장
+            liveActivityEndTimeRef.current = Date.now() + currentTimeLeft * 1000;
+          } catch (error) {
+            console.log('Failed to restart Live Activity:', error);
+          }
+        } else if (!isActive) {
+          liveActivityActive.current = false;
+          liveActivityEndTimeRef.current = null;
+        }
+      }
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    return () => subscription.remove();
+  }, [liveActivitySupported, isRunning, setTimeLeft]);
+
+  // Android 알림 시작/종료/업데이트 관리
+  const prevAndroidIsRunningRef = useRef<boolean | null>(null);
+
+  useEffect(() => {
+    // Android 알림 권한 요청 함수
+    const requestNotificationPermission = async (): Promise<boolean> => {
+      if (Platform.OS !== 'android') return true;
+      if (Platform.Version < 33) return true; // Android 13 미만은 권한 불필요
+
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+          {
+            title: '알림 권한 필요',
+            message: '타이머 진행 상태를 알림으로 표시하려면 알림 권한이 필요합니다.',
+            buttonPositive: '허용',
+            buttonNegative: '거부',
+          }
+        );
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      } catch (error) {
+        console.log('Notification permission error:', error);
+        return false;
+      }
+    };
+
+    const manageAndroidTimer = async () => {
+      console.log('manageAndroidTimer:', { androidTimerSupported, platform: Platform.OS, isRunning });
+      if (!androidTimerSupported || Platform.OS !== 'android') return;
+
+      const wasRunning = prevAndroidIsRunningRef.current;
+      const currentTimeLeft = timeLeftRef.current;
+      prevAndroidIsRunningRef.current = isRunning;
+
+      console.log('Android timer state:', { wasRunning, isRunning, currentTimeLeft, initialTimeLeft: initialTimeLeftRef.current, androidTimerActive: androidTimerActive.current });
+
+      if (isRunning && !androidTimerActive.current) {
+        // 처음 시작: 현재 timeLeft를 초기값으로 저장
+        initialTimeLeftRef.current = currentTimeLeft;
+        const targetDuration = currentTimeLeft;
+
+        const notificationMode = getNotificationTimerMode();
+        const themeColors = getThemeColors();
+        console.log('Starting Android timer with targetDuration:', targetDuration, 'mode:', notificationMode, 'colors:', themeColors);
+        const hasPermission = await requestNotificationPermission();
+        console.log('Notification permission:', hasPermission);
+        try {
+          await FocusTimer.startTimer(notificationMode, targetDuration, currentTimeLeft, themeColors);
+          console.log('Android timer started successfully');
+          androidTimerActive.current = true;
+        } catch (error) {
+          console.log('Failed to start Android timer:', error);
+        }
+      } else if (isRunning && wasRunning === false && androidTimerActive.current) {
+        // 재개: initialTimeLeft와 currentTimeLeft가 다르면 새로 시작 (설정 변경됨)
+        if (initialTimeLeftRef.current !== null &&
+            Math.abs(initialTimeLeftRef.current - currentTimeLeft) > 5) {
+          // 설정이 변경됨 -> Service 재시작
+          const notificationMode = getNotificationTimerMode();
+          const themeColors = getThemeColors();
+          console.log('Settings changed, restarting timer with new targetDuration:', currentTimeLeft);
+          await FocusTimer.stopTimer();
+          initialTimeLeftRef.current = currentTimeLeft;
+          await FocusTimer.startTimer(notificationMode, currentTimeLeft, currentTimeLeft, themeColors);
+        } else {
+          FocusTimer.resumeTimer().catch(() => {});
+        }
+      } else if (!isRunning && wasRunning === true && androidTimerActive.current) {
+        // 일시정지
+        FocusTimer.pauseTimer().catch(() => {});
+      }
+    };
+    manageAndroidTimer();
+  }, [isRunning, androidTimerSupported, mode]);
+
+  // Android 타이머 완료 시 종료
+  useEffect(() => {
+    if (!androidTimerSupported || Platform.OS !== 'android') return;
+
+    if (timeLeft === 0 && androidTimerActive.current) {
+      FocusTimer.stopTimer().catch(() => {});
+      androidTimerActive.current = false;
+      prevAndroidIsRunningRef.current = null;
+      initialTimeLeftRef.current = null;
+    }
+    // Service가 자체적으로 타이머를 돌리므로 매초 업데이트 불필요
+  }, [timeLeft, androidTimerSupported]);
+
   const handleSaveTimerSettings = async () => {
     const focus = parseInt(tempFocusDuration) || 25;
     const breakTime = parseInt(tempBreakDuration) || 5;
     const cycles = parseInt(tempCycleCount) || 4;
 
+    // 집중모드 → 자유모드 전환 시 확인 모달
+    if (settings.appMode === 'CONCENTRATION' && tempAppMode === 'FREE') {
+      // 설정 모달을 먼저 닫고 확인 모달을 띄움
+      setShowTimerSettings(false);
+      setTimeout(() => {
+        setPendingModeChange('FREE');
+        setShowModeChangeConfirm(true);
+      }, 100);
+      return;
+    }
+
+    // 설정 저장 실행
+    await applyTimerSettings(focus, breakTime, cycles, tempAppMode);
+  };
+
+  const applyTimerSettings = async (
+    focus: number,
+    breakTime: number,
+    cycles: number,
+    appMode: 'FREE' | 'CONCENTRATION'
+  ) => {
+    // 집중모드로 전환 시 FOCUS 모드로 변경
+    if (appMode === 'CONCENTRATION' && settings.appMode !== 'CONCENTRATION') {
+      setMode('FOCUS');
+    }
+
+    // updateSettings가 appMode 변경 시 자동으로 currentCycle: 1, isRunning: false, timeLeft를 설정
     updateSettings({
-      appMode: tempAppMode,
+      appMode: appMode,
       focusDuration: focus,
       breakDuration: breakTime,
       cycleCount: cycles,
       blockedTabs: tempBlockedTabs,
       blockedApps: tempBlockedApps,
+      // 알람 설정 저장
+      alarmEnabled: tempAlarmEnabled,
+      alarmSound: tempAlarmSound,
+      alarmVibration: tempAlarmVibration,
+      breakAlarmEnabled: tempBreakAlarmEnabled,
     });
 
     // 앱 차단 설정 적용
-    if (tempAppMode === 'CONCENTRATION' && tempBlockedApps.length > 0) {
+    if (appMode === 'CONCENTRATION' && tempBlockedApps.length > 0) {
       try {
         await AppBlocker.blockApps(tempBlockedApps);
       } catch (error) {
@@ -136,6 +571,25 @@ const PomodoroScreen: React.FC = () => {
     }
 
     setShowTimerSettings(false);
+  };
+
+  const handleConfirmModeChange = async () => {
+    const focus = parseInt(tempFocusDuration) || 25;
+    const breakTime = parseInt(tempBreakDuration) || 5;
+    const cycles = parseInt(tempCycleCount) || 4;
+
+    // 타이머 정지
+    setIsRunning(false);
+
+    await applyTimerSettings(focus, breakTime, cycles, 'FREE');
+    setShowModeChangeConfirm(false);
+    setPendingModeChange(null);
+  };
+
+  const handleCancelModeChange = () => {
+    setTempAppMode('CONCENTRATION'); // 원래대로 복원
+    setShowModeChangeConfirm(false);
+    setPendingModeChange(null);
   };
 
   const toggleBlockedTab = (tab: TabName) => {
@@ -153,8 +607,8 @@ const PomodoroScreen: React.FC = () => {
   const getTabLabel = (tab: TabName): string => {
     switch (tab) {
       case 'Timer': return '타이머';
-      case 'Store': return '상점';
-      case 'Group': return '그룹';
+      case 'Matching': return '매칭';
+      case 'Community': return '커뮤니티';
       case 'StudyRecord': return '공부 기록';
       case 'More': return '더보기';
       default: return tab;
@@ -255,6 +709,127 @@ const PomodoroScreen: React.FC = () => {
     );
   };
 
+  // 화면 잠금 감지 (AppState) + 백그라운드 타이머 보정
+  const appState = useRef(AppState.currentState);
+  const wasRunningBeforeLock = useRef(false);
+  const backgroundStartTime = useRef<number | null>(null);
+  const timeLeftWhenBackground = useRef<number>(0);
+
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
+      // 화면이 꺼짐 (background/inactive)
+      if (nextAppState === 'background' || nextAppState === 'inactive') {
+        if (isRunning) {
+          // 백그라운드 진입 시간과 남은 시간 기록
+          backgroundStartTime.current = Date.now();
+          timeLeftWhenBackground.current = timeLeft;
+          wasRunningBeforeLock.current = true;
+          setIsScreenLocked(true);
+        }
+      }
+      // 화면이 켜짐 (active)
+      else if (nextAppState === 'active' && appState.current !== 'active') {
+        // 백그라운드에서 경과한 시간 계산 및 타이머 보정
+        if (backgroundStartTime.current && wasRunningBeforeLock.current) {
+          const elapsedSeconds = Math.floor((Date.now() - backgroundStartTime.current) / 1000);
+          const newTimeLeft = Math.max(0, timeLeftWhenBackground.current - elapsedSeconds);
+          setTimeLeft(newTimeLeft);
+
+          // 집중 완료 카드 표시 (10초 이상 집중한 경우만)
+          if (elapsedSeconds >= 10) {
+            setFocusResultTime(elapsedSeconds);
+            setShowFocusCard(true);
+          }
+
+          backgroundStartTime.current = null;
+          setLockStudyTime(0);
+          setIsScreenLocked(false);
+          wasRunningBeforeLock.current = false;
+        }
+      }
+      appState.current = nextAppState;
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    return () => subscription?.remove();
+  }, [isRunning, timeLeft, setTimeLeft]);
+
+  // 화면 잠금 중 공부 시간 카운트
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isScreenLocked && isRunning) {
+      interval = setInterval(() => {
+        setLockStudyTime(prev => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isScreenLocked, isRunning]);
+
+  // 화면 잠금 공부 시간 포맷
+  const formatLockStudyTime = (): string => {
+    const hours = Math.floor(lockStudyTime / 3600);
+    const minutes = Math.floor((lockStudyTime % 3600) / 60);
+    const seconds = lockStudyTime % 60;
+    if (hours > 0) {
+      return `${hours}시간 ${minutes}분`;
+    }
+    if (minutes > 0) {
+      return `${minutes}분 ${seconds}초`;
+    }
+    return `${seconds}초`;
+  };
+
+  // 결과 모달용 시간 포맷
+  const formatResultTime = (seconds: number): {main: string; sub: string} => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    if (hours > 0) {
+      return {main: `${hours}시간 ${minutes}분`, sub: `${secs}초`};
+    }
+    if (minutes > 0) {
+      return {main: `${minutes}분`, sub: `${secs}초`};
+    }
+    return {main: `${secs}초`, sub: ''};
+  };
+
+  // 격려 메시지 생성
+  const getEncouragementMessage = (seconds: number): {emoji: string; title: string; message: string} => {
+    const minutes = Math.floor(seconds / 60);
+
+    if (minutes >= 60) {
+      return {
+        emoji: '🏆',
+        title: '대단해요!',
+        message: '1시간 이상 집중하다니 정말 멋져요!\n오늘 하루도 성공적이에요!',
+      };
+    } else if (minutes >= 30) {
+      return {
+        emoji: '🔥',
+        title: '훌륭해요!',
+        message: '30분 이상 집중에 성공했어요!\n이 페이스를 유지해봐요!',
+      };
+    } else if (minutes >= 15) {
+      return {
+        emoji: '💪',
+        title: '잘했어요!',
+        message: '15분 동안 휴대폰을 내려놓았어요!\n집중력이 좋아지고 있어요!',
+      };
+    } else if (minutes >= 5) {
+      return {
+        emoji: '👍',
+        title: '좋아요!',
+        message: '짧지만 확실한 집중이었어요!\n조금씩 시간을 늘려봐요!',
+      };
+    } else {
+      return {
+        emoji: '🌱',
+        title: '시작이 반이에요!',
+        message: '작은 시작도 소중해요!\n다음엔 조금 더 도전해봐요!',
+      };
+    }
+  };
+
   // Timer tick effect
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -265,6 +840,34 @@ const PomodoroScreen: React.FC = () => {
     }
     return () => clearInterval(interval);
   }, [isRunning, tick]);
+
+  // 집중 세션 완료 시 메모 모달 표시
+  useEffect(() => {
+    if (pendingSessionId) {
+      setSessionMemo('');
+      setShowMemoModal(true);
+    }
+  }, [pendingSessionId]);
+
+  // 메모 저장 핸들러
+  const handleSaveMemo = () => {
+    if (pendingSessionId) {
+      if (sessionMemo.trim()) {
+        addMemoToSession(pendingSessionId, sessionMemo.trim());
+      } else {
+        clearPendingSession();
+      }
+    }
+    setShowMemoModal(false);
+    setSessionMemo('');
+  };
+
+  // 메모 건너뛰기 핸들러
+  const handleSkipMemo = () => {
+    clearPendingSession();
+    setShowMemoModal(false);
+    setSessionMemo('');
+  };
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -291,22 +894,21 @@ const PomodoroScreen: React.FC = () => {
   };
 
   const getModeColor = (currentMode: TimerMode): string => {
-    const isAndroid = Platform.OS === 'android';
-
-    // 안드로이드는 색상이 더 어둡게 보여서 보정
+    // 테마에서 색상 가져오기
+    const themeColors = getThemeColors();
     switch (currentMode) {
       case 'FOCUS':
-        return isAndroid ? '#FF6B6B' : '#FF5252'; // 집중: 빨강
+        return themeColors.focusColor;
       case 'BREAK':
-        return isAndroid ? '#42A5F5' : '#2196F3'; // 휴식: 파랑 (기존 긴휴식 색상)
+        return themeColors.breakColor;
     }
   };
 
   const progress = timeLeft / getTotalDuration(); // 남은 시간의 비율 (1 -> 0으로 감소)
   const currentColor = getModeColor(mode);
 
-  // 집중 모드에서 집중 시간일 때 잠금 상태
-  const isLocked = settings.appMode === 'CONCENTRATION' && mode === 'FOCUS' && isRunning;
+  // 집중 모드 + 잠금 활성화 + 집중 시간일 때 잠금 상태
+  const isLocked = settings.appMode === 'CONCENTRATION' && settings.lockEnabled && mode === 'FOCUS' && isRunning;
 
   const styles = getStyles(isDark);
 
@@ -345,6 +947,40 @@ const PomodoroScreen: React.FC = () => {
     if (isLandscape) {
       setShowControls(!showControls);
     }
+  };
+
+  // 타이머 시작/일시정지 핸들러
+  const handlePlayPause = () => {
+    // 이미 실행 중이면 그냥 일시정지
+    if (isRunning) {
+      setIsRunning(false);
+      return;
+    }
+
+    // 집중모드이고 FOCUS 모드일 때 시작 전 잠금 설정 모달 표시
+    if (settings.appMode === 'CONCENTRATION' && mode === 'FOCUS') {
+      // 이전 설정값 유지 (기본값: false)
+      setTempLockEnabled(settings.lockEnabled ?? false);
+      setTempStartBlockedTabs(settings.blockedTabs);
+      setShowLockSettingsModal(true);
+      return;
+    }
+
+    // 자유모드면 바로 시작
+    setIsRunning(true);
+  };
+
+  // 잠금 설정 확인 후 타이머 시작
+  const handleConfirmStart = () => {
+    // 설정 업데이트 (잠금 활성화 여부 및 차단 탭 적용)
+    // appMode(집중/자유)는 유지하고, lockEnabled와 blockedTabs 변경
+    // 탭 차단은 lockEnabled와 별개로 항상 저장
+    updateSettings({
+      lockEnabled: tempLockEnabled,
+      blockedTabs: tempStartBlockedTabs,
+    });
+    setShowLockSettingsModal(false);
+    setIsRunning(true);
   };
 
   const formatCurrentTime = (date: Date): string => {
@@ -418,7 +1054,7 @@ const PomodoroScreen: React.FC = () => {
                   timeText={formatTime(timeLeft)}
                   totalSeconds={getTotalDuration()}
                   isRunning={isRunning}
-                  onPlayPause={() => setIsRunning(!isRunning)}
+                  onPlayPause={handlePlayPause}
                   showButton={true}
                 />
 
@@ -462,7 +1098,7 @@ const PomodoroScreen: React.FC = () => {
                   timeText={formatTime(timeLeft)}
                   totalSeconds={getTotalDuration()}
                   isRunning={isRunning}
-                  onPlayPause={() => setIsRunning(!isRunning)}
+                  onPlayPause={handlePlayPause}
                   showButton={true}
                 />
               </View>
@@ -496,50 +1132,73 @@ const PomodoroScreen: React.FC = () => {
         scrollEventThrottle={16}
         decelerationRate="normal"
         bounces={true}>
-        {/* Current Mode Display */}
-        <View style={[styles.mainModeIndicator, {
-          backgroundColor: settings.appMode === 'FREE' ? '#FF5252' : '#2196F3',
-        }]}>
-          <Text style={styles.mainModeText}>
-            {settings.appMode === 'FREE' ? '자유 모드' : '집중 모드'}
-          </Text>
-        </View>
-
-        {/* Timer Mode Selection - 자유 모드일 때만 선택 가능 */}
-        {settings.appMode === 'FREE' && (
-          <View style={styles.timerModeContainer}>
-            {(['FOCUS', 'BREAK'] as TimerMode[]).map((m) => (
+        {/* 모드 선택 영역 */}
+        <View style={styles.modeSelectArea}>
+          {settings.appMode === 'FREE' ? (
+            /* 자유모드: 집중/휴식 버튼 2개 */
+            <View style={styles.timerModeRow}>
               <TouchableOpacity
-                key={m}
                 style={[
                   styles.timerModeButton,
-                  mode === m && {
-                    ...styles.timerModeButtonActive,
-                    backgroundColor: getModeColor(m),
-                  },
+                  mode === 'FOCUS' && styles.timerModeButtonActive,
+                  {
+                    backgroundColor: mode === 'FOCUS' ? currentColor : (isDark ? '#252525' : '#F5F5F5'),
+                  }
                 ]}
-                onPress={() => setMode(m)}
+                onPress={() => !isRunning && setMode('FOCUS')}
                 disabled={isRunning}>
-                <Text
-                  style={[
-                    styles.timerModeButtonText,
-                    mode === m && styles.timerModeButtonTextActive,
-                  ]}>
-                  {getModeLabel(m)}
+                <Icon
+                  name="flame"
+                  size={iconSize(16)}
+                  color={mode === 'FOCUS' ? '#FFFFFF' : (isDark ? '#666666' : '#999999')}
+                />
+                <Text style={[
+                  styles.timerModeText,
+                  {color: mode === 'FOCUS' ? '#FFFFFF' : (isDark ? '#666666' : '#999999')}
+                ]}>
+                  집중시간
                 </Text>
               </TouchableOpacity>
-            ))}
-          </View>
-        )}
-
-        {/* 집중 모드일 때 사이클 표시 */}
-        {settings.appMode === 'CONCENTRATION' && (
-          <View style={styles.cycleInfoContainer}>
-            <Text style={[styles.cycleInfoText, {color: isDark ? '#AAAAAA' : '#666666'}]}>
-              {currentCycle}/{settings.cycleCount} 사이클 · {getModeLabel(mode)}
-            </Text>
-          </View>
-        )}
+              <TouchableOpacity
+                style={[
+                  styles.timerModeButton,
+                  mode === 'BREAK' && styles.timerModeButtonActive,
+                  {
+                    backgroundColor: mode === 'BREAK' ? '#4CAF50' : (isDark ? '#252525' : '#F5F5F5'),
+                  }
+                ]}
+                onPress={() => !isRunning && setMode('BREAK')}
+                disabled={isRunning}>
+                <Icon
+                  name="cafe"
+                  size={iconSize(16)}
+                  color={mode === 'BREAK' ? '#FFFFFF' : (isDark ? '#666666' : '#999999')}
+                />
+                <Text style={[
+                  styles.timerModeText,
+                  {color: mode === 'BREAK' ? '#FFFFFF' : (isDark ? '#666666' : '#999999')}
+                ]}>
+                  휴식시간
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            /* 집중모드: 현재 상태 텍스트만 표시 */
+            <View style={[
+              styles.concentrationStatus,
+              {backgroundColor: currentColor}
+            ]}>
+              <Icon
+                name={mode === 'FOCUS' ? 'flame' : 'cafe'}
+                size={iconSize(16)}
+                color="#FFFFFF"
+              />
+              <Text style={styles.concentrationStatusText}>
+                {mode === 'FOCUS' ? '집중' : '휴식'} {currentCycle}/{settings.cycleCount}
+              </Text>
+            </View>
+          )}
+        </View>
 
         {/* Timer Display */}
         <View style={styles.timerContainer}>
@@ -549,30 +1208,46 @@ const PomodoroScreen: React.FC = () => {
             onPress={() => setIsFullscreen(true)}>
             <Icon
               name="expand"
-              size={24}
+              size={iconSize(24)}
               color={isDark ? '#AAAAAA' : '#666666'}
             />
           </TouchableOpacity>
           {/* 시간 설정 버튼 - 타이머 원 기준 오른쪽 위 */}
           <TouchableOpacity
             style={styles.settingsBtn}
-            onPress={() => setShowTimerSettings(true)}
+            onPress={() => {
+              // 현재 설정값으로 temp 변수들 초기화
+              setTempFocusDuration(settings.focusDuration.toString());
+              setTempBreakDuration(settings.breakDuration.toString());
+              setTempCycleCount(settings.cycleCount.toString());
+              setTempAppMode(settings.appMode);
+              setTempBlockedTabs(settings.blockedTabs || []);
+              setTempBlockedApps(settings.blockedApps || []);
+              // 알람 설정 초기화
+              setTempAlarmEnabled(settings.alarmEnabled);
+              setTempAlarmSound(settings.alarmSound);
+              setTempAlarmVibration(settings.alarmVibration);
+              setTempBreakAlarmEnabled(settings.breakAlarmEnabled);
+              // 뷰 초기화
+              setTimerSettingsView('main');
+              setShowTimerSettings(true);
+            }}
             disabled={isRunning}>
             <Icon
               name="settings-outline"
-              size={24}
+              size={iconSize(24)}
               color={isRunning ? (isDark ? '#3A3A3A' : '#CCCCCC') : (isDark ? '#AAAAAA' : '#666666')}
             />
           </TouchableOpacity>
           <TimeTimer
-            size={320}
+            size={sp(320)}
             progress={progress}
             color={currentColor}
             backgroundColor={isDark ? '#F5F5F5' : '#FFFFFF'}
             timeText={formatTime(timeLeft)}
             totalSeconds={getTotalDuration()}
             isRunning={isRunning}
-            onPlayPause={() => setIsRunning(!isRunning)}
+            onPlayPause={handlePlayPause}
             showButton={true}
           />
           {/* 남은 시간 텍스트 - 타이머 아래 */}
@@ -596,6 +1271,80 @@ const PomodoroScreen: React.FC = () => {
             </Text>
           </TouchableOpacity>
         </View>
+
+        {/* 오늘의 집중 통계 - 집중모드일 때만 표시 */}
+        {settings.appMode === 'CONCENTRATION' && (
+          <View style={[styles.todayStatsCard, {backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF'}]}>
+            <View style={styles.todayStatsRow}>
+              <View style={styles.todayStatItem}>
+                <Icon name="time-outline" size={iconSize(18)} color={currentColor} />
+                <Text style={[styles.todayStatValue, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
+                  {todayTotalMinutes >= 60
+                    ? `${Math.floor(todayTotalMinutes / 60)}h ${todayTotalMinutes % 60}m`
+                    : `${todayTotalMinutes}m`}
+                </Text>
+                <Text style={[styles.todayStatLabel, {color: isDark ? '#888888' : '#666666'}]}>
+                  오늘 집중
+                </Text>
+              </View>
+              <View style={[styles.todayStatDivider, {backgroundColor: isDark ? '#333333' : '#E5E5E5'}]} />
+              <View style={styles.todayStatItem}>
+                <Icon name="checkmark-circle-outline" size={iconSize(18)} color="#4CAF50" />
+                <Text style={[styles.todayStatValue, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
+                  {todayCompletedSessions}
+                </Text>
+                <Text style={[styles.todayStatLabel, {color: isDark ? '#888888' : '#666666'}]}>
+                  완료 세션
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* 집중 완료 카드 - 화면 잠금 후 돌아왔을 때 */}
+        {showFocusCard && focusResultTime > 0 && (
+          <TouchableOpacity
+            style={[styles.focusCompletedCard, {backgroundColor: currentColor}]}
+            onPress={() => {
+              setShowFocusCard(false);
+              setShowFocusResult(true);
+            }}
+            activeOpacity={0.9}>
+            <View style={styles.focusCompletedContent}>
+              <View style={styles.focusCompletedLeft}>
+                <Text style={styles.focusCompletedEmoji}>
+                  {getEncouragementMessage(focusResultTime).emoji}
+                </Text>
+                <View style={styles.focusCompletedTextContainer}>
+                  <Text style={styles.focusCompletedTitle}>
+                    {formatResultTime(focusResultTime).main} 집중!
+                  </Text>
+                  <Text style={styles.focusCompletedSubtitle}>
+                    탭하여 자세히 보기
+                  </Text>
+                </View>
+              </View>
+              <Icon name="chevron-forward" size={iconSize(24)} color="#FFFFFF" />
+            </View>
+          </TouchableOpacity>
+        )}
+
+        {/* 화면 잠금 집중 안내 - 타이머 실행 중일 때 */}
+        {isRunning && !showFocusCard && (
+          <View style={[styles.lockHintCard, {backgroundColor: isDark ? '#1E3A1E' : '#E8F5E9'}]}>
+            <View style={styles.lockHintContent}>
+              <Icon name="phone-portrait-outline" size={iconSize(24)} color="#4CAF50" />
+              <View style={styles.lockHintTextContainer}>
+                <Text style={[styles.lockHintTitle, {color: isDark ? '#81C784' : '#2E7D32'}]}>
+                  화면을 끄고 집중하세요
+                </Text>
+                <Text style={[styles.lockHintSubtitle, {color: isDark ? '#66BB6A' : '#43A047'}]}>
+                  화면 잠금 시간이 자동으로 기록됩니다
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
       </ScrollView>
 
       {/* Timer Settings Modal */}
@@ -603,26 +1352,229 @@ const PomodoroScreen: React.FC = () => {
         visible={showTimerSettings}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowTimerSettings(false)}>
+        onRequestClose={() => {
+          if (showTimerHelpModal) {
+            setShowTimerHelpModal(false);
+          } else if (timerSettingsView === 'alarmSound') {
+            setTimerSettingsView('main');
+          } else {
+            setShowTimerSettings(false);
+            setTimerSettingsView('main');
+          }
+        }}>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, {backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF'}]}>
             {/* Header */}
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
-                타이머 설정
-              </Text>
-              <TouchableOpacity onPress={() => setShowTimerSettings(false)}>
-                <Icon name="close" size={28} color={isDark ? '#AAAAAA' : '#666666'} />
+              <View style={styles.modalTitleRow}>
+                <Text style={[styles.modalTitle, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
+                  {showTimerHelpModal ? '포모도로 타이머 안내' : timerSettingsView === 'alarmSound' ? '알람 사운드 선택' : '타이머 설정'}
+                </Text>
+                {!showTimerHelpModal && timerSettingsView === 'main' && (
+                  <TouchableOpacity
+                    style={styles.timerHelpButton}
+                    hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+                    onPress={() => setShowTimerHelpModal(true)}>
+                    <Icon name="help-circle-outline" size={iconSize(24)} color={isDark ? '#888888' : '#999999'} />
+                  </TouchableOpacity>
+                )}
+              </View>
+              <TouchableOpacity onPress={() => {
+                if (showTimerHelpModal) {
+                  setShowTimerHelpModal(false);
+                } else if (timerSettingsView === 'alarmSound') {
+                  setTimerSettingsView('main');
+                } else {
+                  setShowTimerSettings(false);
+                  setTimerSettingsView('main');
+                }
+              }}>
+                <Icon name={showTimerHelpModal || timerSettingsView === 'alarmSound' ? 'arrow-back' : 'close'} size={iconSize(28)} color={isDark ? '#AAAAAA' : '#666666'} />
               </TouchableOpacity>
             </View>
 
-            {/* Settings inputs */}
+            {/* Help Content or Settings */}
+            {showTimerHelpModal ? (
+              <>
+                <ScrollView style={styles.timerHelpModalBody} showsVerticalScrollIndicator={false}>
+                  <View style={[styles.timerHelpCard, {backgroundColor: isDark ? '#2A2A2A' : '#F8F8F8'}]}>
+                    <View style={styles.timerHelpIconRow}>
+                      <Text style={styles.timerHelpEmoji}>⏱️</Text>
+                      <Text style={[styles.timerHelpCardTitle, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
+                        25분은 그냥 참고용이에요
+                      </Text>
+                    </View>
+                    <Text style={[styles.timerHelpCardText, {color: isDark ? '#BBBBBB' : '#666666'}]}>
+                      기본 설정인 25분/5분은 일반적인 가이드일 뿐이에요.{'\n'}
+                      자신에게 맞는 시간을 찾아보세요!
+                    </Text>
+                  </View>
+
+                  <View style={[styles.timerHelpCard, {backgroundColor: isDark ? '#2A2A2A' : '#F8F8F8'}]}>
+                    <View style={styles.timerHelpIconRow}>
+                      <Text style={styles.timerHelpEmoji}>👤</Text>
+                      <Text style={[styles.timerHelpCardTitle, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
+                        사람마다 달라요
+                      </Text>
+                    </View>
+                    <Text style={[styles.timerHelpCardText, {color: isDark ? '#BBBBBB' : '#666666'}]}>
+                      • 2시간 집중 + 30분 휴식{'\n'}
+                      • 50분 집중 + 10분 휴식{'\n'}
+                      • 15분 집중 + 5분 휴식{'\n\n'}
+                      어떤 방식이든 괜찮아요. 알아서 조절하면 돼요!
+                    </Text>
+                  </View>
+
+                  <View style={[styles.timerHelpCard, {backgroundColor: isDark ? '#2A2A2A' : '#F8F8F8'}]}>
+                    <View style={styles.timerHelpIconRow}>
+                      <Text style={styles.timerHelpEmoji}>💡</Text>
+                      <Text style={[styles.timerHelpCardTitle, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
+                        핵심은 사고방식이에요
+                      </Text>
+                    </View>
+                    <Text style={[styles.timerHelpCardText, {color: isDark ? '#BBBBBB' : '#666666'}]}>
+                      포모도로의 진짜 가치는 '집중 시간'과 '휴식 시간'을{'\n'}
+                      의식적으로 구분하는 것이에요.{'\n\n'}
+                      집중할 땐 집중하고, 쉴 땐 확실히 쉬세요!
+                    </Text>
+                  </View>
+                </ScrollView>
+
+                <TouchableOpacity
+                  style={[styles.timerHelpCloseButton, {backgroundColor: currentColor}]}
+                  onPress={() => setShowTimerHelpModal(false)}>
+                  <Text style={styles.timerHelpCloseButtonText}>확인</Text>
+                </TouchableOpacity>
+              </>
+            ) : timerSettingsView === 'alarmSound' ? (
+              <View style={{maxHeight: hp(400)}}>
+                <ScrollView style={{marginBottom: hp(16)}} showsVerticalScrollIndicator={false}>
+                  {alarmSounds.map((sound) => (
+                    <TouchableOpacity
+                      key={sound.id}
+                      style={[styles.alarmSoundItem, {
+                        backgroundColor: isDark ? '#2A2A2A' : '#FFFFFF',
+                        marginBottom: hp(10),
+                        borderRadius: sp(12),
+                        borderWidth: tempAlarmSound === sound.id ? 2 : 1,
+                        borderColor: tempAlarmSound === sound.id ? currentColor : (isDark ? '#404040' : '#E0E0E0'),
+                      }]}
+                      onPress={() => {
+                        setTempAlarmSound(sound.id);
+                        AlarmService.previewSound(sound.id);
+                      }}
+                      onLongPress={() => {
+                        if (sound.isCustom) {
+                          Alert.alert(
+                            '사운드 삭제',
+                            `"${sound.name}" 사운드를 삭제하시겠습니까?`,
+                            [
+                              {text: '취소', style: 'cancel'},
+                              {
+                                text: '삭제',
+                                style: 'destructive',
+                                onPress: async () => {
+                                  const removed = await AlarmService.removeCustomSound(sound.id);
+                                  if (removed) {
+                                    setAlarmSounds(AlarmService.getAllSounds());
+                                    if (tempAlarmSound === sound.id) {
+                                      setTempAlarmSound('default');
+                                    }
+                                  }
+                                },
+                              },
+                            ]
+                          );
+                        }
+                      }}>
+                      <View style={{flex: 1}}>
+                        <Text style={[styles.alarmSoundName, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
+                          {sound.name}
+                        </Text>
+                        <Text style={[styles.alarmSoundDescription, {color: isDark ? '#888888' : '#999999'}]}>
+                          {sound.description}
+                          {sound.isCustom ? ' (길게 눌러 삭제)' : ''}
+                        </Text>
+                      </View>
+                      {tempAlarmSound === sound.id && (
+                        <Icon name="checkmark" size={iconSize(22)} color={currentColor} />
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                  {/* 커스텀 사운드 추가 버튼 */}
+                  <TouchableOpacity
+                    style={[styles.alarmSoundItem, {
+                      borderStyle: 'dashed',
+                      borderWidth: 1,
+                      borderColor: isDark ? '#444444' : '#CCCCCC',
+                      marginTop: hp(8),
+                    }]}
+                    onPress={async () => {
+                      const newSound = await AlarmService.addCustomSound();
+                      if (newSound) {
+                        setAlarmSounds(AlarmService.getAllSounds());
+                        setTempAlarmSound(newSound.id);
+                      }
+                    }}>
+                    <Icon name="add-circle-outline" size={iconSize(24)} color={isDark ? '#888888' : '#666666'} style={{marginRight: sp(12)}} />
+                    <View style={{flex: 1}}>
+                      <Text style={[styles.alarmSoundName, {color: isDark ? '#AAAAAA' : '#666666'}]}>
+                        내 사운드 추가
+                      </Text>
+                      <Text style={[styles.alarmSoundDescription, {color: isDark ? '#666666' : '#999999'}]}>
+                        기기에서 오디오 파일 선택
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+
+                  {/* 도움말 */}
+                  <View style={{
+                    marginTop: hp(16),
+                    padding: sp(12),
+                    backgroundColor: isDark ? '#1A1A1A' : '#F5F5F5',
+                    borderRadius: sp(8),
+                  }}>
+                    <Text style={{
+                      fontSize: fp(12),
+                      color: isDark ? '#888888' : '#666666',
+                      lineHeight: fp(18),
+                    }}>
+                      알람음은 미디어 볼륨으로 재생됩니다. 이어폰 연결 시 이어폰으로만 소리가 나며, 미디어 볼륨을 0으로 설정하면 소리가 나지 않습니다.
+                    </Text>
+                    <Text style={{
+                      fontSize: fp(11),
+                      color: isDark ? '#666666' : '#888888',
+                      marginTop: hp(8),
+                      lineHeight: fp(16),
+                    }}>
+                      • 기본 알림: 미디어 볼륨으로 알람음 재생{'\n'}
+                      • 진동만: 소리 없이 진동만{'\n'}
+                      • 완전 무음: 소리와 진동 모두 없음{'\n'}
+                      • 백그라운드에서는 시스템 알림음이 사용됩니다
+                    </Text>
+                    <Text style={{
+                      fontSize: fp(11),
+                      color: isDark ? '#666666' : '#888888',
+                      marginTop: hp(8),
+                    }}>
+                      커스텀 사운드는 길게 눌러 삭제할 수 있습니다.
+                    </Text>
+                  </View>
+                </ScrollView>
+                <TouchableOpacity
+                  style={[styles.modalSaveButton, {backgroundColor: currentColor}]}
+                  onPress={() => setTimerSettingsView('main')}>
+                  <Text style={styles.modalSaveButtonText}>확인</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <>
             <ScrollView
               style={styles.settingsInputContainer}
               showsVerticalScrollIndicator={false}>
-              {/* App Mode Selection */}
-              <View style={styles.settingItem}>
-                <Text style={[styles.settingLabel, {color: isDark ? '#CCCCCC' : '#666666'}]}>
+              {/* 타이머 모드 그룹 */}
+              <View style={[styles.settingGroup, {backgroundColor: isDark ? '#2A2A2A' : '#F8F8F8'}]}>
+                <Text style={[styles.settingGroupTitle, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
                   타이머 모드
                 </Text>
                 <View style={styles.appModeSelector}>
@@ -633,7 +1585,7 @@ const PomodoroScreen: React.FC = () => {
                       {
                         backgroundColor: tempAppMode === 'FREE'
                           ? '#FF5252'
-                          : (isDark ? '#2A2A2A' : '#F5F5F5'),
+                          : (isDark ? '#3A3A3A' : '#EEEEEE'),
                       }
                     ]}
                     onPress={() => setTempAppMode('FREE')}>
@@ -652,7 +1604,7 @@ const PomodoroScreen: React.FC = () => {
                       {
                         backgroundColor: tempAppMode === 'CONCENTRATION'
                           ? '#2196F3'
-                          : (isDark ? '#2A2A2A' : '#F5F5F5'),
+                          : (isDark ? '#3A3A3A' : '#EEEEEE'),
                       }
                     ]}
                     onPress={() => setTempAppMode('CONCENTRATION')}>
@@ -667,194 +1619,164 @@ const PomodoroScreen: React.FC = () => {
                 </View>
               </View>
 
-              {/* Focus Duration */}
-              <View style={styles.settingItem}>
-                <Text style={[styles.settingLabel, {color: isDark ? '#CCCCCC' : '#666666'}]}>
-                  집중 시간 (분)
+              {/* 시간 설정 그룹 */}
+              <View style={[styles.settingGroup, {backgroundColor: isDark ? '#2A2A2A' : '#F8F8F8'}]}>
+                <Text style={[styles.settingGroupTitle, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
+                  시간 설정
                 </Text>
-                <TextInput
-                  style={[styles.settingInput, {
-                    backgroundColor: isDark ? '#2A2A2A' : '#F5F5F5',
-                    color: isDark ? '#FFFFFF' : '#1A1A1A',
-                  }]}
-                  value={tempFocusDuration}
-                  onChangeText={setTempFocusDuration}
-                  keyboardType="number-pad"
-                  maxLength={3}
-                  placeholder="25"
-                  placeholderTextColor={isDark ? '#666666' : '#999999'}
-                />
-              </View>
-
-              {/* Break Duration */}
-              <View style={styles.settingItem}>
-                <Text style={[styles.settingLabel, {color: isDark ? '#CCCCCC' : '#666666'}]}>
-                  휴식 시간 (분)
-                </Text>
-                <TextInput
-                  style={[styles.settingInput, {
-                    backgroundColor: isDark ? '#2A2A2A' : '#F5F5F5',
-                    color: isDark ? '#FFFFFF' : '#1A1A1A',
-                  }]}
-                  value={tempBreakDuration}
-                  onChangeText={setTempBreakDuration}
-                  keyboardType="number-pad"
-                  maxLength={3}
-                  placeholder="5"
-                  placeholderTextColor={isDark ? '#666666' : '#999999'}
-                />
-              </View>
-
-              {/* Cycle Count - 집중 모드일 때만 표시 */}
-              {tempAppMode === 'CONCENTRATION' && (
-                <View style={styles.settingItem}>
-                  <Text style={[styles.settingLabel, {color: isDark ? '#CCCCCC' : '#666666'}]}>
-                    반복 횟수
-                  </Text>
+                {/* Focus Duration */}
+                <View style={styles.settingItemInGroup}>
+                  <View style={{flexDirection: 'row', alignItems: 'center', flex: 1}}>
+                    <Text style={[styles.settingLabel, {color: isDark ? '#CCCCCC' : '#666666'}]}>
+                      집중 시간 (분)
+                    </Text>
+                    {/* 연필 보상 표시 - 레이블 바로 옆 */}
+                    <View style={{flexDirection: 'row', alignItems: 'center', backgroundColor: isDark ? '#3A3A3A' : '#FFF8E1', paddingHorizontal: sp(8), paddingVertical: sp(4), borderRadius: sp(8), gap: sp(4), marginLeft: sp(8)}}>
+                      <Icon name="pencil" size={iconSize(12)} color="#FFB300" />
+                      <Text style={{color: '#FFB300', fontSize: fp(11), fontWeight: '600'}}>
+                        +{Math.min(360, Math.round((parseInt(tempFocusDuration) || 0) * REWARD_CONFIG.pomodoro.pencilsPerMinute))}
+                      </Text>
+                    </View>
+                  </View>
                   <TextInput
                     style={[styles.settingInput, {
-                      backgroundColor: isDark ? '#2A2A2A' : '#F5F5F5',
+                      backgroundColor: isDark ? '#3A3A3A' : '#FFFFFF',
                       color: isDark ? '#FFFFFF' : '#1A1A1A',
                     }]}
-                    value={tempCycleCount}
-                    onChangeText={setTempCycleCount}
+                    value={tempFocusDuration}
+                    onChangeText={setTempFocusDuration}
                     keyboardType="number-pad"
-                    maxLength={2}
-                    placeholder="4"
+                    maxLength={3}
+                    placeholder="25"
                     placeholderTextColor={isDark ? '#666666' : '#999999'}
                   />
                 </View>
-              )}
 
-              {/* Blocked Tabs - 집중 모드일 때만 표시 */}
-              {tempAppMode === 'CONCENTRATION' && (
-                <View style={styles.settingItem}>
+                <View style={[styles.settingDivider, {backgroundColor: isDark ? '#3A3A3A' : '#E0E0E0'}]} />
+
+                {/* Break Duration */}
+                <View style={styles.settingItemInGroup}>
                   <Text style={[styles.settingLabel, {color: isDark ? '#CCCCCC' : '#666666'}]}>
-                    차단할 탭
+                    휴식 시간 (분)
                   </Text>
-                  <Text style={[styles.settingDescription, {color: isDark ? '#888888' : '#999999'}]}>
-                    집중 시간 동안 접근을 차단할 탭을 선택하세요
+                  <TextInput
+                    style={[styles.settingInput, {
+                      backgroundColor: isDark ? '#3A3A3A' : '#FFFFFF',
+                      color: isDark ? '#FFFFFF' : '#1A1A1A',
+                    }]}
+                    value={tempBreakDuration}
+                    onChangeText={setTempBreakDuration}
+                    keyboardType="number-pad"
+                    maxLength={3}
+                    placeholder="5"
+                    placeholderTextColor={isDark ? '#666666' : '#999999'}
+                  />
+                </View>
+
+                {/* Cycle Count - 집중 모드일 때만 표시 */}
+                {tempAppMode === 'CONCENTRATION' && (
+                  <>
+                    <View style={[styles.settingDivider, {backgroundColor: isDark ? '#3A3A3A' : '#E0E0E0'}]} />
+                    <View style={styles.settingItemInGroup}>
+                      <Text style={[styles.settingLabel, {color: isDark ? '#CCCCCC' : '#666666'}]}>
+                        반복 횟수
+                      </Text>
+                      <TextInput
+                        style={[styles.settingInput, {
+                          backgroundColor: isDark ? '#3A3A3A' : '#FFFFFF',
+                          color: isDark ? '#FFFFFF' : '#1A1A1A',
+                        }]}
+                        value={tempCycleCount}
+                        onChangeText={setTempCycleCount}
+                        keyboardType="number-pad"
+                        maxLength={2}
+                        placeholder="4"
+                        placeholderTextColor={isDark ? '#666666' : '#999999'}
+                      />
+                    </View>
+                  </>
+                )}
+              </View>
+
+              {/* 알람 설정 그룹 */}
+              <View style={[styles.settingGroup, {backgroundColor: isDark ? '#2A2A2A' : '#F8F8F8'}]}>
+                <Text style={[styles.settingGroupTitle, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
+                  알람 설정
+                </Text>
+
+                {/* 집중 완료 알람 */}
+                <View style={styles.settingItemInGroup}>
+                  <Text style={[styles.settingLabel, {color: isDark ? '#CCCCCC' : '#666666'}]}>
+                    집중 완료 알람
                   </Text>
-                  <View style={styles.blockedTabsContainer}>
-                    {(['Store', 'Group', 'StudyRecord', 'More'] as TabName[]).map((tab) => (
-                      <TouchableOpacity
-                        key={tab}
-                        style={[
-                          styles.blockedTabButton,
-                          {
-                            backgroundColor: tempBlockedTabs.includes(tab)
-                              ? '#FF5252'
-                              : (isDark ? '#2A2A2A' : '#F5F5F5'),
-                            borderColor: tempBlockedTabs.includes(tab)
-                              ? '#FF5252'
-                              : (isDark ? '#3A3A3A' : '#E0E0E0'),
-                          },
-                        ]}
-                        onPress={() => toggleBlockedTab(tab)}>
-                        <Icon
-                          name={tempBlockedTabs.includes(tab) ? 'lock-closed' : 'lock-open'}
-                          size={18}
-                          color={tempBlockedTabs.includes(tab) ? '#FFFFFF' : (isDark ? '#AAAAAA' : '#666666')}
-                        />
-                        <Text style={[
-                          styles.blockedTabButtonText,
-                          {
-                            color: tempBlockedTabs.includes(tab)
-                              ? '#FFFFFF'
-                              : (isDark ? '#AAAAAA' : '#666666'),
-                          },
-                        ]}>
-                          {getTabLabel(tab)}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
+                  <TouchableOpacity
+                    style={[styles.toggleButton, {
+                      backgroundColor: tempAlarmEnabled ? currentColor : (isDark ? '#3A3A3A' : '#E0E0E0'),
+                    }]}
+                    onPress={() => setTempAlarmEnabled(!tempAlarmEnabled)}>
+                    <View style={[styles.toggleKnob, {
+                      transform: [{translateX: tempAlarmEnabled ? sp(20) : sp(0)}],
+                      backgroundColor: '#FFFFFF',
+                    }]} />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={[styles.settingDivider, {backgroundColor: isDark ? '#3A3A3A' : '#E0E0E0'}]} />
+
+                {/* 휴식 완료 알람 */}
+                <View style={styles.settingItemInGroup}>
+                  <Text style={[styles.settingLabel, {color: isDark ? '#CCCCCC' : '#666666'}]}>
+                    휴식 완료 알람
+                  </Text>
+                  <TouchableOpacity
+                    style={[styles.toggleButton, {
+                      backgroundColor: tempBreakAlarmEnabled ? currentColor : (isDark ? '#3A3A3A' : '#E0E0E0'),
+                    }]}
+                    onPress={() => setTempBreakAlarmEnabled(!tempBreakAlarmEnabled)}>
+                    <View style={[styles.toggleKnob, {
+                      transform: [{translateX: tempBreakAlarmEnabled ? sp(20) : sp(0)}],
+                      backgroundColor: '#FFFFFF',
+                    }]} />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={[styles.settingDivider, {backgroundColor: isDark ? '#3A3A3A' : '#E0E0E0'}]} />
+
+                {/* 알람 사운드 */}
+                <TouchableOpacity
+                  style={styles.settingItemInGroup}
+                  onPress={() => setTimerSettingsView('alarmSound')}>
+                  <Text style={[styles.settingLabel, {color: isDark ? '#CCCCCC' : '#666666'}]}>
+                    알람 사운드
+                  </Text>
+                  <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                    <Text style={{color: isDark ? '#888888' : '#999999', fontSize: fp(14), marginRight: sp(8)}}>
+                      {alarmSounds.find(s => s.id === tempAlarmSound)?.name || '기본 알림'}
+                    </Text>
+                    <Icon name="chevron-forward" size={iconSize(18)} color={isDark ? '#666666' : '#999999'} />
                   </View>
-                </View>
-              )}
+                </TouchableOpacity>
 
-              {/* Blocked Apps - 집중 모드일 때만 표시 (Android만) */}
-              {tempAppMode === 'CONCENTRATION' && Platform.OS === 'android' && (
-                <View style={styles.settingItem}>
+                <View style={[styles.settingDivider, {backgroundColor: isDark ? '#3A3A3A' : '#E0E0E0'}]} />
+
+                {/* 진동 */}
+                <View style={styles.settingItemInGroup}>
                   <Text style={[styles.settingLabel, {color: isDark ? '#CCCCCC' : '#666666'}]}>
-                    차단할 앱
+                    진동
                   </Text>
-                  <Text style={[styles.settingDescription, {color: isDark ? '#888888' : '#999999'}]}>
-                    집중 시간 동안 사용을 차단할 앱을 선택하세요
-                  </Text>
-
-                  {(appBlockerPermission !== 'approved' || !accessibilityPermission) && (
-                    <View style={{gap: 8}}>
-                      {appBlockerPermission !== 'approved' && (
-                        <TouchableOpacity
-                          style={[styles.permissionButton, {backgroundColor: isDark ? '#2A2A2A' : '#F5F5F5'}]}
-                          onPress={requestUsageStatsPermission}>
-                          <Icon name="stats-chart" size={18} color="#FF5252" />
-                          <Text style={[styles.permissionButtonText, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
-                            사용 통계 권한 허용하기
-                          </Text>
-                        </TouchableOpacity>
-                      )}
-                      {!accessibilityPermission && (
-                        <TouchableOpacity
-                          style={[styles.permissionButton, {backgroundColor: isDark ? '#2A2A2A' : '#F5F5F5'}]}
-                          onPress={requestAccessibilityPermission}>
-                          <Icon name="accessibility" size={18} color="#FF5252" />
-                          <Text style={[styles.permissionButtonText, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
-                            접근성 서비스 권한 허용하기
-                          </Text>
-                        </TouchableOpacity>
-                      )}
-                    </View>
-                  )}
-
-                  {appBlockerPermission === 'approved' && accessibilityPermission && (
-                    <TouchableOpacity
-                      style={[styles.selectAppsButton, {backgroundColor: isDark ? '#2A2A2A' : '#F5F5F5'}]}
-                      onPress={() => {
-                        setShowAppSelector(true);
-                        loadInstalledApps();
-                      }}>
-                      <Icon name="apps" size={18} color={isDark ? '#AAAAAA' : '#666666'} />
-                      <Text style={[styles.selectAppsButtonText, {color: isDark ? '#AAAAAA' : '#666666'}]}>
-                        앱 선택 ({tempBlockedApps.length}개)
-                      </Text>
-                    </TouchableOpacity>
-                  )}
+                  <TouchableOpacity
+                    style={[styles.toggleButton, {
+                      backgroundColor: tempAlarmVibration ? currentColor : (isDark ? '#3A3A3A' : '#E0E0E0'),
+                    }]}
+                    onPress={() => setTempAlarmVibration(!tempAlarmVibration)}>
+                    <View style={[styles.toggleKnob, {
+                      transform: [{translateX: tempAlarmVibration ? sp(20) : sp(0)}],
+                      backgroundColor: '#FFFFFF',
+                    }]} />
+                  </TouchableOpacity>
                 </View>
-              )}
+              </View>
 
-              {/* iOS 앱 차단 */}
-              {tempAppMode === 'CONCENTRATION' && Platform.OS === 'ios' && (
-                <View style={styles.settingItem}>
-                  <Text style={[styles.settingLabel, {color: isDark ? '#CCCCCC' : '#666666'}]}>
-                    앱 차단
-                  </Text>
-                  <Text style={[styles.settingDescription, {color: isDark ? '#888888' : '#999999'}]}>
-                    iOS에서 앱 차단 기능은 Screen Time API를 사용합니다.{'\n'}
-                    실제 기기에서만 작동하며, 시뮬레이터에서는 지원되지 않습니다.
-                  </Text>
-
-                  {appBlockerPermission !== 'approved' && (
-                    <TouchableOpacity
-                      style={[styles.permissionButton, {backgroundColor: isDark ? '#2A2A2A' : '#F5F5F5'}]}
-                      onPress={requestUsageStatsPermission}>
-                      <Icon name="shield-checkmark" size={18} color="#FF5252" />
-                      <Text style={[styles.permissionButtonText, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
-                        Screen Time 권한 허용하기
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-
-                  {appBlockerPermission === 'approved' && (
-                    <View style={[styles.permissionGranted, {backgroundColor: isDark ? '#1E3A1E' : '#E8F5E9'}]}>
-                      <Icon name="checkmark-circle" size={18} color="#4CAF50" />
-                      <Text style={[styles.permissionGrantedText, {color: isDark ? '#81C784' : '#2E7D32'}]}>
-                        권한이 허용되었습니다
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              )}
             </ScrollView>
 
             {/* Save button */}
@@ -863,6 +1785,8 @@ const PomodoroScreen: React.FC = () => {
               onPress={handleSaveTimerSettings}>
               <Text style={styles.modalSaveButtonText}>저장</Text>
             </TouchableOpacity>
+            </>
+            )}
           </View>
         </View>
       </Modal>
@@ -875,87 +1799,258 @@ const PomodoroScreen: React.FC = () => {
           transparent={false}
           onRequestClose={() => setShowUnlockPrompt(true)}>
           <View style={[styles.lockScreen, {backgroundColor: isDark ? '#121212' : '#FAFAFA'}]}>
-            <View style={styles.lockContent}>
-              {/* Lock Icon */}
-              <View style={[styles.lockIconContainer, {backgroundColor: currentColor}]}>
-                <Icon name="lock-closed" size={60} color="#FFFFFF" />
-              </View>
-
-              {/* Lock Message */}
-              <Text style={[styles.lockTitle, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
-                집중 시간
-              </Text>
-              <Text style={[styles.lockSubtitle, {color: isDark ? '#AAAAAA' : '#666666'}]}>
-                타이머가 종료되거나 일시정지할 때까지{'\n'}다른 기능을 사용할 수 없습니다
-              </Text>
-
-              {/* Timer Display */}
-              <View style={styles.lockTimerContainer}>
-                <TimeTimer
-                  size={280}
-                  progress={progress}
-                  color={currentColor}
-                  backgroundColor={isDark ? '#F5F5F5' : '#FFFFFF'}
-                  timeText={formatTime(timeLeft)}
-                  totalSeconds={getTotalDuration()}
-                  isRunning={isRunning}
-                  onPlayPause={() => setIsRunning(!isRunning)}
-                  showButton={true}
-                />
-                <Text style={[styles.lockTimeText, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
-                  {formatTime(timeLeft)}
-                </Text>
-              </View>
-
-              {/* Cycle Info */}
-              <View style={[styles.lockCycleInfo, {backgroundColor: isDark ? '#1E1E1E' : '#F5F5F5'}]}>
-                <Text style={[styles.lockCycleText, {color: isDark ? '#AAAAAA' : '#666666'}]}>
-                  {currentCycle}/{settings.cycleCount} 사이클
-                </Text>
-              </View>
-
-              {/* Pause Button */}
-              <TouchableOpacity
-                style={[styles.lockPauseButton, {backgroundColor: currentColor}]}
-                onPress={() => setIsRunning(false)}>
-                <Icon name="pause" size={24} color="#FFFFFF" />
-                <Text style={styles.lockPauseButtonText}>일시정지</Text>
-              </TouchableOpacity>
+            {/* Timer Display with TouchableOpacity wrapper */}
+            <View style={styles.lockTimerContainer}>
+              <TimeTimer
+                size={sp(280)}
+                progress={progress}
+                color={currentColor}
+                backgroundColor={isDark ? '#F5F5F5' : '#FFFFFF'}
+                timeText={formatTime(timeLeft)}
+                totalSeconds={getTotalDuration()}
+                isRunning={isRunning}
+                showButton={true}
+                onPlayPause={() => setShowUnlockPrompt(true)}
+              />
             </View>
+
+            {/* Time Text */}
+            <Text style={[styles.lockTimeText, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
+              {formatTime(timeLeft)}
+            </Text>
+
+            {/* Unlock Confirmation Prompt - Lock Screen 내부에 배치 */}
+            {showUnlockPrompt && (
+              <View style={styles.unlockPromptOverlay}>
+                <View style={[styles.unlockPromptContent, {backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF'}]}>
+                  <Icon name="alert-circle" size={iconSize(56)} color="#FF5252" />
+                  <Text style={[styles.unlockPromptTitle, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
+                    집중을 중단하시겠습니까?
+                  </Text>
+                  <Text style={[styles.unlockPromptMessage, {color: isDark ? '#AAAAAA' : '#666666'}]}>
+                    타이머를 일시정지하면 잠금이 해제됩니다
+                  </Text>
+                  <View style={styles.unlockPromptButtons}>
+                    <TouchableOpacity
+                      style={[styles.unlockPromptButton, styles.unlockCancelButton, {backgroundColor: isDark ? '#2A2A2A' : '#F5F5F5'}]}
+                      onPress={() => setShowUnlockPrompt(false)}>
+                      <Text style={[styles.unlockCancelButtonText, {color: isDark ? '#AAAAAA' : '#666666'}]}>
+                        취소
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.unlockPromptButton, styles.unlockConfirmButton, {backgroundColor: '#FF5252'}]}
+                      onPress={() => {
+                        setIsRunning(false);
+                        setShowUnlockPrompt(false);
+                      }}>
+                      <Text style={styles.unlockConfirmButtonText}>일시정지</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            )}
           </View>
         </Modal>
       )}
 
-      {/* Unlock Confirmation Prompt */}
+      {/* Lock Settings Modal - 집중모드 시작 전 잠금 설정 */}
       <Modal
-        visible={showUnlockPrompt}
+        visible={showLockSettingsModal}
         animationType="fade"
         transparent={true}
-        onRequestClose={() => setShowUnlockPrompt(false)}>
+        onRequestClose={() => setShowLockSettingsModal(false)}>
+        <View style={styles.unlockPromptOverlay}>
+          {(() => {
+            const themeColors = getThemeColors();
+            return (
+          <View style={[styles.lockSettingsContent, {backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF'}]}>
+            <View style={styles.lockSettingsHeader}>
+              <Icon name="timer" size={iconSize(32)} color={themeColors.focusColor} />
+              <Text style={[styles.lockSettingsTitle, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
+                집중 시작
+              </Text>
+            </View>
+
+            <Text style={[styles.lockSettingsDesc, {color: isDark ? '#AAAAAA' : '#666666'}]}>
+              {settings.focusDuration}분 동안 집중합니다
+            </Text>
+
+            {/* 잠금 모드 토글 */}
+            <TouchableOpacity
+              style={[
+                styles.lockSettingsOption,
+                {
+                  backgroundColor: tempLockEnabled
+                    ? (isDark ? 'rgba(255, 82, 82, 0.15)' : 'rgba(255, 82, 82, 0.1)')
+                    : (isDark ? '#2A2A2A' : '#F5F5F5'),
+                  borderColor: tempLockEnabled ? themeColors.focusColor : 'transparent',
+                },
+              ]}
+              onPress={() => setTempLockEnabled(!tempLockEnabled)}>
+              <View style={styles.lockSettingsOptionLeft}>
+                <Icon
+                  name={tempLockEnabled ? 'lock-closed' : 'lock-open'}
+                  size={iconSize(22)}
+                  color={tempLockEnabled ? themeColors.focusColor : (isDark ? '#666666' : '#999999')}
+                />
+                <View>
+                  <Text style={[styles.lockSettingsOptionTitle, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
+                    잠금 모드
+                  </Text>
+                  <Text style={[styles.lockSettingsOptionDesc, {color: isDark ? '#888888' : '#999999'}]}>
+                    집중 중 다른 탭 이동 제한
+                  </Text>
+                </View>
+              </View>
+              <Icon
+                name={tempLockEnabled ? 'checkmark-circle' : 'ellipse-outline'}
+                size={iconSize(24)}
+                color={tempLockEnabled ? themeColors.focusColor : (isDark ? '#666666' : '#CCCCCC')}
+              />
+            </TouchableOpacity>
+
+            {/* 차단할 탭 선택 (항상 표시) */}
+            <View style={styles.lockSettingsTabs}>
+              <Text style={[styles.lockSettingsSubtitle, {color: isDark ? '#AAAAAA' : '#666666'}]}>
+                차단할 탭
+              </Text>
+              <View style={styles.lockSettingsTabsRow}>
+                {(['StudyRecord', 'Community', 'More'] as TabName[]).map(tab => {
+                  const isBlocked = tempStartBlockedTabs.includes(tab);
+                  const tabLabels: Record<TabName, string> = {
+                    Timer: '타이머',
+                    StudyRecord: '공부기록',
+                    Community: '커뮤니티',
+                    Matching: '매칭',
+                    More: '더보기',
+                  };
+                  return (
+                    <TouchableOpacity
+                      key={tab}
+                      style={[
+                        styles.lockSettingsTabChip,
+                        {
+                          backgroundColor: isBlocked
+                            ? (isDark ? 'rgba(255, 82, 82, 0.2)' : 'rgba(255, 82, 82, 0.15)')
+                            : (isDark ? '#2A2A2A' : '#F0F0F0'),
+                          borderColor: isBlocked ? themeColors.focusColor : 'transparent',
+                        },
+                      ]}
+                      onPress={() => {
+                        if (isBlocked) {
+                          setTempStartBlockedTabs(tempStartBlockedTabs.filter(t => t !== tab));
+                        } else {
+                          setTempStartBlockedTabs([...tempStartBlockedTabs, tab]);
+                        }
+                      }}>
+                      <Icon
+                        name={isBlocked ? 'lock-closed' : 'lock-open-outline'}
+                        size={iconSize(14)}
+                        color={isBlocked ? themeColors.focusColor : (isDark ? '#888888' : '#999999')}
+                      />
+                      <Text style={[
+                        styles.lockSettingsTabChipText,
+                        {color: isBlocked ? themeColors.focusColor : (isDark ? '#AAAAAA' : '#666666')},
+                      ]}>
+                        {tabLabels[tab]}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+
+            {/* 앱 차단 */}
+            <TouchableOpacity
+              style={[
+                styles.lockSettingsOption,
+                {
+                  backgroundColor: settings.appBlockEnabled
+                    ? (isDark ? 'rgba(255, 82, 82, 0.15)' : 'rgba(255, 82, 82, 0.1)')
+                    : (isDark ? '#2A2A2A' : '#F5F5F5'),
+                  borderColor: settings.appBlockEnabled ? themeColors.focusColor : 'transparent',
+                },
+              ]}
+              onPress={() => {
+                if (appBlockerPermission !== 'approved') {
+                  requestUsageStatsPermission();
+                } else {
+                  updateSettings({appBlockEnabled: !settings.appBlockEnabled});
+                }
+              }}>
+              <View style={styles.lockSettingsOptionLeft}>
+                <Icon
+                  name="apps"
+                  size={iconSize(22)}
+                  color={settings.appBlockEnabled ? themeColors.focusColor : (isDark ? '#666666' : '#999999')}
+                />
+                <View>
+                  <Text style={[styles.lockSettingsOptionTitle, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
+                    앱 차단
+                  </Text>
+                  <Text style={[styles.lockSettingsOptionDesc, {color: isDark ? '#888888' : '#999999'}]}>
+                    {appBlockerPermission !== 'approved' ? '권한 필요' : '선택한 앱 실행 제한'}
+                  </Text>
+                </View>
+              </View>
+              <Icon
+                name={settings.appBlockEnabled && appBlockerPermission === 'approved' ? 'checkmark-circle' : 'ellipse-outline'}
+                size={iconSize(24)}
+                color={settings.appBlockEnabled && appBlockerPermission === 'approved' ? themeColors.focusColor : (isDark ? '#666666' : '#CCCCCC')}
+              />
+            </TouchableOpacity>
+
+            {/* 버튼들 */}
+            <View style={styles.lockSettingsButtons}>
+              <TouchableOpacity
+                style={[styles.lockSettingsButton, styles.lockSettingsCancelButton, {backgroundColor: isDark ? '#2A2A2A' : '#F5F5F5'}]}
+                onPress={() => setShowLockSettingsModal(false)}>
+                <Text style={[styles.lockSettingsCancelText, {color: isDark ? '#AAAAAA' : '#666666'}]}>
+                  취소
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.lockSettingsButton, {backgroundColor: themeColors.focusColor}]}
+                onPress={handleConfirmStart}>
+                <Icon name="play" size={iconSize(18)} color="#FFFFFF" />
+                <Text style={styles.lockSettingsStartText}>시작하기</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+            );
+          })()}
+        </View>
+      </Modal>
+
+      {/* Mode Change Confirmation Modal - 집중모드 → 자유모드 전환 확인 */}
+      <Modal
+        visible={showModeChangeConfirm}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={handleCancelModeChange}>
         <View style={styles.unlockPromptOverlay}>
           <View style={[styles.unlockPromptContent, {backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF'}]}>
-            <Icon name="alert-circle" size={56} color="#FF5252" />
+            <Icon name="warning" size={iconSize(56)} color="#FF9500" />
             <Text style={[styles.unlockPromptTitle, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
-              집중을 중단하시겠습니까?
+              집중모드를 해제하시겠습니까?
             </Text>
             <Text style={[styles.unlockPromptMessage, {color: isDark ? '#AAAAAA' : '#666666'}]}>
-              타이머를 일시정지하면 잠금이 해제됩니다
+              아직 {settings.cycleCount - currentCycle + 1}개의 세션이 남아있습니다!{'\n'}
+              지금 해제하면 진행 중인 집중이 초기화됩니다.
             </Text>
             <View style={styles.unlockPromptButtons}>
               <TouchableOpacity
                 style={[styles.unlockPromptButton, styles.unlockCancelButton, {backgroundColor: isDark ? '#2A2A2A' : '#F5F5F5'}]}
-                onPress={() => setShowUnlockPrompt(false)}>
+                onPress={handleCancelModeChange}>
                 <Text style={[styles.unlockCancelButtonText, {color: isDark ? '#AAAAAA' : '#666666'}]}>
                   취소
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.unlockPromptButton, styles.unlockConfirmButton, {backgroundColor: '#FF5252'}]}
-                onPress={() => {
-                  setIsRunning(false);
-                  setShowUnlockPrompt(false);
-                }}>
-                <Text style={styles.unlockConfirmButtonText}>일시정지</Text>
+                style={[styles.unlockPromptButton, {backgroundColor: '#FF9500'}]}
+                onPress={handleConfirmModeChange}>
+                <Text style={styles.unlockConfirmButtonText}>해제하기</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -976,7 +2071,7 @@ const PomodoroScreen: React.FC = () => {
                 차단할 앱 선택
               </Text>
               <TouchableOpacity onPress={() => setShowAppSelector(false)}>
-                <Icon name="close" size={28} color={isDark ? '#AAAAAA' : '#666666'} />
+                <Icon name="close" size={iconSize(28)} color={isDark ? '#AAAAAA' : '#666666'} />
               </TouchableOpacity>
             </View>
 
@@ -1008,7 +2103,7 @@ const PomodoroScreen: React.FC = () => {
                       <View style={styles.appItemLeft}>
                         <Icon
                           name={isBlocked ? 'lock-closed' : 'lock-open'}
-                          size={20}
+                          size={iconSize(20)}
                           color={isBlocked ? '#FF5252' : (isDark ? '#666666' : '#999999')}
                         />
                         <View style={styles.appItemInfo}>
@@ -1021,7 +2116,7 @@ const PomodoroScreen: React.FC = () => {
                         </View>
                       </View>
                       {isBlocked && (
-                        <Icon name="checkmark-circle" size={24} color="#FF5252" />
+                        <Icon name="checkmark-circle" size={iconSize(24)} color="#FF5252" />
                       )}
                     </TouchableOpacity>
                   );
@@ -1043,889 +2138,111 @@ const PomodoroScreen: React.FC = () => {
           </View>
         </View>
       </Modal>
+
+      {/* 집중 결과 모달 */}
+      <Modal
+        visible={showFocusResult}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setShowFocusResult(false)}>
+        <View style={styles.focusResultOverlay}>
+          <View style={[styles.focusResultContent, {backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF'}]}>
+            {/* 이모지 & 타이틀 */}
+            <Text style={styles.focusResultEmoji}>
+              {getEncouragementMessage(focusResultTime).emoji}
+            </Text>
+            <Text style={[styles.focusResultTitle, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
+              {getEncouragementMessage(focusResultTime).title}
+            </Text>
+
+            {/* 집중 시간 */}
+            <View style={[styles.focusResultTimeContainer, {backgroundColor: isDark ? '#2A2A2A' : '#F5F5F5'}]}>
+              <Text style={[styles.focusResultTimeMain, {color: currentColor}]}>
+                {formatResultTime(focusResultTime).main}
+              </Text>
+              {formatResultTime(focusResultTime).sub && (
+                <Text style={[styles.focusResultTimeSub, {color: isDark ? '#888888' : '#666666'}]}>
+                  {formatResultTime(focusResultTime).sub}
+                </Text>
+              )}
+              <Text style={[styles.focusResultTimeLabel, {color: isDark ? '#666666' : '#999999'}]}>
+                동안 집중했어요
+              </Text>
+            </View>
+
+            {/* 격려 메시지 */}
+            <Text style={[styles.focusResultMessage, {color: isDark ? '#AAAAAA' : '#666666'}]}>
+              {getEncouragementMessage(focusResultTime).message}
+            </Text>
+
+            {/* 확인 버튼 */}
+            <TouchableOpacity
+              style={[styles.focusResultButton, {backgroundColor: currentColor}]}
+              onPress={() => setShowFocusResult(false)}>
+              <Text style={styles.focusResultButtonText}>확인</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* 세션 메모 모달 */}
+      <Modal
+        visible={showMemoModal}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={handleSkipMemo}>
+        <View style={styles.focusResultOverlay}>
+          <View style={[styles.focusResultContent, {backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF'}]}>
+            {/* 아이콘 & 타이틀 */}
+            <View style={[styles.memoIconContainer, {backgroundColor: currentColor + '20'}]}>
+              <Icon name="pencil" size={iconSize(28)} color={currentColor} />
+            </View>
+            <Text style={[styles.focusResultTitle, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
+              집중 완료!
+            </Text>
+            <Text style={[styles.memoSubtitle, {color: isDark ? '#888888' : '#666666'}]}>
+              이번 집중에서 무엇을 했나요?
+            </Text>
+
+            {/* 메모 입력 */}
+            <TextInput
+              style={[styles.memoInput, {
+                backgroundColor: isDark ? '#2A2A2A' : '#F5F5F5',
+                color: isDark ? '#FFFFFF' : '#1A1A1A',
+                borderColor: isDark ? '#3A3A3A' : '#E0E0E0',
+              }]}
+              placeholder="예: 수학 문제 풀이, 영어 단어 암기..."
+              placeholderTextColor={isDark ? '#666666' : '#999999'}
+              value={sessionMemo}
+              onChangeText={setSessionMemo}
+              multiline
+              maxLength={100}
+              textAlignVertical="top"
+            />
+            <Text style={[styles.memoCharCount, {color: isDark ? '#666666' : '#999999'}]}>
+              {sessionMemo.length}/100
+            </Text>
+
+            {/* 버튼들 */}
+            <View style={styles.memoButtons}>
+              <TouchableOpacity
+                style={[styles.memoSkipButton, {backgroundColor: isDark ? '#2A2A2A' : '#F5F5F5'}]}
+                onPress={handleSkipMemo}>
+                <Text style={[styles.memoSkipButtonText, {color: isDark ? '#888888' : '#666666'}]}>
+                  건너뛰기
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.memoSaveButton, {backgroundColor: currentColor}]}
+                onPress={handleSaveMemo}>
+                <Text style={styles.memoSaveButtonText}>저장</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
-
-const getStyles = (isDark: boolean) =>
-  StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: isDark ? '#121212' : '#FAFAFA',
-    },
-    scrollView: {
-      flex: 1,
-    },
-    scrollContent: {
-      paddingTop: 20,
-      paddingHorizontal: 24,
-      paddingBottom: 100, // 플로팅 탭바 높이(70) + 여백(30)
-    },
-    mainModeIndicator: {
-      paddingVertical: 14,
-      paddingHorizontal: 20,
-      borderRadius: 12,
-      alignItems: 'center',
-      marginBottom: 24,
-      shadowColor: '#000',
-      shadowOffset: {width: 0, height: 2},
-      shadowOpacity: 0.15,
-      shadowRadius: 4,
-      elevation: 3,
-    },
-    mainModeText: {
-      fontSize: 15,
-      fontWeight: '700',
-      color: '#FFFFFF',
-      letterSpacing: 0.3,
-    },
-    fullscreenBtn: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      zIndex: 10,
-      padding: 12,
-      borderRadius: 24,
-      backgroundColor: isDark ? '#2A2A2A' : '#F0F0F0',
-    },
-    settingsBtn: {
-      position: 'absolute',
-      top: 0,
-      right: 0,
-      zIndex: 10,
-      padding: 12,
-      borderRadius: 24,
-      backgroundColor: isDark ? '#2A2A2A' : '#F0F0F0',
-    },
-    title: {
-      fontSize: 28,
-      fontWeight: '700',
-      color: isDark ? '#FFFFFF' : '#1A1A1A',
-      letterSpacing: -0.5,
-    },
-    sessionCounter: {
-      fontSize: 14,
-      color: isDark ? '#999999' : '#757575',
-      marginTop: 4,
-      fontWeight: '500',
-    },
-    modeContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginBottom: 36,
-      gap: 10,
-      backgroundColor: isDark ? '#1E1E1E' : '#F5F5F5',
-      borderRadius: 16,
-      padding: 5,
-    },
-    modeTab: {
-      flex: 1,
-      paddingVertical: 12,
-      paddingHorizontal: 14,
-      borderRadius: 12,
-      alignItems: 'center',
-    },
-    modeTabActive: {
-      shadowColor: '#000',
-      shadowOffset: {width: 0, height: 2},
-      shadowOpacity: 0.15,
-      shadowRadius: 6,
-      elevation: 4,
-    },
-    modeTabText: {
-      fontSize: 12,
-      fontWeight: '600',
-      color: isDark ? '#666666' : '#999999',
-      letterSpacing: 0.2,
-    },
-    modeTabTextActive: {
-      color: '#FFFFFF',
-      fontWeight: '700',
-    },
-    timerModeContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginBottom: 24,
-      gap: 12,
-    },
-    timerModeButton: {
-      flex: 1,
-      paddingVertical: 14,
-      paddingHorizontal: 16,
-      borderRadius: 12,
-      alignItems: 'center',
-      backgroundColor: isDark ? '#1E1E1E' : '#F5F5F5',
-      borderWidth: 1,
-      borderColor: isDark ? '#2A2A2A' : '#E0E0E0',
-    },
-    timerModeButtonActive: {
-      shadowColor: '#000',
-      shadowOffset: {width: 0, height: 2},
-      shadowOpacity: 0.15,
-      shadowRadius: 6,
-      elevation: 4,
-      borderColor: 'transparent',
-    },
-    timerModeButtonText: {
-      fontSize: 14,
-      fontWeight: '600',
-      color: isDark ? '#666666' : '#999999',
-      letterSpacing: 0.2,
-    },
-    timerModeButtonTextActive: {
-      color: '#FFFFFF',
-      fontWeight: '700',
-    },
-    cycleInfoContainer: {
-      alignItems: 'center',
-      marginBottom: 20,
-      paddingVertical: 10,
-      paddingHorizontal: 20,
-      backgroundColor: isDark ? '#1E1E1E' : '#F5F5F5',
-      borderRadius: 12,
-      alignSelf: 'center',
-    },
-    cycleInfoText: {
-      fontSize: 14,
-      fontWeight: '600',
-      letterSpacing: 0.3,
-    },
-    timerContainer: {
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginBottom: 40,
-      position: 'relative',
-    },
-    timeLeftText: {
-      fontSize: 48,
-      fontWeight: '800',
-      color: isDark ? '#FFFFFF' : '#1A1A1A',
-      marginTop: 24,
-      letterSpacing: -2,
-      fontVariant: ['tabular-nums'],
-    },
-    timerContent: {
-      position: 'absolute',
-      alignItems: 'center',
-    },
-    timerText: {
-      fontSize: 56,
-      fontWeight: 'bold',
-      color: isDark ? '#FFFFFF' : '#333333',
-      fontVariant: ['tabular-nums'],
-    },
-    modeLabel: {
-      fontSize: 18,
-      color: isDark ? '#AAAAAA' : '#666666',
-      marginTop: 8,
-    },
-    controls: {
-      flexDirection: 'row',
-      justifyContent: 'center',
-      gap: 14,
-      marginBottom: 36,
-      paddingHorizontal: 20,
-    },
-    button: {
-      paddingVertical: 16,
-      paddingHorizontal: 36,
-      borderRadius: 14,
-      minWidth: 140,
-      alignItems: 'center',
-    },
-    primaryButton: {
-      shadowColor: '#000',
-      shadowOffset: {width: 0, height: 3},
-      shadowOpacity: 0.2,
-      shadowRadius: 8,
-      elevation: 6,
-    },
-    secondaryButton: {
-      backgroundColor: isDark ? '#2A2A2A' : '#EFEFEF',
-      borderWidth: 0,
-    },
-    buttonText: {
-      fontSize: 16,
-      fontWeight: '700',
-      color: '#FFFFFF',
-      letterSpacing: 0.3,
-    },
-    secondaryButtonText: {
-      color: isDark ? '#AAAAAA' : '#666666',
-    },
-    stats: {
-      flexDirection: 'row',
-      justifyContent: 'space-around',
-      backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF',
-      borderRadius: 18,
-      padding: 26,
-      marginHorizontal: 0,
-      shadowColor: '#000',
-      shadowOffset: {width: 0, height: 1},
-      shadowOpacity: isDark ? 0.2 : 0.06,
-      shadowRadius: 10,
-      elevation: 3,
-      borderWidth: 0,
-    },
-    statItem: {
-      alignItems: 'center',
-      flex: 1,
-    },
-    statValue: {
-      fontSize: 28,
-      fontWeight: '800',
-      color: isDark ? '#FFFFFF' : '#1A1A1A',
-      marginBottom: 8,
-      letterSpacing: -0.8,
-    },
-    statLabel: {
-      fontSize: 12,
-      color: isDark ? '#999999' : '#888888',
-      fontWeight: '600',
-      letterSpacing: 0.3,
-    },
-    statDivider: {
-      width: 1,
-      backgroundColor: isDark ? '#2A2A2A' : '#EFEFEF',
-      marginHorizontal: 20,
-    },
-    bottomNav: {
-      flexDirection: 'row',
-      justifyContent: 'space-around',
-      alignItems: 'center',
-      backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF',
-      paddingVertical: 8,
-      paddingBottom: 8,
-      borderTopWidth: 1,
-      borderTopColor: isDark ? '#2A2A2A' : '#F0F0F0',
-      position: 'absolute',
-      bottom: 0,
-      left: 0,
-      right: 0,
-      shadowColor: '#000',
-      shadowOffset: {width: 0, height: -2},
-      shadowOpacity: isDark ? 0.3 : 0.05,
-      shadowRadius: 8,
-      elevation: 10,
-    },
-    navItem: {
-      alignItems: 'center',
-      justifyContent: 'center',
-      flex: 1,
-      paddingVertical: 4,
-    },
-    navIcon: {
-      fontSize: 26,
-      marginBottom: 4,
-      opacity: 0.4,
-    },
-    navIconActive: {
-      opacity: 1,
-    },
-    navLabel: {
-      fontSize: 11,
-      color: isDark ? '#666666' : '#888888',
-      fontWeight: '600',
-      letterSpacing: 0.2,
-    },
-    navLabelActive: {
-      color: isDark ? '#FFFFFF' : '#1A1A1A',
-      fontWeight: '700',
-    },
-    fullscreenContainer: {
-      flex: 1,
-      backgroundColor: isDark ? '#121212' : '#FAFAFA',
-      justifyContent: 'center',
-      alignItems: 'center',
-      overflow: 'hidden',
-    },
-    fullscreenContent: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      width: '100%',
-      paddingHorizontal: 40,
-      gap: 40,
-    },
-    currentTimeSection: {
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    currentTimeText: {
-      fontSize: 120,
-      fontWeight: '800',
-      color: isDark ? '#FFFFFF' : '#1A1A1A',
-      letterSpacing: -6,
-      marginBottom: 32,
-    },
-    currentDateText: {
-      fontSize: 24,
-      fontWeight: '600',
-      color: isDark ? '#999999' : '#666666',
-      marginBottom: 20,
-      letterSpacing: 0.5,
-    },
-    fullscreenModeLabel: {
-      backgroundColor: isDark ? '#2A2A2A' : '#F0F0F0',
-      paddingHorizontal: 20,
-      paddingVertical: 12,
-      borderRadius: 28,
-      marginBottom: 40,
-      alignSelf: 'flex-start',
-    },
-    fullscreenModeLabelText: {
-      fontSize: 15,
-      fontWeight: '700',
-      color: isDark ? '#AAAAAA' : '#666666',
-      letterSpacing: 0.5,
-    },
-    exitFullscreenButton: {
-      position: 'absolute',
-      right: 32,
-      width: 52,
-      height: 52,
-      borderRadius: 26,
-      backgroundColor: isDark ? 'rgba(42, 42, 42, 0.9)' : 'rgba(240, 240, 240, 0.9)',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 10,
-      shadowColor: '#000',
-      shadowOffset: {width: 0, height: 3},
-      shadowOpacity: 0.25,
-      shadowRadius: 8,
-      elevation: 6,
-      borderWidth: 1,
-      borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-    },
-    exitFullscreenText: {
-      fontSize: 22,
-      color: isDark ? '#FFFFFF' : '#1A1A1A',
-      fontWeight: '600',
-    },
-    rotateButton: {
-      position: 'absolute',
-      top: 32,
-      width: 52,
-      height: 52,
-      borderRadius: 26,
-      backgroundColor: isDark ? 'rgba(42, 42, 42, 0.9)' : 'rgba(240, 240, 240, 0.9)',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 10,
-      shadowColor: '#000',
-      shadowOffset: {width: 0, height: 3},
-      shadowOpacity: 0.25,
-      shadowRadius: 8,
-      elevation: 6,
-      borderWidth: 1,
-      borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-    },
-    rotateButtonText: {
-      fontSize: 24,
-      color: isDark ? '#FFFFFF' : '#1A1A1A',
-      fontWeight: '600',
-    },
-    fullscreenTimerContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      position: 'relative',
-    },
-    fullscreenPlayButton: {
-      position: 'absolute',
-      bottom: 20,
-      width: 64,
-      height: 64,
-      borderRadius: 32,
-      justifyContent: 'center',
-      alignItems: 'center',
-      shadowColor: '#000',
-      shadowOffset: {width: 0, height: 4},
-      shadowOpacity: 0.3,
-      shadowRadius: 6,
-      elevation: 8,
-    },
-    fullscreenPlayButtonPortrait: {
-      bottom: undefined,
-      top: 340,
-    },
-    fullscreenPlayButtonLandscape: {
-      width: 80,
-      height: 80,
-      borderRadius: 40,
-      justifyContent: 'center',
-      alignItems: 'center',
-      shadowColor: '#000',
-      shadowOffset: {width: 0, height: 6},
-      shadowOpacity: 0.35,
-      shadowRadius: 10,
-      elevation: 12,
-      marginTop: 8,
-    },
-    fullscreenPlayButtonText: {
-      fontSize: 36,
-      color: '#FFFFFF',
-      fontWeight: '600',
-    },
-    fullscreenPlayButtonCenter: {
-      position: 'absolute',
-      width: 80,
-      height: 80,
-      borderRadius: 40,
-      justifyContent: 'center',
-      alignItems: 'center',
-      shadowColor: '#000',
-      shadowOffset: {width: 0, height: 6},
-      shadowOpacity: 0.35,
-      shadowRadius: 10,
-      elevation: 12,
-      zIndex: 10,
-    },
-    // 세로 모드 스타일
-    fullscreenContentPortrait: {
-      flexDirection: 'column',
-      paddingHorizontal: 24,
-      paddingTop: 40,
-      paddingBottom: 40,
-      justifyContent: 'flex-start',
-      flex: 1,
-    },
-    currentTimeSectionPortrait: {
-      alignItems: 'center',
-      width: '100%',
-      paddingTop: 30,
-      paddingBottom: 10,
-      marginBottom: 20,
-    },
-    currentTimeTextPortrait: {
-      fontSize: 72,
-      fontWeight: '800',
-      color: isDark ? '#FFFFFF' : '#1A1A1A',
-      letterSpacing: -4,
-      marginBottom: 8,
-    },
-    currentDateTextPortrait: {
-      fontSize: 16,
-      fontWeight: '600',
-      color: isDark ? '#999999' : '#666666',
-      letterSpacing: 0.5,
-    },
-    fullscreenTimerContainerPortrait: {
-      width: '100%',
-      alignItems: 'center',
-      justifyContent: 'flex-start',
-      flex: 1,
-      marginTop: -20,
-    },
-    fullscreenPlayButtonBelowTimer: {
-      width: 80,
-      height: 80,
-      borderRadius: 40,
-      justifyContent: 'center',
-      alignItems: 'center',
-      shadowColor: '#000',
-      shadowOffset: {width: 0, height: 6},
-      shadowOpacity: 0.35,
-      shadowRadius: 10,
-      elevation: 12,
-      marginTop: 40,
-    },
-    fullscreenTimeLeftText: {
-      fontSize: 64,
-      fontWeight: '800',
-      marginTop: 20,
-      letterSpacing: -3,
-      fontVariant: ['tabular-nums'],
-    },
-    // Modal styles
-    modalOverlay: {
-      flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    modalContent: {
-      width: '85%',
-      borderRadius: 20,
-      padding: 24,
-      shadowColor: '#000',
-      shadowOffset: {width: 0, height: 4},
-      shadowOpacity: 0.3,
-      shadowRadius: 10,
-      elevation: 10,
-    },
-    modalHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: 24,
-    },
-    modalTitle: {
-      fontSize: 22,
-      fontWeight: '700',
-      letterSpacing: -0.5,
-    },
-    settingsInputContainer: {
-      gap: 20,
-      marginBottom: 24,
-      maxHeight: 500,
-    },
-    settingItem: {
-      gap: 8,
-    },
-    settingLabel: {
-      fontSize: 15,
-      fontWeight: '600',
-      letterSpacing: 0.2,
-    },
-    settingInput: {
-      padding: 16,
-      borderRadius: 12,
-      fontSize: 18,
-      fontWeight: '600',
-      textAlign: 'center',
-    },
-    appModeSelector: {
-      flexDirection: 'row',
-      gap: 10,
-    },
-    appModeButton: {
-      flex: 1,
-      paddingVertical: 14,
-      paddingHorizontal: 16,
-      borderRadius: 12,
-      alignItems: 'center',
-      borderWidth: 1,
-      borderColor: isDark ? '#3A3A3A' : '#E0E0E0',
-    },
-    appModeButtonActive: {
-      borderColor: 'transparent',
-      shadowColor: '#000',
-      shadowOffset: {width: 0, height: 2},
-      shadowOpacity: 0.15,
-      shadowRadius: 4,
-      elevation: 3,
-    },
-    appModeButtonText: {
-      fontSize: 14,
-      fontWeight: '600',
-      letterSpacing: 0.2,
-    },
-    appModeButtonTextActive: {
-      fontWeight: '700',
-    },
-    currentModeIndicator: {
-      paddingVertical: 12,
-      paddingHorizontal: 16,
-      borderRadius: 10,
-      alignItems: 'center',
-      marginBottom: 8,
-    },
-    currentModeText: {
-      fontSize: 13,
-      fontWeight: '600',
-      letterSpacing: 0.2,
-    },
-    settingsDivider: {
-      height: 1,
-      marginVertical: 16,
-    },
-    settingDescription: {
-      fontSize: 12,
-      marginTop: 4,
-      marginBottom: 12,
-      lineHeight: 18,
-    },
-    blockedTabsContainer: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: 8,
-      marginTop: 8,
-    },
-    blockedTabButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: 10,
-      paddingHorizontal: 14,
-      borderRadius: 10,
-      borderWidth: 1.5,
-      gap: 6,
-    },
-    blockedTabButtonText: {
-      fontSize: 13,
-      fontWeight: '600',
-      letterSpacing: 0.2,
-    },
-    modalSaveButton: {
-      paddingVertical: 16,
-      borderRadius: 12,
-      alignItems: 'center',
-      shadowColor: '#000',
-      shadowOffset: {width: 0, height: 2},
-      shadowOpacity: 0.2,
-      shadowRadius: 4,
-      elevation: 4,
-    },
-    modalSaveButtonText: {
-      fontSize: 17,
-      fontWeight: '700',
-      color: '#FFFFFF',
-      letterSpacing: 0.5,
-    },
-    // Lock Screen Styles
-    lockScreen: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      paddingHorizontal: 24,
-    },
-    lockContent: {
-      alignItems: 'center',
-      width: '100%',
-    },
-    lockIconContainer: {
-      width: 120,
-      height: 120,
-      borderRadius: 60,
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginBottom: 24,
-      shadowColor: '#000',
-      shadowOffset: {width: 0, height: 4},
-      shadowOpacity: 0.3,
-      shadowRadius: 8,
-      elevation: 8,
-    },
-    lockTitle: {
-      fontSize: 28,
-      fontWeight: '800',
-      marginBottom: 12,
-      letterSpacing: -0.5,
-    },
-    lockSubtitle: {
-      fontSize: 15,
-      fontWeight: '500',
-      textAlign: 'center',
-      lineHeight: 22,
-      marginBottom: 40,
-    },
-    lockTimerContainer: {
-      alignItems: 'center',
-      marginBottom: 32,
-    },
-    lockTimeText: {
-      fontSize: 52,
-      fontWeight: '800',
-      marginTop: 24,
-      letterSpacing: -3,
-      fontVariant: ['tabular-nums'],
-    },
-    lockCycleInfo: {
-      paddingVertical: 12,
-      paddingHorizontal: 24,
-      borderRadius: 12,
-      marginBottom: 32,
-    },
-    lockCycleText: {
-      fontSize: 15,
-      fontWeight: '700',
-      letterSpacing: 0.3,
-    },
-    lockPauseButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-      paddingVertical: 16,
-      paddingHorizontal: 32,
-      borderRadius: 14,
-      shadowColor: '#000',
-      shadowOffset: {width: 0, height: 3},
-      shadowOpacity: 0.2,
-      shadowRadius: 8,
-      elevation: 6,
-    },
-    lockPauseButtonText: {
-      fontSize: 17,
-      fontWeight: '700',
-      color: '#FFFFFF',
-      letterSpacing: 0.3,
-    },
-    // Unlock Prompt Styles
-    unlockPromptOverlay: {
-      flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.6)',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    unlockPromptContent: {
-      width: '85%',
-      borderRadius: 20,
-      padding: 28,
-      alignItems: 'center',
-      shadowColor: '#000',
-      shadowOffset: {width: 0, height: 4},
-      shadowOpacity: 0.3,
-      shadowRadius: 10,
-      elevation: 10,
-    },
-    unlockPromptTitle: {
-      fontSize: 22,
-      fontWeight: '700',
-      marginTop: 20,
-      marginBottom: 12,
-      letterSpacing: -0.5,
-    },
-    unlockPromptMessage: {
-      fontSize: 15,
-      fontWeight: '500',
-      textAlign: 'center',
-      lineHeight: 22,
-      marginBottom: 28,
-    },
-    unlockPromptButtons: {
-      flexDirection: 'row',
-      gap: 12,
-      width: '100%',
-    },
-    unlockPromptButton: {
-      flex: 1,
-      paddingVertical: 14,
-      borderRadius: 12,
-      alignItems: 'center',
-    },
-    unlockCancelButton: {
-      borderWidth: 1,
-      borderColor: isDark ? '#3A3A3A' : '#E0E0E0',
-    },
-    unlockConfirmButton: {
-      shadowColor: '#000',
-      shadowOffset: {width: 0, height: 2},
-      shadowOpacity: 0.2,
-      shadowRadius: 4,
-      elevation: 4,
-    },
-    unlockCancelButtonText: {
-      fontSize: 16,
-      fontWeight: '600',
-      letterSpacing: 0.3,
-    },
-    unlockConfirmButtonText: {
-      fontSize: 16,
-      fontWeight: '700',
-      color: '#FFFFFF',
-      letterSpacing: 0.3,
-    },
-    // App Blocker Styles
-    permissionButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: 12,
-      paddingHorizontal: 16,
-      borderRadius: 10,
-      gap: 8,
-      marginTop: 8,
-    },
-    permissionButtonText: {
-      fontSize: 14,
-      fontWeight: '600',
-      letterSpacing: 0.2,
-    },
-    permissionGranted: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: 12,
-      paddingHorizontal: 16,
-      borderRadius: 10,
-      gap: 8,
-      marginTop: 8,
-    },
-    permissionGrantedText: {
-      fontSize: 14,
-      fontWeight: '600',
-      letterSpacing: 0.2,
-    },
-    selectAppsButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: 12,
-      paddingHorizontal: 16,
-      borderRadius: 10,
-      gap: 8,
-      marginTop: 8,
-    },
-    selectAppsButtonText: {
-      fontSize: 14,
-      fontWeight: '600',
-      letterSpacing: 0.2,
-    },
-    appSelectorContent: {
-      width: '90%',
-      height: '80%',
-      borderRadius: 20,
-      padding: 24,
-      shadowColor: '#000',
-      shadowOffset: {width: 0, height: 4},
-      shadowOpacity: 0.3,
-      shadowRadius: 10,
-      elevation: 10,
-    },
-    loadingContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      gap: 16,
-    },
-    loadingText: {
-      fontSize: 14,
-      fontWeight: '500',
-    },
-    appListContent: {
-      paddingVertical: 8,
-    },
-    appItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: 14,
-      borderRadius: 12,
-    },
-    appItemLeft: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
-      flex: 1,
-    },
-    appItemInfo: {
-      flex: 1,
-      gap: 4,
-    },
-    appItemName: {
-      fontSize: 15,
-      fontWeight: '600',
-      letterSpacing: 0.2,
-    },
-    appItemPackage: {
-      fontSize: 12,
-      fontWeight: '400',
-    },
-    appSelectorDoneButton: {
-      paddingVertical: 16,
-      borderRadius: 12,
-      alignItems: 'center',
-      marginTop: 16,
-      shadowColor: '#000',
-      shadowOffset: {width: 0, height: 2},
-      shadowOpacity: 0.2,
-      shadowRadius: 4,
-      elevation: 4,
-    },
-    appSelectorDoneButtonText: {
-      fontSize: 17,
-      fontWeight: '700',
-      color: '#FFFFFF',
-      letterSpacing: 0.5,
-    },
-  });
 
 export default PomodoroScreen;

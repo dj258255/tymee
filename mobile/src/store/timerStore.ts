@@ -9,6 +9,8 @@ import {
   isTimerComplete,
 } from '../utils/timerEngine';
 import {Vibration} from 'react-native';
+import {useStudyRecordStore} from './studyRecordStore';
+import {useCurrencyStore} from './currencyStore';
 
 interface TimerStore extends TimerState {
   // Actions
@@ -111,10 +113,22 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
 
     // Check if timer is complete
     if (isTimerComplete(state)) {
+      const completedAt = new Date();
       set({
         status: 'completed',
-        completedAt: new Date(),
+        completedAt,
       });
+
+      // 공부 기록에 저장
+      useStudyRecordStore.getState().addStudySession({
+        startTime: state.createdAt,
+        endTime: completedAt,
+        durationMinutes: state.totalMinutes,
+        type: 'timer',
+      });
+
+      // 보상 지급 (집중모드 완료)
+      useCurrencyStore.getState().grantFocusReward('timer', state.totalMinutes);
 
       // Completion haptic
       Vibration.vibrate([100, 50, 100, 50, 100]);

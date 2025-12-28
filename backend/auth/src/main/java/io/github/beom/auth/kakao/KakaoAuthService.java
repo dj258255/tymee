@@ -1,6 +1,6 @@
 package io.github.beom.auth.kakao;
 
-import io.github.beom.common.exception.BusinessException;
+import io.github.beom.core.exception.BusinessException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpEntity;
@@ -45,7 +45,7 @@ public class KakaoAuthService {
             );
 
             if (response.getBody() == null) {
-                throw new BusinessException(io.github.beom.common.exception.ErrorCode.KAKAO_USER_INFO_FAILED);
+                throw new BusinessException(io.github.beom.core.exception.ErrorCode.KAKAO_USER_INFO_FAILED);
             }
 
             log.info("카카오 사용자 정보 조회 성공 - ID: {}", response.getBody().getId());
@@ -53,7 +53,7 @@ public class KakaoAuthService {
 
         } catch (Exception e) {
             log.error("카카오 사용자 정보 조회 실패", e);
-            throw new BusinessException(io.github.beom.common.exception.ErrorCode.KAKAO_INVALID_TOKEN);
+            throw new BusinessException(io.github.beom.core.exception.ErrorCode.KAKAO_INVALID_TOKEN);
         }
     }
 }

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="12dp"
+    android:gravity="center_vertical">
+
+    <!-- 확대: 큰 파이 차트 -->
+    <ImageView
+        android:id="@+id/pie_chart"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:scaleType="fitCenter" />
+
+    <!-- 텍스트 정보 (오른쪽 정렬) -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="16dp"
+        android:orientation="vertical"
+        android:gravity="end">
+
+        <!-- 제목 -->
+        <TextView
+            android:id="@+id/timer_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="집중 모드"
+            android:textSize="14sp"
+            android:textColor="?android:attr/textColorPrimary" />
+
+        <!-- 남은 시간 -->
+        <TextView
+            android:id="@+id/timer_remaining"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="25:00"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            android:textColor="?android:attr/textColorPrimary"
+            android:fontFamily="monospace" />
+
+        <!-- 상태 -->
+        <TextView
+            android:id="@+id/timer_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="진행 중"
+            android:textSize="12sp"
+            android:textColor="?android:attr/textColorSecondary" />
+
+    </LinearLayout>
+
+</LinearLayout>

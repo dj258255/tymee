@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="12dp"
+    android:background="@drawable/widget_background">
+
+    <!-- Timer Icon -->
+    <ImageView
+        android:id="@+id/widget_timer_icon"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:src="@drawable/ic_timer"
+        android:contentDescription="Timer" />
+
+    <!-- Pomodoro Count -->
+    <TextView
+        android:id="@+id/widget_pomodoro_count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="0"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:textColor="#FF5252" />
+
+    <!-- Label -->
+    <TextView
+        android:id="@+id/widget_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="뽀모도로"
+        android:textSize="12sp"
+        android:textColor="#666666" />
+
+</LinearLayout>

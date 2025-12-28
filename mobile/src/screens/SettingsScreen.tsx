@@ -99,7 +99,7 @@ const SettingsScreen: React.FC = () => {
                           <Icon name="trophy" size={18} color="#E91E63" />
                         </View>
                         <Text style={[styles.tierText, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
-                          플래티넘
+                          학사 II
                         </Text>
                       </View>
                     </View>

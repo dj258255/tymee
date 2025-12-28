@@ -1,7 +1,7 @@
 import {create} from 'zustand';
 import i18n from '../i18n';
 
-type Language = 'ko' | 'en' | 'ja';
+export type Language = 'ko' | 'en' | 'ja';
 
 interface LanguageStore {
   language: Language;

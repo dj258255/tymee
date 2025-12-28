@@ -1,6 +1,8 @@
 #import "AppDelegate.h"
 
 #import <React/RCTBundleURLProvider.h>
+#import <ActivityKit/ActivityKit.h>
+#import "mobile-Swift.h"
 
 @implementation AppDelegate
 
@@ -12,6 +14,19 @@
   self.initialProps = @{};
 
   return [super application:application didFinishLaunchingWithOptions:launchOptions];
+}
+
+- (void)applicationWillTerminate:(UIApplication *)application
+{
+  // 앱 종료 시 Live Activity 정리
+  [self endAllLiveActivities];
+}
+
+- (void)endAllLiveActivities
+{
+  if (@available(iOS 16.2, *)) {
+    [LiveActivityModule endAllActivities];
+  }
 }
 
 - (NSURL *)sourceURLForBridge:(RCTBridge *)bridge

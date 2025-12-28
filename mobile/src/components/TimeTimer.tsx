@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, StyleSheet} from 'react-native';
+import {View, StyleSheet, TouchableOpacity} from 'react-native';
 import Svg, {Circle, Path, G, Text as SvgText} from 'react-native-svg';
 
 interface TimeTimerProps {
@@ -124,7 +124,7 @@ const TimeTimer: React.FC<TimeTimerProps> = ({
 
       // Start from top (12 o'clock = 0분) and go clockwise
       const angle = (i * 30 - 90) * (Math.PI / 180);
-      const labelRadius = radius * 1.15; // 눈금선과 가깝게 배치
+      const labelRadius = radius * 1.22; // 눈금선과 겹치지 않도록 더 바깥으로 배치
       const x = center + labelRadius * Math.cos(angle);
       const y = center + labelRadius * Math.sin(angle);
 
@@ -133,7 +133,7 @@ const TimeTimer: React.FC<TimeTimerProps> = ({
           key={i}
           x={x}
           y={y}
-          fontSize={size * 0.05}
+          fontSize={size * 0.045}
           fontWeight="600"
           fill="#666666"
           textAnchor="middle"
@@ -235,12 +235,9 @@ const TimeTimer: React.FC<TimeTimerProps> = ({
 
       {/* Center button touch area */}
       {showButton && onPlayPause && (
-        <View
-          onStartShouldSetResponder={() => true}
-          onResponderGrant={() => {
-            onPlayPause();
-            return true;
-          }}
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={onPlayPause}
           style={{
             position: 'absolute',
             width: size * 0.3,

@@ -1,6 +1,6 @@
 package io.github.beom.upload.domain;
 
-import io.github.beom.domain.repository.Repository;
+import io.github.beom.core.domain.Repository;
 
 import java.util.List;
 import java.util.Optional;

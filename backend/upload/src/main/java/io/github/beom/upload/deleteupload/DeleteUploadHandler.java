@@ -1,7 +1,7 @@
 package io.github.beom.upload.deleteupload;
 
-import io.github.beom.common.exception.BusinessException;
-import io.github.beom.common.exception.ErrorCode;
+import io.github.beom.core.exception.BusinessException;
+import io.github.beom.core.exception.ErrorCode;
 import io.github.beom.upload.domain.Upload;
 import io.github.beom.upload.domain.UploadRepository;
 import io.github.beom.upload.service.FileStorageService;

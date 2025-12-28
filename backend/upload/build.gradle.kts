@@ -3,9 +3,7 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":common"))
-    implementation(project(":domain"))
-    implementation(project(":infrastructure"))
+    implementation(project(":core"))
     implementation(project(":user"))
 
     // Spring Boot Web (파일 업로드 처리)
@@ -26,6 +24,6 @@ dependencies {
 
 dependencyManagement {
     imports {
-        mavenBom("org.springframework.boot:spring-boot-dependencies:3.5.8")
+        mavenBom(libs.spring.boot.dependencies.get().toString())
     }
 }

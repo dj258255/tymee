@@ -22,6 +22,7 @@ const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
 const CARD_WIDTH = Math.min(SCREEN_WIDTH - 40, 360);
 const CARD_HEIGHT = Math.min(SCREEN_HEIGHT * 0.7, 640);
 import Icon from '@react-native-vector-icons/ionicons';
+import {sp, hp, fp, iconSize, touchSize} from '../utils/responsive';
 import ViewShot from 'react-native-view-shot';
 import Share from 'react-native-share';
 import {launchImageLibrary} from 'react-native-image-picker';
@@ -131,14 +132,14 @@ const StudyStoryCard: React.FC<StudyStoryCardProps> = ({
     setScaleState: (scale: number) => void,
     setCurrentY?: (y: number) => void,
     onSingleTap?: () => void,
-    onDoubleTap?: () => void
+    _onDoubleTap?: () => void // 더블탭은 사용하지 않음
   ) => {
     let initialDistance = 0;
     let initialScale = 1;
     let isPinching = false;
     let hasMoved = false;
     let offsetY = 0;
-    let lastTap = 0;
+    let offsetSet = false;
 
     return PanResponder.create({
       onStartShouldSetPanResponder: (evt) => true,
@@ -157,6 +158,7 @@ const StudyStoryCard: React.FC<StudyStoryCardProps> = ({
       },
       onPanResponderGrant: (evt) => {
         hasMoved = false;
+        offsetSet = false;
         setScrollEnabled(false);
         if (evt.nativeEvent.touches.length === 2) {
           // 핀치 시작
@@ -168,18 +170,17 @@ const StudyStoryCard: React.FC<StudyStoryCardProps> = ({
           );
           initialScale = scaleState;
         } else {
-          // 드래그 시작
+          // 드래그 준비 (아직 offset 설정 안함)
           isPinching = false;
           offsetY = position.y._value;
-          position.setOffset({
-            x: position.x._value,
-            y: position.y._value,
-          });
-          position.setValue({x: 0, y: 0});
         }
       },
       onPanResponderMove: (evt, gestureState) => {
-        hasMoved = true;
+        const moved = Math.abs(gestureState.dx) > 5 || Math.abs(gestureState.dy) > 5;
+        if (moved) {
+          hasMoved = true;
+        }
+
         if (evt.nativeEvent.touches.length === 2) {
           // 핀치 동작
           isPinching = true;
@@ -192,8 +193,16 @@ const StudyStoryCard: React.FC<StudyStoryCardProps> = ({
             const scale = (distance / initialDistance) * initialScale;
             setScaleState(Math.max(0.5, Math.min(scale, 3)));
           }
-        } else if (!isPinching) {
-          // 드래그 동작
+        } else if (!isPinching && hasMoved) {
+          // 드래그 동작 - 실제로 움직일 때만 offset 설정
+          if (!offsetSet) {
+            position.setOffset({
+              x: position.x._value,
+              y: position.y._value,
+            });
+            position.setValue({x: 0, y: 0});
+            offsetSet = true;
+          }
           position.setValue({
             x: gestureState.dx,
             y: gestureState.dy,
@@ -206,30 +215,21 @@ const StudyStoryCard: React.FC<StudyStoryCardProps> = ({
         }
       },
       onPanResponderRelease: () => {
-        if (!isPinching && hasMoved) {
+        if (!isPinching && hasMoved && offsetSet) {
           position.flattenOffset();
           // 최종 Y 위치 업데이트
           if (setCurrentY) {
             setCurrentY(position.y._value);
           }
         } else if (!isPinching && !hasMoved) {
-          // 탭 이벤트 처리
-          const now = Date.now();
-          if (now - lastTap < 300 && onDoubleTap) {
-            // 더블 탭
-            onDoubleTap();
-          } else if (onSingleTap) {
-            // 싱글 탭
-            setTimeout(() => {
-              if (Date.now() - lastTap >= 300) {
-                onSingleTap();
-              }
-            }, 300);
+          // 탭 이벤트 처리 - 싱글탭만 지원
+          if (onSingleTap) {
+            onSingleTap();
           }
-          lastTap = now;
         }
         isPinching = false;
         hasMoved = false;
+        offsetSet = false;
         initialDistance = 0;
         setScrollEnabled(true);
       },
@@ -275,7 +275,67 @@ const StudyStoryCard: React.FC<StudyStoryCardProps> = ({
     }
   };
 
-  const selectBackgroundImage = () => {
+  const selectBackgroundImage = async () => {
+    // Android 권한 확인
+    if (Platform.OS === 'android') {
+      const androidVersion = Platform.Version;
+
+      if (androidVersion >= 33) {
+        // Android 13+ : READ_MEDIA_IMAGES 권한 필요
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+          {
+            title: '사진 접근 권한 필요',
+            message: '배경 사진을 선택하려면 사진 접근 권한이 필요합니다.',
+            buttonNeutral: '나중에',
+            buttonNegative: '취소',
+            buttonPositive: '확인',
+          }
+        );
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          Alert.alert(
+            '권한 필요',
+            '설정에서 사진 접근 권한을 허용해주세요.',
+            [
+              {text: '취소', style: 'cancel'},
+              {text: '설정으로 이동', onPress: () => {
+                const {Linking} = require('react-native');
+                Linking.openSettings();
+              }},
+            ]
+          );
+          return;
+        }
+      } else {
+        // Android 12 이하 : READ_EXTERNAL_STORAGE 권한 필요
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+          {
+            title: '저장소 권한 필요',
+            message: '배경 사진을 선택하려면 저장소 권한이 필요합니다.',
+            buttonNeutral: '나중에',
+            buttonNegative: '취소',
+            buttonPositive: '확인',
+          }
+        );
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          Alert.alert(
+            '권한 필요',
+            '설정에서 저장소 권한을 허용해주세요.',
+            [
+              {text: '취소', style: 'cancel'},
+              {text: '설정으로 이동', onPress: () => {
+                const {Linking} = require('react-native');
+                Linking.openSettings();
+              }},
+            ]
+          );
+          return;
+        }
+      }
+    }
+
+    // iOS는 react-native-image-picker가 자동으로 권한 요청함
     launchImageLibrary(
       {
         mediaType: 'photo',
@@ -286,7 +346,21 @@ const StudyStoryCard: React.FC<StudyStoryCardProps> = ({
           return;
         }
         if (response.errorCode) {
-          Alert.alert('오류', '이미지를 불러올 수 없습니다.');
+          if (response.errorCode === 'permission') {
+            Alert.alert(
+              '권한 필요',
+              '설정에서 사진 접근 권한을 허용해주세요.',
+              [
+                {text: '취소', style: 'cancel'},
+                {text: '설정으로 이동', onPress: () => {
+                  const {Linking} = require('react-native');
+                  Linking.openSettings();
+                }},
+              ]
+            );
+          } else {
+            Alert.alert('오류', '이미지를 불러올 수 없습니다.');
+          }
           return;
         }
         if (response.assets && response.assets[0].uri) {
@@ -316,31 +390,31 @@ const StudyStoryCard: React.FC<StudyStoryCardProps> = ({
   };
 
   const deleteCustomText = (id: string) => {
-    setCustomTexts(customTexts.filter(t => t.id !== id));
+    setCustomTexts(prev => prev.filter(t => t.id !== id));
     // responder도 삭제
     delete customTextRespondersRef.current[id];
   };
 
   const updateCustomTextScale = (id: string, newScale: number) => {
-    setCustomTexts(customTexts.map(t =>
+    setCustomTexts(prev => prev.map(t =>
       t.id === id ? {...t, scale: newScale} : t
     ));
   };
 
   const updateCustomTextColor = (id: string, newColor: string) => {
-    setCustomTexts(customTexts.map(t =>
+    setCustomTexts(prev => prev.map(t =>
       t.id === id ? {...t, color: newColor} : t
     ));
   };
 
   const updateCustomTextFontSize = (id: string, newSize: number) => {
-    setCustomTexts(customTexts.map(t =>
+    setCustomTexts(prev => prev.map(t =>
       t.id === id ? {...t, fontSize: newSize} : t
     ));
   };
 
   const updateCustomTextCurrentY = (id: string, newY: number) => {
-    setCustomTexts(customTexts.map(t =>
+    setCustomTexts(prev => prev.map(t =>
       t.id === id ? {...t, currentY: newY} : t
     ));
   };
@@ -356,7 +430,7 @@ const StudyStoryCard: React.FC<StudyStoryCardProps> = ({
 
   const saveCustomTextContent = () => {
     if (editingTextId) {
-      setCustomTexts(customTexts.map(t =>
+      setCustomTexts(prev => prev.map(t =>
         t.id === editingTextId ? {...t, text: tempCustomText} : t
       ));
       setIsEditingCustomText(false);
@@ -423,21 +497,62 @@ const StudyStoryCard: React.FC<StudyStoryCardProps> = ({
 
   const handleScreenshot = async () => {
     try {
-      // Android 권한 확인
+      // Android 권한 확인 (API 33 이상은 READ_MEDIA_IMAGES, 이하는 WRITE_EXTERNAL_STORAGE)
       if (Platform.OS === 'android') {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-          {
-            title: '저장소 권한 필요',
-            message: '스크린샷을 저장하려면 저장소 권한이 필요합니다.',
-            buttonNeutral: '나중에',
-            buttonNegative: '취소',
-            buttonPositive: '확인',
+        const androidVersion = Platform.Version;
+
+        if (androidVersion >= 33) {
+          // Android 13+ : READ_MEDIA_IMAGES 권한 필요
+          const granted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+            {
+              title: '사진 접근 권한 필요',
+              message: '스크린샷을 갤러리에 저장하려면 사진 접근 권한이 필요합니다.',
+              buttonNeutral: '나중에',
+              buttonNegative: '취소',
+              buttonPositive: '확인',
+            }
+          );
+          if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+            Alert.alert(
+              '권한 필요',
+              '설정에서 사진 접근 권한을 허용해주세요.',
+              [
+                {text: '취소', style: 'cancel'},
+                {text: '설정으로 이동', onPress: () => {
+                  const {Linking} = require('react-native');
+                  Linking.openSettings();
+                }},
+              ]
+            );
+            return;
           }
-        );
-        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-          Alert.alert('권한 필요', '저장소 권한이 필요합니다.');
-          return;
+        } else {
+          // Android 12 이하 : WRITE_EXTERNAL_STORAGE 권한 필요
+          const granted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+            {
+              title: '저장소 권한 필요',
+              message: '스크린샷을 저장하려면 저장소 권한이 필요합니다.',
+              buttonNeutral: '나중에',
+              buttonNegative: '취소',
+              buttonPositive: '확인',
+            }
+          );
+          if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+            Alert.alert(
+              '권한 필요',
+              '설정에서 저장소 권한을 허용해주세요.',
+              [
+                {text: '취소', style: 'cancel'},
+                {text: '설정으로 이동', onPress: () => {
+                  const {Linking} = require('react-native');
+                  Linking.openSettings();
+                }},
+              ]
+            );
+            return;
+          }
         }
       }
 
@@ -508,9 +623,8 @@ const StudyStoryCard: React.FC<StudyStoryCardProps> = ({
             <ImageBackground
               source={{uri: backgroundImage}}
               style={styles.backgroundImage}
-              resizeMode="cover">
-              <View style={styles.overlayBackdrop} />
-            </ImageBackground>
+              resizeMode="cover"
+            />
           ) : (
             <Canvas style={styles.defaultBackground}>
               <Rect x={0} y={0} width={CARD_WIDTH} height={CARD_HEIGHT}>
@@ -527,7 +641,7 @@ const StudyStoryCard: React.FC<StudyStoryCardProps> = ({
           <TouchableOpacity
             style={styles.closeButtonX}
             onPress={onClose}>
-            <Icon name="close" size={24} color="#FFFFFF" />
+            <Icon name="close" size={iconSize(24)} color="#FFFFFF" />
           </TouchableOpacity>
 
           {/* Background Touch Area - 빈 공간 클릭용 */}
@@ -599,14 +713,14 @@ const StudyStoryCard: React.FC<StudyStoryCardProps> = ({
                             setIsDateVisible(false);
                             setIsDateSelected(false);
                           }}>
-                          <Icon name="close-circle" size={24} color="#FF6B6B" />
+                          <Icon name="close-circle" size={iconSize(24)} color="#FF6B6B" />
                         </TouchableOpacity>
                         <TouchableOpacity
                           style={styles.textButton}
                           onPress={() => {
                             setIsDateSelected(false);
                           }}>
-                          <Icon name="checkmark-circle" size={24} color="#4CAF50" />
+                          <Icon name="checkmark-circle" size={iconSize(24)} color="#4CAF50" />
                         </TouchableOpacity>
                       </View>
                     )}
@@ -655,14 +769,14 @@ const StudyStoryCard: React.FC<StudyStoryCardProps> = ({
                               setIsMainStatVisible(false);
                               setIsMainStatSelected(false);
                             }}>
-                            <Icon name="close-circle" size={24} color="#FF6B6B" />
+                            <Icon name="close-circle" size={iconSize(24)} color="#FF6B6B" />
                           </TouchableOpacity>
                           <TouchableOpacity
                             style={styles.textButton}
                             onPress={() => {
                               setIsMainStatSelected(false);
                             }}>
-                            <Icon name="checkmark-circle" size={24} color="#4CAF50" />
+                            <Icon name="checkmark-circle" size={iconSize(24)} color="#4CAF50" />
                           </TouchableOpacity>
                         </View>
                       )}
@@ -712,14 +826,14 @@ const StudyStoryCard: React.FC<StudyStoryCardProps> = ({
                                 setIsSessionVisible(false);
                                 setIsSessionSelected(false);
                               }}>
-                              <Icon name="close-circle" size={24} color="#FF6B6B" />
+                              <Icon name="close-circle" size={iconSize(24)} color="#FF6B6B" />
                             </TouchableOpacity>
                             <TouchableOpacity
                               style={styles.textButton}
                               onPress={() => {
                                 setIsSessionSelected(false);
                               }}>
-                              <Icon name="checkmark-circle" size={24} color="#4CAF50" />
+                              <Icon name="checkmark-circle" size={iconSize(24)} color="#4CAF50" />
                             </TouchableOpacity>
                           </View>
                         )}
@@ -767,14 +881,14 @@ const StudyStoryCard: React.FC<StudyStoryCardProps> = ({
                                 setIsAvgTimeVisible(false);
                                 setIsAvgTimeSelected(false);
                               }}>
-                              <Icon name="close-circle" size={24} color="#FF6B6B" />
+                              <Icon name="close-circle" size={iconSize(24)} color="#FF6B6B" />
                             </TouchableOpacity>
                             <TouchableOpacity
                               style={styles.textButton}
                               onPress={() => {
                                 setIsAvgTimeSelected(false);
                               }}>
-                              <Icon name="checkmark-circle" size={24} color="#4CAF50" />
+                              <Icon name="checkmark-circle" size={iconSize(24)} color="#4CAF50" />
                             </TouchableOpacity>
                           </View>
                         )}
@@ -805,10 +919,7 @@ const StudyStoryCard: React.FC<StudyStoryCardProps> = ({
                   isMessageSelected && styles.selectedTextContainer,
                 ]}
                 onPress={() => {
-                  if (isMessageSelected) {
-                    setTempMessage(customMessage);
-                    setIsEditingMessage(true);
-                  } else {
+                  if (!isMessageSelected) {
                     setIsMessageSelected(true);
                     setIsDateSelected(false);
                     setIsMainStatSelected(false);
@@ -816,10 +927,6 @@ const StudyStoryCard: React.FC<StudyStoryCardProps> = ({
                     setIsAvgTimeSelected(false);
                     setSelectedCustomTextId(null);
                   }
-                }}
-                onLongPress={() => {
-                  setTempMessage(customMessage);
-                  setIsEditingMessage(true);
                 }}
                 delayPressIn={0}>
                 <View style={styles.textWithButtons}>
@@ -835,17 +942,25 @@ const StudyStoryCard: React.FC<StudyStoryCardProps> = ({
                       <TouchableOpacity
                         style={styles.textButton}
                         onPress={() => {
+                          setTempMessage(customMessage);
+                          setIsEditingMessage(true);
+                        }}>
+                        <Icon name="pencil" size={iconSize(20)} color="#FFFFFF" />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.textButton}
+                        onPress={() => {
                           setCustomMessage('');
                           setIsMessageSelected(false);
                         }}>
-                        <Icon name="close-circle" size={24} color="#FF6B6B" />
+                        <Icon name="close-circle" size={iconSize(24)} color="#FF6B6B" />
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={styles.textButton}
                         onPress={() => {
                           setIsMessageSelected(false);
                         }}>
-                        <Icon name="checkmark-circle" size={24} color="#4CAF50" />
+                        <Icon name="checkmark-circle" size={iconSize(24)} color="#4CAF50" />
                       </TouchableOpacity>
                     </View>
                   )}
@@ -867,25 +982,8 @@ const StudyStoryCard: React.FC<StudyStoryCardProps> = ({
                   customText.scale,
                   (newScale) => updateCustomTextScale(customText.id, newScale),
                   (newY) => updateCustomTextCurrentY(customText.id, newY),
-                  () => {
-                    // 싱글 탭: 선택 또는 선택 해제
-                    const currentSelected = selectedCustomTextId === customText.id;
-                    if (currentSelected) {
-                      setSelectedCustomTextId(null);
-                      setIsMessageSelected(false);
-                    } else {
-                      setSelectedCustomTextId(customText.id);
-                      setIsMessageSelected(false);
-                      setIsDateSelected(false);
-                      setIsMainStatSelected(false);
-                      setIsSessionSelected(false);
-                      setIsAvgTimeSelected(false);
-                    }
-                  },
-                  () => {
-                    // 더블 탭: 편집
-                    editCustomTextContent(customText.id);
-                  }
+                  undefined, // 싱글탭은 TouchableOpacity로 처리
+                  undefined // 더블 탭 비활성화
                 );
               }
               const textResponder = customTextRespondersRef.current[customText.id];
@@ -917,7 +1015,23 @@ const StudyStoryCard: React.FC<StudyStoryCardProps> = ({
                       },
                       isSelected && styles.selectedTextContainer,
                     ]}>
-                  <View style={styles.customTextWrapper}>
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      if (selectedCustomTextId === customText.id) {
+                        // 이미 선택된 상태면 선택 해제
+                        setSelectedCustomTextId(null);
+                      } else {
+                        // 선택
+                        setSelectedCustomTextId(customText.id);
+                        setIsMessageSelected(false);
+                        setIsDateSelected(false);
+                        setIsMainStatSelected(false);
+                        setIsSessionSelected(false);
+                        setIsAvgTimeSelected(false);
+                      }
+                    }}
+                    style={styles.customTextWrapper}>
                     <View style={styles.textWithButtons}>
                         <Text style={{
                           color: customText.color,
@@ -934,10 +1048,17 @@ const StudyStoryCard: React.FC<StudyStoryCardProps> = ({
                           <TouchableOpacity
                             style={styles.textButton}
                             onPress={() => {
+                              editCustomTextContent(customText.id);
+                            }}>
+                            <Icon name="pencil" size={iconSize(20)} color="#FFFFFF" />
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.textButton}
+                            onPress={() => {
                               deleteCustomText(customText.id);
                               setSelectedCustomTextId(null);
                             }}>
-                            <Icon name="close-circle" size={24} color="#FF6B6B" />
+                            <Icon name="close-circle" size={iconSize(24)} color="#FF6B6B" />
                           </TouchableOpacity>
                           <TouchableOpacity
                             style={styles.textButton}
@@ -945,12 +1066,12 @@ const StudyStoryCard: React.FC<StudyStoryCardProps> = ({
                               setSelectedCustomTextId(null);
                               setIsMessageSelected(false);
                             }}>
-                            <Icon name="checkmark-circle" size={24} color="#4CAF50" />
+                            <Icon name="checkmark-circle" size={iconSize(24)} color="#4CAF50" />
                           </TouchableOpacity>
                         </View>
                       )}
                     </View>
-                  </View>
+                  </TouchableOpacity>
                   </Animated.View>
                 </Animated.View>
               );
@@ -1077,14 +1198,14 @@ const StudyStoryCard: React.FC<StudyStoryCardProps> = ({
             <TouchableOpacity
               style={[styles.button, styles.imageButton]}
               onPress={selectBackgroundImage}>
-              <Icon name="image" size={20} color="#FFFFFF" />
+              <Icon name="image" size={iconSize(20)} color="#FFFFFF" />
               <Text style={styles.buttonText}>배경 사진 선택</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.button, styles.shareButton]}
               onPress={handleShare}
               disabled={isCapturing}>
-              <Icon name="share-social" size={20} color="#FFFFFF" />
+              <Icon name="share-social" size={iconSize(20)} color="#FFFFFF" />
               <Text style={styles.buttonText}>
                 {isCapturing ? '생성 중...' : '공유하기'}
               </Text>
@@ -1093,7 +1214,7 @@ const StudyStoryCard: React.FC<StudyStoryCardProps> = ({
               style={[styles.button, styles.screenshotButton]}
               onPress={handleScreenshot}
               disabled={isCapturing}>
-              <Icon name="camera" size={20} color="#FFFFFF" />
+              <Icon name="camera" size={iconSize(20)} color="#FFFFFF" />
               <Text style={styles.buttonText}>스크린샷</Text>
             </TouchableOpacity>
           </View>
@@ -1185,8 +1306,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-    paddingTop: 20,
-    paddingHorizontal: 20,
+    paddingTop: hp(20),
+    paddingHorizontal: sp(20),
   },
   bottomScrollArea: {
     flex: 1,
@@ -1194,22 +1315,22 @@ const styles = StyleSheet.create({
     maxWidth: CARD_WIDTH,
   },
   bottomScrollContent: {
-    paddingTop: 12,
-    paddingBottom: 20,
+    paddingTop: hp(12),
+    paddingBottom: hp(20),
   },
   viewShot: {
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
-    borderRadius: 24,
+    borderRadius: sp(24),
     overflow: 'hidden',
   },
   closeButtonX: {
     position: 'absolute',
-    top: 16,
-    right: 16,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    top: hp(16),
+    right: sp(16),
+    width: touchSize(36),
+    height: touchSize(36),
+    borderRadius: sp(18),
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -1224,7 +1345,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: '100%',
     height: '100%',
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: 'rgba(0, 0, 0, 0.15)',
   },
   defaultBackground: {
     position: 'absolute',
@@ -1251,18 +1372,18 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     flex: 1,
-    padding: 28,
-    paddingTop: 50,
+    padding: sp(28),
+    paddingTop: hp(50),
     justifyContent: 'space-between',
   },
   dateContainer: {
     position: 'absolute',
     alignItems: 'center',
-    top: 80,
+    top: hp(80),
     alignSelf: 'center',
   },
   dateLabel: {
-    fontSize: 18,
+    fontSize: fp(18),
     fontWeight: '700',
     color: '#FFFFFF',
     opacity: 0.95,
@@ -1270,11 +1391,11 @@ const styles = StyleSheet.create({
   },
   resizeHandle: {
     position: 'absolute',
-    bottom: -10,
-    right: -10,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    bottom: hp(-10),
+    right: sp(-10),
+    width: sp(30),
+    height: sp(30),
+    borderRadius: sp(15),
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -1282,7 +1403,7 @@ const styles = StyleSheet.create({
   centerSection: {
     position: 'absolute',
     alignItems: 'center',
-    gap: 16,
+    gap: sp(16),
     width: '100%',
     top: '35%',
     alignSelf: 'center',
@@ -1290,7 +1411,7 @@ const styles = StyleSheet.create({
   subStatsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: sp(12),
     width: '100%',
   },
   mainStatCard: {
@@ -1298,17 +1419,17 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   mainStatValue: {
-    fontSize: 40,
+    fontSize: fp(40),
     fontWeight: '800',
     color: '#FFFFFF',
     letterSpacing: -1,
     textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: {width: 0, height: 2},
-    textShadowRadius: 4,
-    marginBottom: 6,
+    textShadowOffset: {width: 0, height: sp(2)},
+    textShadowRadius: sp(4),
+    marginBottom: hp(6),
   },
   mainStatLabel: {
-    fontSize: 14,
+    fontSize: fp(14),
     fontWeight: '600',
     color: '#FFFFFF',
     opacity: 0.9,
@@ -1318,88 +1439,88 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   subStatValue: {
-    fontSize: 22,
+    fontSize: fp(22),
     fontWeight: '700',
     color: '#FFFFFF',
     letterSpacing: -0.5,
     textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: {width: 0, height: 1},
-    textShadowRadius: 2,
-    marginBottom: 4,
+    textShadowOffset: {width: 0, height: sp(1)},
+    textShadowRadius: sp(2),
+    marginBottom: hp(4),
   },
   subStatLabel: {
-    fontSize: 12,
+    fontSize: fp(12),
     fontWeight: '600',
     color: '#FFFFFF',
     opacity: 0.85,
   },
   bottomSection: {
     position: 'absolute',
-    bottom: 40,
+    bottom: hp(40),
     alignItems: 'center',
     alignSelf: 'center',
   },
   motivationText: {
-    fontSize: 15,
+    fontSize: fp(15),
     fontWeight: '600',
     color: '#FFFFFF',
     opacity: 0.9,
     textShadowColor: 'rgba(0, 0, 0, 0.15)',
-    textShadowOffset: {width: 0, height: 1},
-    textShadowRadius: 2,
+    textShadowOffset: {width: 0, height: sp(1)},
+    textShadowRadius: sp(2),
   },
   editHint: {
-    fontSize: 11,
+    fontSize: fp(11),
     color: '#FFFFFF',
     opacity: 0.6,
-    marginTop: 4,
+    marginTop: hp(4),
   },
   buttonRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: sp(12),
     width: '100%',
-    marginTop: 12,
+    marginTop: hp(12),
   },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: sp(20),
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 24,
+    borderRadius: sp(16),
+    padding: sp(24),
     width: '100%',
-    maxWidth: 400,
+    maxWidth: sp(400),
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: fp(18),
     fontWeight: '700',
     color: '#000',
-    marginBottom: 16,
+    marginBottom: hp(16),
     textAlign: 'center',
   },
   modalInput: {
     backgroundColor: '#F5F5F5',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 15,
+    borderRadius: sp(12),
+    paddingHorizontal: sp(16),
+    paddingVertical: hp(12),
+    fontSize: fp(15),
     color: '#000',
-    minHeight: 80,
+    minHeight: hp(80),
     textAlignVertical: 'top',
   },
   modalButtons: {
     flexDirection: 'row',
-    gap: 12,
-    marginTop: 20,
+    gap: sp(12),
+    marginTop: hp(20),
   },
   modalButton: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
+    paddingVertical: hp(14),
+    borderRadius: sp(12),
     alignItems: 'center',
   },
   modalCancelButton: {
@@ -1409,7 +1530,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#007AFF',
   },
   modalButtonText: {
-    fontSize: 16,
+    fontSize: fp(16),
     fontWeight: '600',
     color: '#000',
   },
@@ -1418,10 +1539,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    gap: 8,
+    paddingVertical: hp(16),
+    paddingHorizontal: sp(12),
+    borderRadius: sp(12),
+    gap: sp(8),
   },
   imageButton: {
     backgroundColor: '#6B6B6B',
@@ -1433,7 +1554,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#34C759',
   },
   buttonText: {
-    fontSize: 14,
+    fontSize: fp(14),
     fontWeight: '700',
     color: '#FFFFFF',
     flexShrink: 1,
@@ -1442,9 +1563,9 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: CARD_WIDTH,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
+    borderRadius: sp(12),
+    padding: sp(12),
+    marginBottom: hp(12),
   },
   toolbarRow: {
     flexDirection: 'row',
@@ -1453,12 +1574,12 @@ const styles = StyleSheet.create({
   },
   toolbarLeft: {
     flexDirection: 'row',
-    gap: 12,
+    gap: sp(12),
   },
   toolbarButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: touchSize(44),
+    height: touchSize(44),
+    borderRadius: sp(22),
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -1467,37 +1588,37 @@ const styles = StyleSheet.create({
     backgroundColor: '#007AFF',
   },
   toolbarButtonText: {
-    fontSize: 20,
+    fontSize: fp(20),
     fontWeight: '700',
     color: '#FFFFFF',
   },
   addButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: touchSize(44),
+    height: touchSize(44),
+    borderRadius: sp(22),
     backgroundColor: '#007AFF',
     justifyContent: 'center',
     alignItems: 'center',
   },
   toolbarRight: {
-    marginTop: 12,
-    gap: 8,
+    marginTop: hp(12),
+    gap: sp(8),
   },
   toolbarLabel: {
-    fontSize: 12,
+    fontSize: fp(12),
     fontWeight: '600',
     color: '#FFFFFF',
     opacity: 0.8,
-    marginBottom: 4,
+    marginBottom: hp(4),
   },
   colorPicker: {
     flexDirection: 'row',
   },
   colorOption: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    marginRight: 8,
+    width: sp(32),
+    height: sp(32),
+    borderRadius: sp(16),
+    marginRight: sp(8),
     borderWidth: 2,
     borderColor: 'transparent',
   },
@@ -1509,17 +1630,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   fontSizeOption: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
+    paddingHorizontal: sp(12),
+    paddingVertical: hp(6),
+    borderRadius: sp(8),
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    marginRight: 8,
+    marginRight: sp(8),
   },
   fontSizeOptionSelected: {
     backgroundColor: '#007AFF',
   },
   fontSizeText: {
-    fontSize: 14,
+    fontSize: fp(14),
     fontWeight: '600',
     color: '#FFFFFF',
   },
@@ -1536,30 +1657,30 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#007AFF',
     borderStyle: 'dashed',
-    borderRadius: 8,
-    padding: 4,
+    borderRadius: sp(8),
+    padding: sp(4),
   },
   textWithButtons: {
     position: 'relative',
   },
   textButtonGroup: {
     position: 'absolute',
-    top: -38,
-    right: -10,
+    top: hp(-38),
+    right: sp(-10),
     flexDirection: 'row',
-    gap: 4,
+    gap: sp(4),
   },
   textButtonGroupBottom: {
     position: 'absolute',
-    bottom: -38,
-    right: -10,
+    bottom: hp(-38),
+    right: sp(-10),
     flexDirection: 'row',
-    gap: 4,
+    gap: sp(4),
   },
   textButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: touchSize(28),
+    height: touchSize(28),
+    borderRadius: sp(14),
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -1567,25 +1688,25 @@ const styles = StyleSheet.create({
   editingPanel: {
     width: '100%',
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: sp(12),
+    padding: sp(16),
+    marginBottom: hp(12),
   },
   editingPanelTitle: {
-    fontSize: 14,
+    fontSize: fp(14),
     fontWeight: '700',
     color: '#FFFFFF',
-    marginBottom: 12,
+    marginBottom: hp(12),
   },
   editingRow: {
-    marginBottom: 12,
+    marginBottom: hp(12),
   },
   editingLabel: {
-    fontSize: 12,
+    fontSize: fp(12),
     fontWeight: '600',
     color: '#FFFFFF',
     opacity: 0.8,
-    marginBottom: 8,
+    marginBottom: hp(8),
   },
   colorPickerBottom: {
     flexDirection: 'row',

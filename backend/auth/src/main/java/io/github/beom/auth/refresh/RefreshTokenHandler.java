@@ -1,7 +1,7 @@
 package io.github.beom.auth.refresh;
 
-import io.github.beom.common.exception.BusinessException;
-import io.github.beom.common.exception.ErrorCode;
+import io.github.beom.core.exception.BusinessException;
+import io.github.beom.core.exception.ErrorCode;
 import io.github.beom.auth.jwt.CookieUtil;
 import io.github.beom.auth.jwt.JwtTokenProvider;
 import io.github.beom.user.domain.User;

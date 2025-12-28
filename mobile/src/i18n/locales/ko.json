@@ -10,7 +10,7 @@
   },
   "tabs": {
     "timer": "타이머",
-    "store": "스토어",
+    "matching": "매칭",
     "group": "모임",
     "study": "공부기록",
     "more": "더보기"
@@ -32,6 +32,7 @@
     "support": "지원",
     "appInfo": "앱 정보",
     "theme": "테마",
+    "language": "언어",
     "notifications": "알림 설정",
     "announcements": "공지사항",
     "help": "도움말",
@@ -48,7 +49,19 @@
     "ballpens": "볼펜",
     "buyPencils": "연필 구매하기",
     "buyBallpens": "볼펜 구매하기",
-    "history": "결제 내역"
+    "history": "결제 내역",
+    "thisMonthSummary": "이번 달 요약",
+    "detailHistory": "상세 내역",
+    "filterAll": "전체",
+    "filterEarn": "획득",
+    "filterSpend": "사용",
+    "filterPurchase": "충전",
+    "noHistory": "해당 조건의 내역이 없습니다",
+    "today": "오늘",
+    "yesterday": "어제",
+    "earned": "획득",
+    "spent": "사용",
+    "purchased": "충전"
   },
   "theme": {
     "title": "테마 선택",

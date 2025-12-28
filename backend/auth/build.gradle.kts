@@ -3,9 +3,7 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":common"))
-    implementation(project(":domain"))
-    implementation(project(":infrastructure"))
+    implementation(project(":core"))
     implementation(project(":user"))
 
     // Spring Boot Web
@@ -25,12 +23,12 @@ dependencies {
     // Spring Transaction
     implementation(libs.spring.tx)
 
-    // Servlet API
-    compileOnly("jakarta.servlet:jakarta.servlet-api:6.0.0")
+    // Servlet API (Jakarta EE 11)
+    compileOnly("jakarta.servlet:jakarta.servlet-api:6.1.0")
 }
 
 dependencyManagement {
     imports {
-        mavenBom("org.springframework.boot:spring-boot-dependencies:3.5.8")
+        mavenBom(libs.spring.boot.dependencies.get().toString())
     }
 }

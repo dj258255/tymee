@@ -2,12 +2,10 @@ rootProject.name = "tymee"
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
-// Common modules
-include("common")
-include("domain")
-include("infrastructure")
+// Core module (공통 + 도메인 추상화 + 인프라 설정)
+include("core")
 
-// Domain modules (Pattern B: Vertical Slice per domain)
+// Domain modules (Vertical Slice per domain)
 include("user")
 include("auth")
 include("upload")

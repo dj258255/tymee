@@ -10,7 +10,7 @@
   },
   "tabs": {
     "timer": "タイマー",
-    "store": "ストア",
+    "matching": "マッチング",
     "group": "グループ",
     "study": "学習記録",
     "more": "もっと見る"
@@ -32,6 +32,7 @@
     "support": "サポート",
     "appInfo": "アプリ情報",
     "theme": "テーマ",
+    "language": "言語",
     "notifications": "通知設定",
     "announcements": "お知らせ",
     "help": "ヘルプ",
@@ -48,7 +49,19 @@
     "ballpens": "ボールペン",
     "buyPencils": "鉛筆を購入",
     "buyBallpens": "ボールペンを購入",
-    "history": "決済履歴"
+    "history": "決済履歴",
+    "thisMonthSummary": "今月のサマリー",
+    "detailHistory": "詳細履歴",
+    "filterAll": "すべて",
+    "filterEarn": "獲得",
+    "filterSpend": "使用",
+    "filterPurchase": "チャージ",
+    "noHistory": "該当する履歴がありません",
+    "today": "今日",
+    "yesterday": "昨日",
+    "earned": "獲得",
+    "spent": "使用",
+    "purchased": "チャージ"
   },
   "theme": {
     "title": "テーマを選択",

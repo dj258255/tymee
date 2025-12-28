@@ -1,7 +1,7 @@
 package io.github.beom.config;
 
-import io.github.beom.common.exception.BusinessException;
-import io.github.beom.common.exception.ErrorCode;
+import io.github.beom.core.exception.BusinessException;
+import io.github.beom.core.exception.ErrorCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

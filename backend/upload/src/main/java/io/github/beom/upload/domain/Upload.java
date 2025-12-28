@@ -1,6 +1,6 @@
 package io.github.beom.upload.domain;
 
-import io.github.beom.domain.model.AggregateRoot;
+import io.github.beom.core.domain.AggregateRoot;
 import lombok.Getter;
 
 import java.time.Instant;

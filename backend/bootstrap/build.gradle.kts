@@ -3,9 +3,7 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":common"))
-    implementation(project(":domain"))
-    implementation(project(":infrastructure"))
+    implementation(project(":core"))
     implementation(project(":user"))
     implementation(project(":auth"))
     implementation(project(":upload"))

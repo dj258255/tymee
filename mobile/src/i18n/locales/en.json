@@ -10,7 +10,7 @@
   },
   "tabs": {
     "timer": "Timer",
-    "store": "Store",
+    "matching": "Match",
     "group": "Group",
     "study": "Study Record",
     "more": "More"
@@ -32,6 +32,7 @@
     "support": "Support",
     "appInfo": "App Info",
     "theme": "Theme",
+    "language": "Language",
     "notifications": "Notifications",
     "announcements": "Announcements",
     "help": "Help",
@@ -48,7 +49,19 @@
     "ballpens": "Ballpens",
     "buyPencils": "Buy Pencils",
     "buyBallpens": "Buy Ballpens",
-    "history": "Payment History"
+    "history": "Payment History",
+    "thisMonthSummary": "This Month Summary",
+    "detailHistory": "Transaction Details",
+    "filterAll": "All",
+    "filterEarn": "Earned",
+    "filterSpend": "Spent",
+    "filterPurchase": "Purchased",
+    "noHistory": "No transactions found",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "earned": "Earned",
+    "spent": "Spent",
+    "purchased": "Purchased"
   },
   "theme": {
     "title": "Select Theme",

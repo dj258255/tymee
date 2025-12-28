@@ -1,12 +1,12 @@
 [versions]
 # Spring Framework
-spring-boot = "3.5.8"
-spring-framework = "6.2.1"
-spring-security = "6.4.2"
+spring-boot = "4.0.1"
+spring-framework = "7.0.1"
+spring-security = "7.0.2"
 spring-dependency-management = "1.1.7"
 
 # Database
-h2 = "2.3.232"
+h2 = "2.4.240"
 postgresql = "42.7.4"
 
 # JWT
@@ -51,6 +51,9 @@ jakarta-validation = { module = "jakarta.validation:jakarta.validation-api", ver
 # Utilities
 commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
 lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
+
+# Spring Boot BOM
+spring-boot-dependencies = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot" }
 
 # Testing
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }

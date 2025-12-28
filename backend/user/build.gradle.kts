@@ -3,9 +3,7 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":common"))
-    implementation(project(":domain"))
-    implementation(project(":infrastructure"))
+    implementation(project(":core"))
 
     // Spring Boot Web
     implementation(libs.spring.boot.starter.web)
@@ -30,6 +28,6 @@ dependencies {
 
 dependencyManagement {
     imports {
-        mavenBom("org.springframework.boot:spring-boot-dependencies:3.5.8")
+        mavenBom(libs.spring.boot.dependencies.get().toString())
     }
 }

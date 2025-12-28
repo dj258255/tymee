@@ -1,6 +1,6 @@
 package io.github.beom.upload.service;
 
-import io.github.beom.common.exception.BusinessException;
+import io.github.beom.core.exception.BusinessException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,13 +42,13 @@ public class FileStorageService {
      */
     public String store(MultipartFile file) {
         if (file.isEmpty()) {
-            throw new BusinessException(io.github.beom.common.exception.ErrorCode.FILE_EMPTY);
+            throw new BusinessException(io.github.beom.core.exception.ErrorCode.FILE_EMPTY);
         }
 
         // 원본 파일명 추출
         String originalFilename = file.getOriginalFilename();
         if (originalFilename == null || originalFilename.isBlank()) {
-            throw new BusinessException(io.github.beom.common.exception.ErrorCode.FILE_INVALID_NAME);
+            throw new BusinessException(io.github.beom.core.exception.ErrorCode.FILE_INVALID_NAME);
         }
 
         // 파일 확장자 추출
@@ -67,7 +67,7 @@ public class FileStorageService {
 
             // 경로 순회 공격 방지
             if (!destinationFile.getParent().equals(this.uploadDirectory)) {
-                throw new BusinessException(io.github.beom.common.exception.ErrorCode.FILE_INVALID_PATH);
+                throw new BusinessException(io.github.beom.core.exception.ErrorCode.FILE_INVALID_PATH);
             }
 
             // 파일 저장
@@ -78,7 +78,7 @@ public class FileStorageService {
 
         } catch (IOException e) {
             log.error("파일 저장 실패: {}", originalFilename, e);
-            throw new BusinessException(io.github.beom.common.exception.ErrorCode.FILE_STORE_FAILED, e.getMessage());
+            throw new BusinessException(io.github.beom.core.exception.ErrorCode.FILE_STORE_FAILED, e.getMessage());
         }
     }
 
@@ -94,11 +94,11 @@ public class FileStorageService {
 
             // 경로 순회 공격 방지
             if (!file.getParent().equals(this.uploadDirectory)) {
-                throw new BusinessException(io.github.beom.common.exception.ErrorCode.FILE_INVALID_PATH);
+                throw new BusinessException(io.github.beom.core.exception.ErrorCode.FILE_INVALID_PATH);
             }
 
             if (!Files.exists(file)) {
-                throw new BusinessException(io.github.beom.common.exception.ErrorCode.FILE_NOT_FOUND, storedFilename);
+                throw new BusinessException(io.github.beom.core.exception.ErrorCode.FILE_NOT_FOUND, storedFilename);
             }
 
             return file;
@@ -107,7 +107,7 @@ public class FileStorageService {
             throw e;
         } catch (Exception e) {
             log.error("파일 로드 실패: {}", storedFilename, e);
-            throw new BusinessException(io.github.beom.common.exception.ErrorCode.FILE_LOAD_FAILED, e.getMessage());
+            throw new BusinessException(io.github.beom.core.exception.ErrorCode.FILE_LOAD_FAILED, e.getMessage());
         }
     }
 
@@ -122,7 +122,7 @@ public class FileStorageService {
 
             // 경로 순회 공격 방지
             if (!file.getParent().equals(this.uploadDirectory)) {
-                throw new BusinessException(io.github.beom.common.exception.ErrorCode.FILE_INVALID_PATH);
+                throw new BusinessException(io.github.beom.core.exception.ErrorCode.FILE_INVALID_PATH);
             }
 
             Files.deleteIfExists(file);
@@ -130,7 +130,7 @@ public class FileStorageService {
 
         } catch (IOException e) {
             log.error("파일 삭제 실패: {}", storedFilename, e);
-            throw new BusinessException(io.github.beom.common.exception.ErrorCode.FILE_DELETE_FAILED, e.getMessage());
+            throw new BusinessException(io.github.beom.core.exception.ErrorCode.FILE_DELETE_FAILED, e.getMessage());
         }
     }
 

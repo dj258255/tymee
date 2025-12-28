@@ -11,16 +11,26 @@
 		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
+		14B21CB146907E12B17A4A37 /* FocusTimerAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDB90560CAF4AD60C8E9668F /* FocusTimerAttributes.swift */; };
+		1B3202260CA04EB712337985 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 817FF4AF1A9CA4F2B3480100 /* Foundation.framework */; };
 		1E92802B16A99F1A605C2603 /* FamilyControls.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F2776E1986BD4277CC5E399C /* FamilyControls.framework */; };
 		2850D725CCFCE1F6F7CCBF93 /* ManagedSettings.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9E99C20F20E95C6287839042 /* ManagedSettings.framework */; };
 		39CD369264114D2F873B0F78 /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = D5ACA3B61F0F48DA94B05DC7 /* BootSplash.storyboard */; };
 		48F3EF772E5C41C4BB478190 /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A4EC58E1534E43C1819C009D /* Colors.xcassets */; };
+		595D771973CD1145968F9D72 /* FocusTimerWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11FED0EAAAB7B2261085D552 /* FocusTimerWidgetBundle.swift */; };
 		6265F1E20CE7F0AF7289EE92 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
+		6B3A8592BDBAE0B6F3D63FE3 /* FocusTimerLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B0E0ABE175E39A9920A3690 /* FocusTimerLiveActivity.swift */; };
+		POMODORO123456789ABCD000 /* PomodoroHomeWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = POMODORO123456789ABCD001 /* PomodoroHomeWidget.swift */; };
 		6CAF41CECB5DA0F9E450CE54 /* libPods-mobile-mobileTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C973AEA314C3193863CA030 /* libPods-mobile-mobileTests.a */; };
+		6E055C7477F3DDEA8317AFC5 /* LiveActivityModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 832A39C8C143D4FA440145F1 /* LiveActivityModule.m */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		8461A97A564DB1F91FEF6590 /* FocusTimerWidget.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 2C870C78CF8AE8BFE56629E7 /* FocusTimerWidget.appex */; };
 		A66BB5919F71B790A291083C /* DeviceActivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4F3BEBAC67547498F1623FE2 /* DeviceActivity.framework */; };
+		AB4AC5ABF862EFE949E8C7DC /* FocusTimerAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42EFE88D9A765972169D7563 /* FocusTimerAttributes.swift */; };
+		CE0CAEC25C121715BD9F9394 /* LiveActivityModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0841DAF490D54100A79C3057 /* LiveActivityModule.swift */; };
 		EF4F112C85CDEBDA3309998F /* libPods-mobile.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6D68DBBB32D560330D8BC4C7 /* libPods-mobile.a */; };
 		F8E8AAF52206924C306CBCD7 /* AppBlockerModule.m in Sources */ = {isa = PBXBuildFile; fileRef = B832D7AD39E9E1CEAA0A7675 /* AppBlockerModule.m */; };
+		WIDGETASSETS123456789ABC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = WIDGETASSETS987654321DEF /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -31,12 +41,36 @@
 			remoteGlobalIDString = 13B07F861A680F5B00A75B9A;
 			remoteInfo = mobile;
 		};
+		42AA274C946089E28D309646 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 05FF7949B120B19BC63B6826;
+			remoteInfo = FocusTimerWidget;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		10BAA857289741C693F2225D /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				8461A97A564DB1F91FEF6590 /* FocusTimerWidget.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		00E356EE1AD99517003FC87E /* mobileTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = mobileTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		00E356F11AD99517003FC87E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		00E356F21AD99517003FC87E /* mobileTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = mobileTests.m; sourceTree = "<group>"; };
+		0841DAF490D54100A79C3057 /* LiveActivityModule.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = LiveActivityModule.swift; path = mobile/LiveActivityModule.swift; sourceTree = "<group>"; };
+		10D2B5448A2C554D4E4FEC5F /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		11FED0EAAAB7B2261085D552 /* FocusTimerWidgetBundle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FocusTimerWidgetBundle.swift; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* mobile.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = mobile.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FAF1A68108700A75B9A /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = mobile/AppDelegate.h; sourceTree = "<group>"; };
 		13B07FB01A68108700A75B9A /* AppDelegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = AppDelegate.mm; path = mobile/AppDelegate.mm; sourceTree = "<group>"; };
@@ -44,21 +78,30 @@
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = mobile/Info.plist; sourceTree = "<group>"; };
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = mobile/main.m; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = mobile/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		2C870C78CF8AE8BFE56629E7 /* FocusTimerWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FocusTimerWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		42EFE88D9A765972169D7563 /* FocusTimerAttributes.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FocusTimerAttributes.swift; sourceTree = "<group>"; };
 		4BD1D416F1EBD8C8106D5FE6 /* Pods-mobile-mobileTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-mobile-mobileTests.debug.xcconfig"; path = "Target Support Files/Pods-mobile-mobileTests/Pods-mobile-mobileTests.debug.xcconfig"; sourceTree = "<group>"; };
 		4C973AEA314C3193863CA030 /* libPods-mobile-mobileTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-mobile-mobileTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4F3BEBAC67547498F1623FE2 /* DeviceActivity.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DeviceActivity.framework; path = System/Library/Frameworks/DeviceActivity.framework; sourceTree = "<group>"; };
+		5B0E0ABE175E39A9920A3690 /* FocusTimerLiveActivity.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FocusTimerLiveActivity.swift; sourceTree = "<group>"; };
+		POMODORO123456789ABCD001 /* PomodoroHomeWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PomodoroHomeWidget.swift; sourceTree = "<group>"; };
 		6D68DBBB32D560330D8BC4C7 /* libPods-mobile.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-mobile.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		817FF4AF1A9CA4F2B3480100 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = mobile/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		832A39C8C143D4FA440145F1 /* LiveActivityModule.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = LiveActivityModule.m; path = mobile/LiveActivityModule.m; sourceTree = "<group>"; };
 		9E99C20F20E95C6287839042 /* ManagedSettings.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ManagedSettings.framework; path = System/Library/Frameworks/ManagedSettings.framework; sourceTree = "<group>"; };
 		A4EC58E1534E43C1819C009D /* Colors.xcassets */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = folder.assetcatalog; name = Colors.xcassets; path = mobile/Colors.xcassets; sourceTree = "<group>"; };
 		AFABCA9801D6DB689DABA0DA /* Pods-mobile-mobileTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-mobile-mobileTests.release.xcconfig"; path = "Target Support Files/Pods-mobile-mobileTests/Pods-mobile-mobileTests.release.xcconfig"; sourceTree = "<group>"; };
 		B832D7AD39E9E1CEAA0A7675 /* AppBlockerModule.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = AppBlockerModule.m; path = mobile/AppBlockerModule.m; sourceTree = "<group>"; };
 		B9C9E25C25FC25830DD06AE2 /* Pods-mobile.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-mobile.debug.xcconfig"; path = "Target Support Files/Pods-mobile/Pods-mobile.debug.xcconfig"; sourceTree = "<group>"; };
 		D5ACA3B61F0F48DA94B05DC7 /* BootSplash.storyboard */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = BootSplash.storyboard; path = mobile/BootSplash.storyboard; sourceTree = "<group>"; };
+		E239E1DD7D8BA80F5D10256E /* mobile-Bridging-Header.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = "mobile-Bridging-Header.h"; path = "mobile/mobile-Bridging-Header.h"; sourceTree = "<group>"; };
 		EA3A73EBB684E2C6BB1816F9 /* AppBlockerModule.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = AppBlockerModule.h; path = mobile/AppBlockerModule.h; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		EDB90560CAF4AD60C8E9668F /* FocusTimerAttributes.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = FocusTimerAttributes.swift; path = mobile/FocusTimerAttributes.swift; sourceTree = "<group>"; };
 		F2776E1986BD4277CC5E399C /* FamilyControls.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = FamilyControls.framework; path = System/Library/Frameworks/FamilyControls.framework; sourceTree = "<group>"; };
 		F932798A923181D393BBE3A7 /* Pods-mobile.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-mobile.release.xcconfig"; path = "Target Support Files/Pods-mobile/Pods-mobile.release.xcconfig"; sourceTree = "<group>"; };
+		WIDGETASSETS987654321DEF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -78,6 +121,14 @@
 				1E92802B16A99F1A605C2603 /* FamilyControls.framework in Frameworks */,
 				2850D725CCFCE1F6F7CCBF93 /* ManagedSettings.framework in Frameworks */,
 				A66BB5919F71B790A291083C /* DeviceActivity.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8DEED131AC428C632298D56B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1B3202260CA04EB712337985 /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -115,6 +166,10 @@
 				A4EC58E1534E43C1819C009D /* Colors.xcassets */,
 				EA3A73EBB684E2C6BB1816F9 /* AppBlockerModule.h */,
 				B832D7AD39E9E1CEAA0A7675 /* AppBlockerModule.m */,
+				0841DAF490D54100A79C3057 /* LiveActivityModule.swift */,
+				832A39C8C143D4FA440145F1 /* LiveActivityModule.m */,
+				EDB90560CAF4AD60C8E9668F /* FocusTimerAttributes.swift */,
+				E239E1DD7D8BA80F5D10256E /* mobile-Bridging-Header.h */,
 			);
 			name = mobile;
 			sourceTree = "<group>";
@@ -128,8 +183,17 @@
 				F2776E1986BD4277CC5E399C /* FamilyControls.framework */,
 				9E99C20F20E95C6287839042 /* ManagedSettings.framework */,
 				4F3BEBAC67547498F1623FE2 /* DeviceActivity.framework */,
+				6AD24200158FAFA133D32792 /* iOS */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		6AD24200158FAFA133D32792 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				817FF4AF1A9CA4F2B3480100 /* Foundation.framework */,
+			);
+			name = iOS;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -148,6 +212,7 @@
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
+				AA2EA98697924F29C6DC1CC8 /* FocusTimerWidget */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -159,8 +224,23 @@
 			children = (
 				13B07F961A680F5B00A75B9A /* mobile.app */,
 				00E356EE1AD99517003FC87E /* mobileTests.xctest */,
+				2C870C78CF8AE8BFE56629E7 /* FocusTimerWidget.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		AA2EA98697924F29C6DC1CC8 /* FocusTimerWidget */ = {
+			isa = PBXGroup;
+			children = (
+				42EFE88D9A765972169D7563 /* FocusTimerAttributes.swift */,
+				11FED0EAAAB7B2261085D552 /* FocusTimerWidgetBundle.swift */,
+				5B0E0ABE175E39A9920A3690 /* FocusTimerLiveActivity.swift */,
+				POMODORO123456789ABCD001 /* PomodoroHomeWidget.swift */,
+				10D2B5448A2C554D4E4FEC5F /* Info.plist */,
+				WIDGETASSETS987654321DEF /* Assets.xcassets */,
+			);
+			name = FocusTimerWidget;
+			path = FocusTimerWidget;
 			sourceTree = "<group>";
 		};
 		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
@@ -198,6 +278,23 @@
 			productReference = 00E356EE1AD99517003FC87E /* mobileTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		05FF7949B120B19BC63B6826 /* FocusTimerWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 39BB44E355AFA5B7F7F28B18 /* Build configuration list for PBXNativeTarget "FocusTimerWidget" */;
+			buildPhases = (
+				6ED1979BDCB162FDF9F59723 /* Sources */,
+				8DEED131AC428C632298D56B /* Frameworks */,
+				8A269B2C98292450B131DD9F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = FocusTimerWidget;
+			productName = FocusTimerWidget;
+			productReference = 2C870C78CF8AE8BFE56629E7 /* FocusTimerWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		13B07F861A680F5B00A75B9A /* mobile */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "mobile" */;
@@ -209,10 +306,12 @@
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				E65D49B8907ECEC7D2155917 /* [CP] Embed Pods Frameworks */,
 				88019F740C300AEA9C5E8AA5 /* [CP] Copy Pods Resources */,
+				10BAA857289741C693F2225D /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				9A8428B724775EF1D50F064D /* PBXTargetDependency */,
 			);
 			name = mobile;
 			productName = mobile;
@@ -251,6 +350,7 @@
 			targets = (
 				13B07F861A680F5B00A75B9A /* mobile */,
 				00E356ED1AD99517003FC87E /* mobileTests */,
+				05FF7949B120B19BC63B6826 /* FocusTimerWidget */,
 			);
 		};
 /* End PBXProject section */
@@ -272,6 +372,14 @@
 				6265F1E20CE7F0AF7289EE92 /* PrivacyInfo.xcprivacy in Resources */,
 				39CD369264114D2F873B0F78 /* BootSplash.storyboard in Resources */,
 				48F3EF772E5C41C4BB478190 /* Colors.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8A269B2C98292450B131DD9F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				WIDGETASSETS123456789ABC /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -424,6 +532,20 @@
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
 				F8E8AAF52206924C306CBCD7 /* AppBlockerModule.m in Sources */,
+				CE0CAEC25C121715BD9F9394 /* LiveActivityModule.swift in Sources */,
+				6E055C7477F3DDEA8317AFC5 /* LiveActivityModule.m in Sources */,
+				14B21CB146907E12B17A4A37 /* FocusTimerAttributes.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6ED1979BDCB162FDF9F59723 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AB4AC5ABF862EFE949E8C7DC /* FocusTimerAttributes.swift in Sources */,
+				595D771973CD1145968F9D72 /* FocusTimerWidgetBundle.swift in Sources */,
+				6B3A8592BDBAE0B6F3D63FE3 /* FocusTimerLiveActivity.swift in Sources */,
+				POMODORO123456789ABCD000 /* PomodoroHomeWidget.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -434,6 +556,12 @@
 			isa = PBXTargetDependency;
 			target = 13B07F861A680F5B00A75B9A /* mobile */;
 			targetProxy = 00E356F41AD99517003FC87E /* PBXContainerItemProxy */;
+		};
+		9A8428B724775EF1D50F064D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = FocusTimerWidget;
+			target = 05FF7949B120B19BC63B6826 /* FocusTimerWidget */;
+			targetProxy = 42AA274C946089E28D309646 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -489,6 +617,34 @@
 			};
 			name = Release;
 		};
+		112B1E1BFDFC2ED8F334E117 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = FocusTimerWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.reactjs.native.example.mobile.FocusTimerWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = B9C9E25C25FC25830DD06AE2 /* Pods-mobile.debug.xcconfig */;
@@ -512,6 +668,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = mobile;
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/mobile/mobile-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -540,10 +697,38 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = mobile;
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/mobile/mobile-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
+		};
+		18D2DF6B83EF83C6C6C3BF35 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = FocusTimerWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.reactjs.native.example.mobile.FocusTimerWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
 		};
 		83CBBA201A601CBA00E9B192 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -714,6 +899,15 @@
 			buildConfigurations = (
 				13B07F941A680F5B00A75B9A /* Debug */,
 				13B07F951A680F5B00A75B9A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		39BB44E355AFA5B7F7F28B18 /* Build configuration list for PBXNativeTarget "FocusTimerWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				112B1E1BFDFC2ED8F334E117 /* Release */,
+				18D2DF6B83EF83C6C6C3BF35 /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

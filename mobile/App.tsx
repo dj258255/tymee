@@ -4,7 +4,7 @@ import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import Icon from '@react-native-vector-icons/ionicons';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import {useWindowDimensions, InteractionManager, StyleSheet} from 'react-native';
+import {useWindowDimensions, InteractionManager, StyleSheet, ActivityIndicator, View} from 'react-native';
 import {useTranslation} from 'react-i18next';
 
 // Import i18n
@@ -18,10 +18,12 @@ import MoreScreen from './src/screens/MoreScreen';
 import StoreScreen from './src/screens/StoreScreen';
 import PaymentHistoryScreen from './src/screens/PaymentHistoryScreen';
 import FriendChatScreen from './src/screens/FriendChatScreen';
+import LoginScreen from './src/screens/LoginScreen';
 import FloatingTabBar from './src/components/FloatingTabBarSkia';
 import {usePomodoroStore} from './src/store/pomodoroStore';
 import {useThemeStore} from './src/store/themeStore';
 import {useNavigationStore} from './src/store/navigationStore';
+import {useAuthStore} from './src/store/authStore';
 import {safeGetColorScheme, safeAddAppearanceListener} from './src/utils/appearance';
 import {TabName} from './src/types/pomodoro';
 
@@ -107,6 +109,12 @@ function TabNavigator() {
 function App(): React.JSX.Element {
   const [systemColorScheme, setSystemColorScheme] = useState<'light' | 'dark'>('light');
   const {themeMode} = useThemeStore();
+  const {isLoggedIn, isLoading, login, checkAuth} = useAuthStore();
+
+  useEffect(() => {
+    // 앱 시작 시 인증 상태 확인
+    checkAuth();
+  }, []);
 
   useEffect(() => {
     const task = InteractionManager.runAfterInteractions(() => {
@@ -127,6 +135,26 @@ function App(): React.JSX.Element {
     themeMode === 'system'
       ? systemColorScheme === 'dark'
       : themeMode === 'dark';
+
+  // 로딩 중일 때 스플래시 화면
+  if (isLoading) {
+    return (
+      <GestureHandlerRootView style={{flex: 1}}>
+        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: isDark ? '#121212' : '#FAFAFA'}}>
+          <ActivityIndicator size="large" color="#007AFF" />
+        </View>
+      </GestureHandlerRootView>
+    );
+  }
+
+  // 로그인 안 된 상태면 로그인 화면
+  if (!isLoggedIn) {
+    return (
+      <GestureHandlerRootView style={{flex: 1}}>
+        <LoginScreen onLogin={(user) => login(user)} />
+      </GestureHandlerRootView>
+    );
+  }
 
   return (
     <GestureHandlerRootView style={{flex: 1}}>

@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+        "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+        "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<suppressions>
+    <!-- 테스트 코드는 일부 규칙 완화 -->
+    <suppress checks="MethodLength" files=".*Test\.java"/>
+    <suppress checks="FileLength" files=".*Test\.java"/>
+
+    <!-- DTO/Entity는 많은 필드를 가질 수 있음 -->
+    <suppress checks="ParameterNumber" files=".*Dto\.java"/>
+    <suppress checks="ParameterNumber" files=".*Entity\.java"/>
+
+    <!-- 설정 클래스는 길어질 수 있음 -->
+    <suppress checks="FileLength" files=".*Config\.java"/>
+</suppressions>

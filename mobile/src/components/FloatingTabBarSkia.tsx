@@ -16,6 +16,7 @@ import {
   Shader,
   vec,
 } from '@shopify/react-native-skia';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -37,6 +38,18 @@ const TAB_BAR_HEIGHT = hp(70);
 // Brand Colors - Blue theme
 const BRAND_BLUE = '#42A5F5';
 const INACTIVE_GRAY = '#8E8E93';
+
+// 햅틱 피드백 옵션
+const hapticOptions = {
+  enableVibrateFallback: true,
+  ignoreAndroidSystemSettings: false,
+};
+
+// 햅틱 피드백 트리거 함수
+const triggerHaptic = (type: 'light' | 'medium' | 'selection' = 'light') => {
+  const feedbackType = type === 'light' ? 'impactLight' : type === 'medium' ? 'impactMedium' : 'selection';
+  ReactNativeHapticFeedback.trigger(feedbackType, hapticOptions);
+};
 
 // Simple gradient shader for frosted glass
 const glassShader = Skia.RuntimeEffect.Make(`
@@ -108,10 +121,14 @@ const FloatingTabBarSkia: React.FC<BottomTabBarProps> = ({
     if (s.appMode === 'CONCENTRATION' && running && m === 'FOCUS' && s.blockedTabs.includes(tabName as TabName)) {
       return;
     }
+    // 드래그로 탭 변경 시 햅틱 피드백
+    triggerHaptic('light');
     navigation.navigate(tabName);
   }, [navigation]);
 
   const setCommunityTabCallback = useCallback((tab: CommunitySubTab) => {
+    // 드래그로 서브탭 변경 시 햅틱 피드백
+    triggerHaptic('light');
     useNavigationStore.getState().setCommunityTab(tab);
   }, []);
 
@@ -216,6 +233,9 @@ const FloatingTabBarSkia: React.FC<BottomTabBarProps> = ({
       return;
     }
 
+    // 햅틱 피드백 (살짝 가벼운 진동)
+    triggerHaptic('light');
+
     if (tabName === 'Community') {
       // 커뮤니티 탭 누르면 커뮤니티 모드로 전환, 현재 탭 저장
       const currentTab = getCurrentMainTab();
@@ -228,11 +248,15 @@ const FloatingTabBarSkia: React.FC<BottomTabBarProps> = ({
 
   // 커뮤니티 서브탭 프레스 핸들러
   const handleSubTabPress = (subTab: CommunitySubTab) => {
+    // 햅틱 피드백 (살짝 가벼운 진동)
+    triggerHaptic('light');
     setCommunityTab(subTab);
   };
 
   // 뒤로가기 핸들러
   const handleBackPress = () => {
+    // 햅틱 피드백 (살짝 가벼운 진동)
+    triggerHaptic('light');
     const prevTab = exitCommunityMode();
     // 이전 탭으로 돌아가기
     navigation.navigate(prevTab);
@@ -390,8 +414,9 @@ const SubTabItem: React.FC<{
         // 뒤로가기 버튼(0)을 제외한 영역에서만 드래그
         const absoluteFingerX = e.x + index * tabWidth;
         const indicatorCenterX = absoluteFingerX - tabWidth / 2;
-        // 최소 1 (뒤로가기 버튼 제외)
-        const clampedX = Math.max(tabWidth, Math.min(indicatorCenterX, (tabCount - 1) * tabWidth));
+        // 최소 1 (뒤로가기 버튼 제외), 양쪽 끝에 동일한 여백을 위해 오른쪽 최대값 조정
+        const maxX = (tabCount - 1) * tabWidth - 8;
+        const clampedX = Math.max(tabWidth, Math.min(indicatorCenterX, maxX));
         const targetIndex = Math.floor(absoluteFingerX / tabWidth);
         const clampedIndex = Math.max(1, Math.min(tabCount - 1, targetIndex));
 
@@ -571,7 +596,9 @@ const MainTabItem: React.FC<{
 
         const absoluteFingerX = e.x + index * tabWidth;
         const indicatorCenterX = absoluteFingerX - tabWidth / 2;
-        const clampedX = Math.max(0, Math.min(indicatorCenterX, (tabCount - 1) * tabWidth));
+        // 양쪽 끝에 동일한 여백을 위해 오른쪽 최대값 조정 (왼쪽과 대칭)
+        const maxX = (tabCount - 1) * tabWidth - 8;
+        const clampedX = Math.max(0, Math.min(indicatorCenterX, maxX));
         const targetIndex = Math.floor(absoluteFingerX / tabWidth);
         const clampedIndex = Math.max(0, Math.min(tabCount - 1, targetIndex));
 

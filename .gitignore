@@ -43,10 +43,16 @@ local.properties
 *.iml
 *.ipr
 
-# Env
+# Env (Root)
 .env
 .env.local
 .env.*.local
+
+# Mobile Environment Files (실제 환경 변수 - 절대 커밋 금지)
+mobile/.env
+mobile/.env.staging
+mobile/.env.production
+mobile/.env.local
 
 # Backend (Gradle)
 backend/.gradle/
@@ -55,6 +61,14 @@ backend/*/build/
 backend/bin/
 backend/out/
 backend/.gradle-cache/
+
+# Backend Environment Files (실제 환경 변수 - 절대 커밋 금지)
+backend/.env
+backend/.env.local
+backend/.env.staging
+backend/.env.prod
+backend/.env.*.local
+# .env.example은 커밋 허용 (템플릿)
 
 # TypeScript
 *.tsbuildinfo
@@ -68,3 +82,4 @@ coverage/
 
 # Claude Code
 .claude/
+

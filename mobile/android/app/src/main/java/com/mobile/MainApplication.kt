@@ -23,6 +23,7 @@ class MainApplication : Application(), ReactApplication {
               add(AppBlockerPackage())
               add(FocusTimerPackage())
               add(PomodoroWidgetPackage())
+              add(ScreenLockPackage())
             }
 
         override fun getJSMainModuleName(): String = "index"

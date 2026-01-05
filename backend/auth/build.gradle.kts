@@ -15,6 +15,9 @@ dependencies {
     // Spring Security
     implementation(libs.spring.boot.starter.security)
 
+    // Spring Data Redis
+    implementation(libs.spring.boot.starter.data.redis)
+
     // JWT
     implementation(libs.jjwt.api)
     runtimeOnly(libs.jjwt.impl)
@@ -29,6 +32,10 @@ dependencies {
 
 dependencyManagement {
     imports {
-        mavenBom(libs.spring.boot.dependencies.get().toString())
+        mavenBom(
+            libs.spring.boot.dependencies
+                .get()
+                .toString(),
+        )
     }
 }

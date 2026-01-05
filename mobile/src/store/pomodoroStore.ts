@@ -251,7 +251,7 @@ export const usePomodoroStore = create<PomodoroState>((set, get) => ({
     }).length;
 
     // 오늘 집중 시간 (분) - studyRecordStore에서 가져오기
-    const todaySessions = studyStore.studySessions.filter(s => {
+    const todaySessions = (studyStore.sessions || []).filter(s => {
       const sessionDate = new Date(s.startTime);
       const sessionDateStr = `${sessionDate.getFullYear()}-${String(sessionDate.getMonth() + 1).padStart(2, '0')}-${String(sessionDate.getDate()).padStart(2, '0')}`;
       return sessionDateStr === todayStr && s.type === 'pomodoro';

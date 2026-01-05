@@ -1,0 +1,6 @@
+# Grafana Agent 핸들러
+---
+- name: Grafana Agent 재시작
+  systemd:
+    name: grafana-agent
+    state: restarted

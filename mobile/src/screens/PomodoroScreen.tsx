@@ -18,6 +18,7 @@ import {
   AppStateStatus,
   PermissionsAndroid,
 } from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Icon from '@react-native-vector-icons/ionicons';
 import {usePomodoroStore} from '../store/pomodoroStore';
 import {useThemeStore} from '../store/themeStore';
@@ -28,6 +29,7 @@ import {safeGetColorScheme, safeAddAppearanceListener} from '../utils/appearance
 import AppBlocker from '../modules/AppBlocker';
 import LiveActivity, {LiveActivityTimerMode, LiveActivityColors} from '../modules/LiveActivity';
 import FocusTimer, {FocusTimerColors} from '../modules/FocusTimer';
+import ScreenLock from '../modules/ScreenLock';
 import {getPomodoroTheme} from '../themes/pomodoroThemes';
 import {sp, hp, fp, iconSize, touchSize} from '../utils/responsive';
 import {getStyles} from './PomodoroScreen.styles';
@@ -52,10 +54,7 @@ const PomodoroScreen: React.FC = () => {
 
   // 화면 잠금 감지 상태
   const [isScreenLocked, setIsScreenLocked] = useState(false);
-  const [lockStudyTime, setLockStudyTime] = useState(0); // 화면 잠금 중 공부한 시간 (초)
-  const [showFocusResult, setShowFocusResult] = useState(false); // 집중 결과 모달
-  const [focusResultTime, setFocusResultTime] = useState(0); // 결과 모달에 표시할 집중 시간
-  const [showFocusCard, setShowFocusCard] = useState(false); // 집중 완료 카드 표시
+  const [isScreenDimmed, setIsScreenDimmed] = useState(false); // 화면 어둡게 (잠금 버튼)
   const [showMemoModal, setShowMemoModal] = useState(false); // 세션 메모 모달
   const [sessionMemo, setSessionMemo] = useState(''); // 세션 메모 입력값
   const [showTimerHelpModal, setShowTimerHelpModal] = useState(false); // 타이머 도움말 모달
@@ -117,6 +116,7 @@ const PomodoroScreen: React.FC = () => {
   }, 0);
   const todayCompletedSessions = todayFocusSessions.filter(s => s.completed).length;
   const {width, height} = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const isLandscape = width > height;
 
   const {
@@ -735,14 +735,7 @@ const PomodoroScreen: React.FC = () => {
           const newTimeLeft = Math.max(0, timeLeftWhenBackground.current - elapsedSeconds);
           setTimeLeft(newTimeLeft);
 
-          // 집중 완료 카드 표시 (10초 이상 집중한 경우만)
-          if (elapsedSeconds >= 10) {
-            setFocusResultTime(elapsedSeconds);
-            setShowFocusCard(true);
-          }
-
           backgroundStartTime.current = null;
-          setLockStudyTime(0);
           setIsScreenLocked(false);
           wasRunningBeforeLock.current = false;
         }
@@ -753,82 +746,6 @@ const PomodoroScreen: React.FC = () => {
     const subscription = AppState.addEventListener('change', handleAppStateChange);
     return () => subscription?.remove();
   }, [isRunning, timeLeft, setTimeLeft]);
-
-  // 화면 잠금 중 공부 시간 카운트
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isScreenLocked && isRunning) {
-      interval = setInterval(() => {
-        setLockStudyTime(prev => prev + 1);
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isScreenLocked, isRunning]);
-
-  // 화면 잠금 공부 시간 포맷
-  const formatLockStudyTime = (): string => {
-    const hours = Math.floor(lockStudyTime / 3600);
-    const minutes = Math.floor((lockStudyTime % 3600) / 60);
-    const seconds = lockStudyTime % 60;
-    if (hours > 0) {
-      return `${hours}시간 ${minutes}분`;
-    }
-    if (minutes > 0) {
-      return `${minutes}분 ${seconds}초`;
-    }
-    return `${seconds}초`;
-  };
-
-  // 결과 모달용 시간 포맷
-  const formatResultTime = (seconds: number): {main: string; sub: string} => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    if (hours > 0) {
-      return {main: `${hours}시간 ${minutes}분`, sub: `${secs}초`};
-    }
-    if (minutes > 0) {
-      return {main: `${minutes}분`, sub: `${secs}초`};
-    }
-    return {main: `${secs}초`, sub: ''};
-  };
-
-  // 격려 메시지 생성
-  const getEncouragementMessage = (seconds: number): {emoji: string; title: string; message: string} => {
-    const minutes = Math.floor(seconds / 60);
-
-    if (minutes >= 60) {
-      return {
-        emoji: '🏆',
-        title: '대단해요!',
-        message: '1시간 이상 집중하다니 정말 멋져요!\n오늘 하루도 성공적이에요!',
-      };
-    } else if (minutes >= 30) {
-      return {
-        emoji: '🔥',
-        title: '훌륭해요!',
-        message: '30분 이상 집중에 성공했어요!\n이 페이스를 유지해봐요!',
-      };
-    } else if (minutes >= 15) {
-      return {
-        emoji: '💪',
-        title: '잘했어요!',
-        message: '15분 동안 휴대폰을 내려놓았어요!\n집중력이 좋아지고 있어요!',
-      };
-    } else if (minutes >= 5) {
-      return {
-        emoji: '👍',
-        title: '좋아요!',
-        message: '짧지만 확실한 집중이었어요!\n조금씩 시간을 늘려봐요!',
-      };
-    } else {
-      return {
-        emoji: '🌱',
-        title: '시작이 반이에요!',
-        message: '작은 시작도 소중해요!\n다음엔 조금 더 도전해봐요!',
-      };
-    }
-  };
 
   // Timer tick effect
   useEffect(() => {
@@ -997,27 +914,165 @@ const PomodoroScreen: React.FC = () => {
     return `${month}월 ${day}일 ${weekday}요일`;
   };
 
+  // 일반 화면 가로모드 레이아웃
+  if (isLandscape && !isFullscreen) {
+    const safeWidth = width - insets.left - insets.right;
+    const landscapeTimerSize = Math.min(height * 0.65, safeWidth * 0.35);
+
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar hidden={false} />
+        {/* 상단 버튼 - 전체화면 전환 */}
+        <View style={styles.landscapeTopButtons}>
+          <TouchableOpacity
+            style={[styles.landscapeTopButton, {backgroundColor: isDark ? '#2A2A2A' : '#F0F0F0'}]}
+            onPress={() => setIsFullscreen(true)}>
+            <Icon
+              name="expand"
+              size={iconSize(20)}
+              color={isDark ? '#AAAAAA' : '#666666'}
+            />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.landscapeContainer}>
+          {/* 왼쪽: 타이머 */}
+          <View style={styles.landscapeLeftSection}>
+            <View style={styles.landscapeTimerContainer}>
+              <TimeTimer
+                size={landscapeTimerSize}
+                progress={progress}
+                color={currentColor}
+                backgroundColor={isDark ? '#F5F5F5' : '#FFFFFF'}
+                timeText={formatTime(timeLeft)}
+                totalSeconds={getTotalDuration()}
+                isRunning={isRunning}
+                onPlayPause={handlePlayPause}
+                showButton={true}
+              />
+              <Text style={[styles.landscapeTimeText, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
+                {formatTime(timeLeft)}
+              </Text>
+            </View>
+          </View>
+
+          {/* 오른쪽: 컨트롤 */}
+          <View style={styles.landscapeRightSection}>
+            <View style={styles.landscapeControlsContainer}>
+              {/* 모드 선택 */}
+              {settings.appMode === 'FREE' ? (
+                <View style={styles.landscapeModeSelect}>
+                  <TouchableOpacity
+                    style={[
+                      styles.landscapeModeButton,
+                      {
+                        backgroundColor: mode === 'FOCUS' ? currentColor : (isDark ? '#252525' : '#F5F5F5'),
+                      }
+                    ]}
+                    onPress={() => !isRunning && setMode('FOCUS')}
+                    disabled={isRunning}>
+                    <Icon
+                      name="flame"
+                      size={iconSize(14)}
+                      color={mode === 'FOCUS' ? '#FFFFFF' : (isDark ? '#666666' : '#999999')}
+                    />
+                    <Text style={[
+                      styles.timerModeText,
+                      {color: mode === 'FOCUS' ? '#FFFFFF' : (isDark ? '#666666' : '#999999')}
+                    ]}>
+                      집중
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.landscapeModeButton,
+                      {
+                        backgroundColor: mode === 'BREAK' ? '#4CAF50' : (isDark ? '#252525' : '#F5F5F5'),
+                      }
+                    ]}
+                    onPress={() => !isRunning && setMode('BREAK')}
+                    disabled={isRunning}>
+                    <Icon
+                      name="cafe"
+                      size={iconSize(14)}
+                      color={mode === 'BREAK' ? '#FFFFFF' : (isDark ? '#666666' : '#999999')}
+                    />
+                    <Text style={[
+                      styles.timerModeText,
+                      {color: mode === 'BREAK' ? '#FFFFFF' : (isDark ? '#666666' : '#999999')}
+                    ]}>
+                      휴식
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View style={[styles.concentrationStatus, {backgroundColor: currentColor, marginBottom: hp(16)}]}>
+                  <Icon
+                    name={mode === 'FOCUS' ? 'flame' : 'cafe'}
+                    size={iconSize(14)}
+                    color="#FFFFFF"
+                  />
+                  <Text style={styles.concentrationStatusText}>
+                    {mode === 'FOCUS' ? '집중' : '휴식'} {currentCycle}/{settings.cycleCount}
+                  </Text>
+                </View>
+              )}
+
+              {/* 컨트롤 버튼 */}
+              <View style={styles.landscapeControls}>
+                <TouchableOpacity
+                  style={[styles.landscapeButton, {backgroundColor: currentColor}]}
+                  onPress={() => setIsRunning(!isRunning)}>
+                  <Text style={styles.buttonText}>
+                    {isRunning ? '일시정지' : '시작'}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.landscapeButton, {backgroundColor: isDark ? '#2A2A2A' : '#EFEFEF'}]}
+                  onPress={reset}>
+                  <Text style={[styles.buttonText, styles.secondaryButtonText]}>
+                    초기화
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </View>
+
+      </SafeAreaView>
+    );
+  }
+
   // 전체화면 모드일 때
   if (isFullscreen) {
-    // 화면 크기 계산
-    const effectiveWidth = isLandscape ? Math.max(width, height) : Math.min(width, height);
-    const effectiveHeight = isLandscape ? Math.min(width, height) : Math.max(width, height);
+    // 화면 크기 계산 - Safe Area 고려
+    const safeWidth = width - (isLandscape ? insets.left + insets.right : 0);
+    const safeHeight = height - (isLandscape ? 0 : insets.top + insets.bottom);
+    const effectiveWidth = isLandscape ? safeWidth : Math.min(width, height);
+    const effectiveHeight = isLandscape ? Math.min(width, height) : safeHeight;
 
     // 반응형 폰트 크기
-    const timeFontSize = isLandscape ? effectiveHeight * 0.28 : effectiveWidth * 0.2;
-    const dateFontSize = isLandscape ? effectiveHeight * 0.06 : effectiveWidth * 0.04;
-    const timerSize = isLandscape ? effectiveHeight * 0.8 : effectiveWidth * 0.88;
+    const timeFontSize = isLandscape ? effectiveHeight * 0.25 : effectiveWidth * 0.2;
+    const dateFontSize = isLandscape ? effectiveHeight * 0.05 : effectiveWidth * 0.04;
+    const timerSize = isLandscape ? effectiveHeight * 0.7 : effectiveWidth * 0.88;
 
     return (
       <TouchableOpacity
-        style={styles.fullscreenContainer}
+        style={[
+          styles.fullscreenContainer,
+          isLandscape && {
+            paddingLeft: insets.left,
+            paddingRight: insets.right,
+          }
+        ]}
         activeOpacity={1}
         onPress={handleScreenPress}>
         <StatusBar hidden={true} />
 
         <View style={[
           styles.fullscreenContent,
-          !isLandscape && styles.fullscreenContentPortrait
+          !isLandscape && styles.fullscreenContentPortrait,
+          isLandscape && {paddingHorizontal: 20}
         ]} pointerEvents="box-none">
           {/* 세로 모드 레이아웃 */}
           {!isLandscape ? (
@@ -1301,50 +1356,6 @@ const PomodoroScreen: React.FC = () => {
           </View>
         )}
 
-        {/* 집중 완료 카드 - 화면 잠금 후 돌아왔을 때 */}
-        {showFocusCard && focusResultTime > 0 && (
-          <TouchableOpacity
-            style={[styles.focusCompletedCard, {backgroundColor: currentColor}]}
-            onPress={() => {
-              setShowFocusCard(false);
-              setShowFocusResult(true);
-            }}
-            activeOpacity={0.9}>
-            <View style={styles.focusCompletedContent}>
-              <View style={styles.focusCompletedLeft}>
-                <Text style={styles.focusCompletedEmoji}>
-                  {getEncouragementMessage(focusResultTime).emoji}
-                </Text>
-                <View style={styles.focusCompletedTextContainer}>
-                  <Text style={styles.focusCompletedTitle}>
-                    {formatResultTime(focusResultTime).main} 집중!
-                  </Text>
-                  <Text style={styles.focusCompletedSubtitle}>
-                    탭하여 자세히 보기
-                  </Text>
-                </View>
-              </View>
-              <Icon name="chevron-forward" size={iconSize(24)} color="#FFFFFF" />
-            </View>
-          </TouchableOpacity>
-        )}
-
-        {/* 화면 잠금 집중 안내 - 타이머 실행 중일 때 */}
-        {isRunning && !showFocusCard && (
-          <View style={[styles.lockHintCard, {backgroundColor: isDark ? '#1E3A1E' : '#E8F5E9'}]}>
-            <View style={styles.lockHintContent}>
-              <Icon name="phone-portrait-outline" size={iconSize(24)} color="#4CAF50" />
-              <View style={styles.lockHintTextContainer}>
-                <Text style={[styles.lockHintTitle, {color: isDark ? '#81C784' : '#2E7D32'}]}>
-                  화면을 끄고 집중하세요
-                </Text>
-                <Text style={[styles.lockHintSubtitle, {color: isDark ? '#66BB6A' : '#43A047'}]}>
-                  화면 잠금 시간이 자동으로 기록됩니다
-                </Text>
-              </View>
-            </View>
-          </View>
-        )}
       </ScrollView>
 
       {/* Timer Settings Modal */}
@@ -1819,6 +1830,34 @@ const PomodoroScreen: React.FC = () => {
               {formatTime(timeLeft)}
             </Text>
 
+            {/* Screen Lock Button */}
+            <TouchableOpacity
+              style={[styles.screenLockButton, {backgroundColor: isDark ? '#2A2A2A' : '#F0F0F0'}]}
+              onPress={async () => {
+                const success = await ScreenLock.lockScreen();
+                if (success) {
+                  setIsScreenDimmed(true);
+                }
+              }}>
+              <Icon name="moon" size={iconSize(20)} color={isDark ? '#AAAAAA' : '#666666'} />
+              <Text style={[styles.screenLockButtonText, {color: isDark ? '#AAAAAA' : '#666666'}]}>
+                화면 끄기
+              </Text>
+            </TouchableOpacity>
+
+            {/* Screen Dimmed Overlay - 화면 끄기 상태 */}
+            {isScreenDimmed && (
+              <TouchableOpacity
+                style={styles.screenDimmedOverlay}
+                activeOpacity={1}
+                onPress={async () => {
+                  await ScreenLock.unlockScreen();
+                  setIsScreenDimmed(false);
+                }}>
+                <Text style={styles.screenDimmedText}>화면을 터치하면 켜집니다</Text>
+              </TouchableOpacity>
+            )}
+
             {/* Unlock Confirmation Prompt - Lock Screen 내부에 배치 */}
             {showUnlockPrompt && (
               <View style={styles.unlockPromptOverlay}>
@@ -2134,52 +2173,6 @@ const PomodoroScreen: React.FC = () => {
               <Text style={styles.appSelectorDoneButtonText}>
                 완료 ({tempBlockedApps.length}개 선택)
               </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* 집중 결과 모달 */}
-      <Modal
-        visible={showFocusResult}
-        animationType="fade"
-        transparent={true}
-        onRequestClose={() => setShowFocusResult(false)}>
-        <View style={styles.focusResultOverlay}>
-          <View style={[styles.focusResultContent, {backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF'}]}>
-            {/* 이모지 & 타이틀 */}
-            <Text style={styles.focusResultEmoji}>
-              {getEncouragementMessage(focusResultTime).emoji}
-            </Text>
-            <Text style={[styles.focusResultTitle, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
-              {getEncouragementMessage(focusResultTime).title}
-            </Text>
-
-            {/* 집중 시간 */}
-            <View style={[styles.focusResultTimeContainer, {backgroundColor: isDark ? '#2A2A2A' : '#F5F5F5'}]}>
-              <Text style={[styles.focusResultTimeMain, {color: currentColor}]}>
-                {formatResultTime(focusResultTime).main}
-              </Text>
-              {formatResultTime(focusResultTime).sub && (
-                <Text style={[styles.focusResultTimeSub, {color: isDark ? '#888888' : '#666666'}]}>
-                  {formatResultTime(focusResultTime).sub}
-                </Text>
-              )}
-              <Text style={[styles.focusResultTimeLabel, {color: isDark ? '#666666' : '#999999'}]}>
-                동안 집중했어요
-              </Text>
-            </View>
-
-            {/* 격려 메시지 */}
-            <Text style={[styles.focusResultMessage, {color: isDark ? '#AAAAAA' : '#666666'}]}>
-              {getEncouragementMessage(focusResultTime).message}
-            </Text>
-
-            {/* 확인 버튼 */}
-            <TouchableOpacity
-              style={[styles.focusResultButton, {backgroundColor: currentColor}]}
-              onPress={() => setShowFocusResult(false)}>
-              <Text style={styles.focusResultButtonText}>확인</Text>
             </TouchableOpacity>
           </View>
         </View>

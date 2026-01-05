@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- 테스트 코드 제외 -->
+    <Match>
+        <Source name="~.*Test\.java"/>
+    </Match>
+
+    <!-- DTO 클래스의 직렬화 관련 경고 무시 -->
+    <Match>
+        <Class name="~.*\.dto\..*"/>
+        <Bug pattern="SE_BAD_FIELD"/>
+    </Match>
+    <Match>
+        <Class name="~.*\.dto\..*"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="~.*\.dto\..*"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- Entity 클래스의 가변 필드 경고 무시 -->
+    <Match>
+        <Class name="~.*\.entity\..*"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="~.*\.entity\..*"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- Lombok @Slf4j 사용 시 발생하는 경고 무시 -->
+    <Match>
+        <Field name="log"/>
+        <Bug pattern="SE_TRANSIENT_FIELD_NOT_RESTORED"/>
+    </Match>
+
+    <!-- Spring @Autowired 필드 관련 경고 무시 -->
+    <Match>
+        <Bug pattern="URF_UNREAD_FIELD"/>
+    </Match>
+
+    <!-- Record 클래스 관련 경고 무시 (Java 16+) -->
+    <Match>
+        <Class name="~.*Record"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+</FindBugsFilter>

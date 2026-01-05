@@ -24,6 +24,10 @@ dependencies {
 
 dependencyManagement {
     imports {
-        mavenBom(libs.spring.boot.dependencies.get().toString())
+        mavenBom(
+            libs.spring.boot.dependencies
+                .get()
+                .toString(),
+        )
     }
 }

@@ -15,9 +15,15 @@ dependencies {
     // Spring Data JPA
     implementation(libs.spring.boot.starter.data.jpa)
 
+    // Spring Web (for GlobalExceptionHandler)
+    implementation(libs.spring.boot.starter.web)
+
+    // Spring Security (for exception handling)
+    compileOnly(libs.spring.boot.starter.security)
+
     // Database
-    runtimeOnly(libs.h2)
-    runtimeOnly(libs.postgresql)
+    runtimeOnly(libs.mysql)
+    testRuntimeOnly(libs.h2)
 
     // Spring Transaction
     implementation(libs.spring.tx)
@@ -25,6 +31,10 @@ dependencies {
 
 dependencyManagement {
     imports {
-        mavenBom(libs.spring.boot.dependencies.get().toString())
+        mavenBom(
+            libs.spring.boot.dependencies
+                .get()
+                .toString(),
+        )
     }
 }

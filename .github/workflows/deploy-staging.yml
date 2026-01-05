@@ -1,0 +1,113 @@
+# Staging 배포 - staging 브랜치 푸시 시
+name: Deploy to Staging
+
+on:
+  push:
+    branches:
+      - staging
+    paths:
+      - 'backend/**'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/tymee-backend
+
+jobs:
+  build:
+    name: 빌드
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: JDK 25 설정
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+
+      - name: Gradle 설정
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: 테스트 실행
+        working-directory: ./backend
+        run: ./gradlew test
+
+      - name: Gradle 빌드
+        working-directory: ./backend
+        run: ./gradlew clean build -x test
+
+      - name: 컨테이너 레지스트리 로그인
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker Buildx 설정
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker 이미지 빌드 및 푸시
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-${{ github.sha }}
+          platforms: linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Staging 배포
+    needs: build
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: 환경변수 로드
+        run: |
+          echo "${{ secrets.ENV_PROD }}" > /tmp/.env.prod
+          source /tmp/.env.prod
+          echo "STAGING_HOST=$STAGING_HOST" >> $GITHUB_ENV
+          echo "SSH_USER=$SSH_USER" >> $GITHUB_ENV
+          rm /tmp/.env.prod
+
+      - name: SSH 키 설정
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ env.STAGING_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Staging 서버에 배포
+        run: |
+          ssh ${{ env.SSH_USER }}@${{ env.STAGING_HOST }} << 'DEPLOY_SCRIPT'
+            cd ~/tymee/staging
+
+            # 최신 이미지 풀
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging
+
+            # 앱 재시작
+            docker compose down app
+            docker compose up -d app
+
+            # 헬스체크 대기
+            sleep 30
+
+            # 배포 검증
+            curl -f http://localhost:8080/actuator/health || exit 1
+
+            # 사용하지 않는 이미지 정리
+            docker image prune -f
+
+            echo "Staging 배포 완료!"
+          DEPLOY_SCRIPT

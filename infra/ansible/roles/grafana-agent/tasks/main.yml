@@ -1,0 +1,40 @@
+# Grafana Agent 설치
+---
+- name: Grafana Agent 아키텍처 확인
+  set_fact:
+    agent_arch: "{{ 'arm64' if ansible_architecture == 'aarch64' else 'amd64' }}"
+
+- name: Grafana Agent 다운로드
+  get_url:
+    url: "https://github.com/grafana/agent/releases/download/v{{ grafana_agent_version }}/grafana-agent-{{ grafana_agent_version }}-1.{{ agent_arch }}.deb"
+    dest: "/tmp/grafana-agent.deb"
+    mode: '0644'
+
+- name: Grafana Agent 설치
+  apt:
+    deb: "/tmp/grafana-agent.deb"
+    state: present
+
+- name: Grafana Agent 설정 디렉토리 생성
+  file:
+    path: /etc/grafana-agent
+    state: directory
+    mode: '0755'
+
+- name: Grafana Agent 설정 파일 복사
+  template:
+    src: agent.yaml.j2
+    dest: /etc/grafana-agent/agent.yaml
+    mode: '0644'
+  notify: Grafana Agent 재시작
+
+- name: Grafana Agent 서비스 시작
+  systemd:
+    name: grafana-agent
+    state: started
+    enabled: yes
+
+- name: 임시 파일 삭제
+  file:
+    path: "/tmp/grafana-agent.deb"
+    state: absent

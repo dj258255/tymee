@@ -1,0 +1,69 @@
+# 공통 서버 세팅
+---
+- name: 시스템 패키지 업데이트
+  apt:
+    update_cache: yes
+    upgrade: dist
+    cache_valid_time: 3600
+
+- name: 필수 패키지 설치
+  apt:
+    name:
+      - curl
+      - wget
+      - git
+      - vim
+      - htop
+      - net-tools
+      - unzip
+      - apt-transport-https
+      - ca-certificates
+      - gnupg
+      - lsb-release
+      - python3-pip
+    state: present
+
+- name: 타임존 설정 (Asia/Seoul)
+  timezone:
+    name: Asia/Seoul
+
+- name: 스왑 파일 생성 (2GB)
+  command: fallocate -l 2G /swapfile
+  args:
+    creates: /swapfile
+
+- name: 스왑 파일 권한 설정
+  file:
+    path: /swapfile
+    mode: '0600'
+
+- name: 스왑 영역 생성
+  command: mkswap /swapfile
+  args:
+    creates: /swapfile
+  register: mkswap_result
+  changed_when: mkswap_result.rc == 0
+  failed_when: false
+
+- name: 스왑 활성화
+  command: swapon /swapfile
+  register: swapon_result
+  changed_when: swapon_result.rc == 0
+  failed_when: false
+
+- name: fstab에 스왑 추가
+  lineinfile:
+    path: /etc/fstab
+    line: '/swapfile none swap sw 0 0'
+    state: present
+
+- name: 프로젝트 디렉토리 생성
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+  loop:
+    - /home/{{ ansible_user }}/tymee
+    - /home/{{ ansible_user }}/tymee/logs

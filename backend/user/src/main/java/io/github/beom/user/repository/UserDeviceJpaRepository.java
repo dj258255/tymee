@@ -1,0 +1,22 @@
+package io.github.beom.user.repository;
+
+import io.github.beom.user.entity.UserDeviceEntity;
+import java.util.List;
+import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+/** 사용자 디바이스 JPA 레포지토리. */
+public interface UserDeviceJpaRepository extends JpaRepository<UserDeviceEntity, Long> {
+
+  /** 사용자 ID와 디바이스 ID로 디바이스를 조회한다. */
+  Optional<UserDeviceEntity> findByUserIdAndDeviceId(Long userId, String deviceId);
+
+  /** 사용자의 모든 디바이스를 조회한다. 푸시 알림 발송 시 사용. */
+  List<UserDeviceEntity> findAllByUserId(Long userId);
+
+  /** 사용자 ID와 디바이스 ID로 디바이스를 삭제한다. */
+  void deleteByUserIdAndDeviceId(Long userId, String deviceId);
+
+  /** 사용자의 모든 디바이스를 삭제한다. 회원 탈퇴 시 사용. */
+  void deleteAllByUserId(Long userId);
+}

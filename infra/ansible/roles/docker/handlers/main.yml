@@ -1,0 +1,6 @@
+# Docker 핸들러
+---
+- name: Docker 재시작
+  systemd:
+    name: docker
+    state: restarted

@@ -7,7 +7,8 @@ spring-dependency-management = "1.1.7"
 
 # Database
 h2 = "2.4.240"
-postgresql = "42.7.4"
+mysql = "9.2.0"
+flyway = "11.1.0"
 
 # JWT
 jjwt = "0.12.6"
@@ -19,9 +20,21 @@ jakarta-validation = "3.1.0"
 commons-lang3 = "3.17.0"
 lombok = "1.18.36"
 
+# API Documentation
+springdoc = "2.8.3"
+
+# Monitoring
+micrometer = "1.14.2"
+
 # Testing
 junit = "5.11.4"
 mockito = "5.15.2"
+
+# Code Quality
+spotless = "7.0.2"
+checkstyle = "12.3.0"
+spotbugs = "6.4.8"
+spotbugs-annotations = "4.9.8"
 
 [libraries]
 # Spring Boot Starters (versions managed by Spring Boot BOM)
@@ -30,6 +43,7 @@ spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-
 spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation" }
 spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security" }
 spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
+spring-boot-starter-log4j2 = { module = "org.springframework.boot:spring-boot-starter-log4j2" }
 
 # Spring Framework
 spring-context = { module = "org.springframework:spring-context", version.ref = "spring-framework" }
@@ -43,7 +57,13 @@ jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
 
 # Database
 h2 = { module = "com.h2database:h2", version.ref = "h2" }
-postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
+mysql = { module = "com.mysql:mysql-connector-j", version.ref = "mysql" }
+flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
+flyway-mysql = { module = "org.flywaydb:flyway-mysql", version.ref = "flyway" }
+
+# Spring Boot Data Starters
+spring-boot-starter-data-redis = { module = "org.springframework.boot:spring-boot-starter-data-redis" }
+spring-boot-starter-data-mongodb = { module = "org.springframework.boot:spring-boot-starter-data-mongodb" }
 
 # Validation
 jakarta-validation = { module = "jakarta.validation:jakarta.validation-api", version.ref = "jakarta-validation" }
@@ -61,7 +81,21 @@ junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
 mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito" }
 
+# Code Quality
+spotbugs-annotations = { module = "com.github.spotbugs:spotbugs-annotations", version.ref = "spotbugs-annotations" }
+
+# API Documentation
+springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
+
+# Monitoring
+spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }
+micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometer" }
+
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
 spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
 lombok = { id = "io.freefair.lombok", version = "9.1.0" }
+
+# Code Quality
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+spotbugs = { id = "com.github.spotbugs", version.ref = "spotbugs" }

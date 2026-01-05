@@ -1,0 +1,174 @@
+# 인프라 세팅 - 수동 실행
+name: Infrastructure Setup
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: '세팅할 서버'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - staging
+          - production
+          - db
+          - cache
+
+jobs:
+  setup:
+    name: Ansible 실행
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Python 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Ansible 설치
+        run: |
+          pip install ansible
+          ansible-galaxy collection install community.docker
+
+      - name: 환경변수 로드
+        run: |
+          echo "${{ secrets.ENV_PROD }}" > /tmp/.env.prod
+          source /tmp/.env.prod
+          echo "PROD_HOST=$PROD_HOST" >> $GITHUB_ENV
+          echo "STAGING_HOST=$STAGING_HOST" >> $GITHUB_ENV
+          echo "DB_HOST=$DB_HOST" >> $GITHUB_ENV
+          echo "CACHE_HOST=$CACHE_HOST" >> $GITHUB_ENV
+          echo "SSH_USER=$SSH_USER" >> $GITHUB_ENV
+
+      - name: SSH 키 설정
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H $PROD_HOST >> ~/.ssh/known_hosts 2>/dev/null || true
+          ssh-keyscan -H $STAGING_HOST >> ~/.ssh/known_hosts 2>/dev/null || true
+          ssh-keyscan -H $DB_HOST >> ~/.ssh/known_hosts 2>/dev/null || true
+          ssh-keyscan -H $CACHE_HOST >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Ansible 설정 파일 생성
+        run: |
+          echo "${{ secrets.ENV_PROD }}" > /tmp/.env.prod
+          source /tmp/.env.prod
+
+          # 임시 inventory 디렉토리 생성
+          mkdir -p /tmp/ansible-inventory/group_vars
+
+          # hosts.yml 생성
+          cat > /tmp/ansible-inventory/hosts.yml << EOF
+          all:
+            vars:
+              ansible_user: $SSH_USER
+              ansible_ssh_private_key_file: ~/.ssh/id_rsa
+              ansible_python_interpreter: /usr/bin/python3
+
+            children:
+              production:
+                children:
+                  app_servers:
+                    hosts:
+                      aarch64-1:
+                        ansible_host: $PROD_HOST
+                        server_role: app
+                        environment: prod
+
+                  db_servers:
+                    hosts:
+                      aarch64-3:
+                        ansible_host: $DB_HOST
+                        server_role: db
+                        environment: prod
+
+                  cache_servers:
+                    hosts:
+                      aarch64-4:
+                        ansible_host: $CACHE_HOST
+                        server_role: cache
+                        environment: prod
+
+              staging:
+                hosts:
+                  aarch64-2:
+                    ansible_host: $STAGING_HOST
+                    server_role: staging
+                    environment: staging
+
+              arm_servers:
+                hosts:
+                  aarch64-1:
+                  aarch64-2:
+                  aarch64-3:
+                  aarch64-4:
+          EOF
+
+          # all.yml 생성
+          cat > /tmp/ansible-inventory/group_vars/all.yml << EOF
+          # GitHub
+          github_repository: "${{ github.repository }}"
+          github_username: "${{ github.actor }}"
+          github_token: "${{ secrets.GITHUB_TOKEN }}"
+
+          # 도메인
+          production_domain: "$PRODUCTION_DOMAIN"
+          staging_domain: "$STAGING_DOMAIN"
+          ssl_enabled: false
+
+          # 서버 IP
+          db_host: "$DB_HOST"
+          cache_host: "$CACHE_HOST"
+
+          # MySQL
+          mysql_root_password: "$MYSQL_ROOT_PASSWORD"
+          mysql_user: "$MYSQL_USER"
+          mysql_password: "$MYSQL_PASSWORD"
+
+          # MongoDB
+          mongo_root_username: "$MONGO_ROOT_USERNAME"
+          mongo_root_password: "$MONGO_ROOT_PASSWORD"
+          mongo_username: "$MONGO_USERNAME"
+          mongo_password: "$MONGO_PASSWORD"
+
+          # Redis
+          redis_password: "$REDIS_PASSWORD"
+
+          # RabbitMQ
+          rabbitmq_user: "$RABBITMQ_USER"
+          rabbitmq_password: "$RABBITMQ_PASSWORD"
+
+          # JWT
+          jwt_secret: "$JWT_SECRET"
+          jwt_expiration: "$JWT_EXPIRATION"
+
+          # Grafana
+          grafana_agent_version: "0.40.0"
+          grafana_remote_write_url: "$GRAFANA_REMOTE_WRITE_URL"
+          grafana_loki_url: "$GRAFANA_LOKI_URL"
+          grafana_username: "$GRAFANA_USERNAME"
+          grafana_api_key: "$GRAFANA_API_KEY"
+          EOF
+
+          rm /tmp/.env.prod
+
+      - name: Ansible 실행
+        working-directory: infra/ansible
+        run: |
+          if [ "${{ inputs.target }}" = "all" ]; then
+            ansible-playbook -i /tmp/ansible-inventory playbooks/setup-all.yml
+          elif [ "${{ inputs.target }}" = "staging" ]; then
+            ansible-playbook -i /tmp/ansible-inventory playbooks/setup-all.yml --limit staging
+          elif [ "${{ inputs.target }}" = "production" ]; then
+            ansible-playbook -i /tmp/ansible-inventory playbooks/setup-all.yml --limit app_servers
+          elif [ "${{ inputs.target }}" = "db" ]; then
+            ansible-playbook -i /tmp/ansible-inventory playbooks/setup-all.yml --limit db_servers
+          elif [ "${{ inputs.target }}" = "cache" ]; then
+            ansible-playbook -i /tmp/ansible-inventory playbooks/setup-all.yml --limit cache_servers
+          fi

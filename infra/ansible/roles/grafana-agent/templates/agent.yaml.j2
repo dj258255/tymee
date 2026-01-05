@@ -1,0 +1,116 @@
+# Grafana Agent 설정 파일
+# Ansible에 의해 자동 생성됨
+
+server:
+  log_level: info
+
+metrics:
+  global:
+    scrape_interval: 15s
+    external_labels:
+      environment: {{ environment }}
+      server: {{ inventory_hostname }}
+
+  configs:
+    - name: integrations
+      remote_write:
+        - url: {{ grafana_remote_write_url }}
+          basic_auth:
+            username: {{ grafana_username }}
+            password: {{ grafana_api_key }}
+
+      scrape_configs:
+        # Node Exporter (내장)
+        - job_name: 'node'
+          static_configs:
+            - targets: ['localhost:9100']
+              labels:
+                instance: {{ inventory_hostname }}
+
+        # cadvisor - 컨테이너 메트릭
+        - job_name: 'cadvisor'
+          static_configs:
+            - targets: ['localhost:8081']
+              labels:
+                instance: {{ inventory_hostname }}
+
+{% if server_role in ['app', 'staging'] %}
+        # Spring Boot Actuator
+        - job_name: 'spring-boot'
+          metrics_path: '/actuator/prometheus'
+          static_configs:
+            - targets: ['localhost:8080']
+              labels:
+                instance: {{ inventory_hostname }}
+{% endif %}
+
+{% if server_role in ['db', 'staging'] %}
+        # MySQL Exporter
+        - job_name: 'mysql'
+          static_configs:
+            - targets: ['localhost:9104']
+              labels:
+                instance: {{ inventory_hostname }}
+
+        # MongoDB Exporter
+        - job_name: 'mongodb'
+          static_configs:
+            - targets: ['localhost:9216']
+              labels:
+                instance: {{ inventory_hostname }}
+{% endif %}
+
+{% if server_role in ['cache', 'staging'] %}
+        # Redis Exporter
+        - job_name: 'redis'
+          static_configs:
+            - targets: ['localhost:9121']
+              labels:
+                instance: {{ inventory_hostname }}
+
+        # RabbitMQ Exporter
+        - job_name: 'rabbitmq'
+          static_configs:
+            - targets: ['localhost:9419']
+              labels:
+                instance: {{ inventory_hostname }}
+{% endif %}
+
+integrations:
+  node_exporter:
+    enabled: true
+    rootfs_path: /
+    sysfs_path: /sys
+    procfs_path: /proc
+
+  prometheus_remote_write:
+    - url: {{ grafana_remote_write_url }}
+      basic_auth:
+        username: {{ grafana_username }}
+        password: {{ grafana_api_key }}
+
+logs:
+  configs:
+    - name: default
+      positions:
+        filename: /tmp/positions.yaml
+      clients:
+        - url: {{ grafana_loki_url }}
+          basic_auth:
+            username: {{ grafana_username }}
+            password: {{ grafana_api_key }}
+          external_labels:
+            environment: {{ environment }}
+            server: {{ inventory_hostname }}
+      scrape_configs:
+        # Docker 컨테이너 로그
+        - job_name: docker
+          docker_sd_configs:
+            - host: unix:///var/run/docker.sock
+              refresh_interval: 5s
+          relabel_configs:
+            - source_labels: ['__meta_docker_container_name']
+              regex: '/(.+)'
+              target_label: 'container'
+            - source_labels: ['__meta_docker_container_log_stream']
+              target_label: 'stream'

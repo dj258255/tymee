@@ -1,7 +1,24 @@
-# 인프라 세팅 - 수동 실행
-name: Infrastructure Setup
+# 인프라 워크플로우
+# - infra/** 변경 시: Ansible Lint (검증만)
+# - 수동 실행: 실제 서버 세팅 (Ansible 적용)
+name: Infrastructure
 
 on:
+  push:
+    branches:
+      - develop
+      - staging
+      - master
+    paths:
+      - 'infra/**'
+      - '.github/workflows/infra.yml'
+  pull_request:
+    branches:
+      - develop
+      - staging
+      - master
+    paths:
+      - 'infra/**'
   workflow_dispatch:
     inputs:
       target:
@@ -17,9 +34,46 @@ on:
           - cache
 
 jobs:
-  setup:
-    name: Ansible 실행
+  # ===========================================
+  # Ansible Lint (자동 - infra/** 변경 시)
+  # ===========================================
+  lint:
+    name: Ansible Lint
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Python 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Ansible Lint 설치
+        run: pip install ansible ansible-lint
+
+      - name: Ansible Lint 실행
+        working-directory: infra/ansible
+        run: ansible-lint playbooks/
+
+      - name: Ansible 문법 검사
+        working-directory: infra/ansible
+        run: |
+          for playbook in playbooks/*.yml; do
+            echo "Checking $playbook..."
+            ansible-playbook --syntax-check "$playbook" || exit 1
+          done
+
+  # ===========================================
+  # 서버 세팅 (수동 실행만)
+  # ===========================================
+  setup:
+    name: 서버 세팅 (${{ inputs.target }})
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    environment: ${{ inputs.target == 'production' && 'production' || 'staging' }}
 
     steps:
       - name: 코드 체크아웃

@@ -1,40 +1,23 @@
-import axios from 'axios';
-
+// API client placeholder - axios will be installed when backend integration is needed
 const API_BASE_URL = __DEV__
   ? 'http://localhost:8080/api'
   : 'https://your-production-api.com/api';
 
-export const apiClient = axios.create({
+// Simple fetch-based API client
+export const apiClient = {
   baseURL: API_BASE_URL,
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
+  async get(url: string) {
+    const response = await fetch(`${API_BASE_URL}${url}`);
+    return response.json();
   },
-});
-
-// Request interceptor
-apiClient.interceptors.request.use(
-  config => {
-    // Add auth token here if needed
-    // const token = await getToken();
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`;
-    // }
-    return config;
+  async post(url: string, data: unknown) {
+    const response = await fetch(`${API_BASE_URL}${url}`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data),
+    });
+    return response.json();
   },
-  error => {
-    return Promise.reject(error);
-  },
-);
-
-// Response interceptor
-apiClient.interceptors.response.use(
-  response => response,
-  error => {
-    // Handle errors globally
-    console.error('API Error:', error);
-    return Promise.reject(error);
-  },
-);
+};
 
 export default apiClient;

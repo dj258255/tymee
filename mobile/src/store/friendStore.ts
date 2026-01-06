@@ -304,7 +304,7 @@ export const useFriendStore = create<FriendState>((set, get) => ({
       const newFriend: Friend = {
         id: request.from.id,
         nickname: request.from.nickname,
-        profileImage: request.from.profileImage,
+        profileImageUrl: request.from.profileImage,
         status: 'offline',
         level: request.from.level,
       };

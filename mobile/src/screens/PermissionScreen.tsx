@@ -60,14 +60,6 @@ const PermissionScreen: React.FC<{onComplete: () => void}> = ({onComplete}) => {
         required: true,
       },
       {
-        id: 'notification',
-        title: '알림',
-        description: '타이머 완료 알림을 받기 위해 필요합니다',
-        icon: 'notifications-outline',
-        permission: PERMISSIONS.IOS.NOTIFICATIONS,
-        required: true,
-      },
-      {
         id: 'camera',
         title: '카메라',
         description: '프로필 사진 촬영을 위해 필요합니다',
@@ -83,14 +75,6 @@ const PermissionScreen: React.FC<{onComplete: () => void}> = ({onComplete}) => {
         description: '일정 기록 및 관리를 위해 필요합니다',
         icon: 'calendar-outline',
         permission: PERMISSIONS.ANDROID.READ_CALENDAR,
-        required: true,
-      },
-      {
-        id: 'notification',
-        title: '알림',
-        description: '타이머 완료 알림을 받기 위해 필요합니다',
-        icon: 'notifications-outline',
-        permission: PERMISSIONS.ANDROID.POST_NOTIFICATIONS,
         required: true,
       },
       {

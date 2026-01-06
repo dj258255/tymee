@@ -7,7 +7,7 @@ import {
   Dimensions,
 } from 'react-native';
 import Icon from '@react-native-vector-icons/ionicons';
-import {useStudyRecordStore, DailyStats} from '../store/studyRecordStore';
+import {useStudyRecordStore} from '../store/studyRecordStore';
 import {usePomodoroStore} from '../store/pomodoroStore';
 import {StudyRecordTheme} from '../themes/studyRecordThemes';
 import NotebookCard from './NotebookCard';
@@ -297,8 +297,8 @@ const StudyReport: React.FC<StudyReportProps> = ({theme, isDark}) => {
     const daysInMonth = monthlyData.daysInMonth;
 
     const cellSize = (SCREEN_WIDTH - sp(80)) / 7 - sp(4);
-    const weeks: (DailyStats | null)[][] = [];
-    let currentWeek: (DailyStats | null)[] = [];
+    const weeks: (FocusDayStats | null)[][] = [];
+    let currentWeek: (FocusDayStats | null)[] = [];
 
     // 첫 주 빈 칸 채우기
     for (let i = 0; i < firstDay; i++) {

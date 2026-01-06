@@ -138,7 +138,7 @@ const GroupContent: React.FC = () => {
   const [activeDetailTab, setActiveDetailTab] = useState<'info' | 'members' | 'board' | 'chat' | 'study'>('info');
   const [studyPeriodType, setStudyPeriodType] = useState<'day' | 'week' | 'month'>('day'); // 1일/7일/1달 단위
   const [studyDateOffset, setStudyDateOffset] = useState(0); // 날짜 오프셋 (0=오늘/이번주/이번달)
-  const [_showMoreMenu, _setShowMoreMenu] = useState(false); // 더보기 메뉴 표시 여부 (미래 사용을 위해 보존)
+  const [_showMoreMenu, setShowMoreMenu] = useState(false); // 더보기 메뉴 표시 여부
   const [isSearchMode, setIsSearchMode] = useState(false); // 검색 모드 여부
   const [selectedPost, setSelectedPost] = useState<GroupNotice | null>(null); // 선택된 게시글
   const [showPostDetail, setShowPostDetail] = useState(false); // 게시글 상세 페이지
@@ -168,6 +168,8 @@ const GroupContent: React.FC = () => {
   const [isBreakTime, setIsBreakTime] = useState(false); // 휴식 시간 여부
   const FOCUS_TIME = 25 * 60; // 25분 집중
   const BREAK_TIME = 5 * 60; // 5분 휴식
+  const currentTotalTime = isBreakTime ? BREAK_TIME : FOCUS_TIME;
+  const timerProgress = sessionTimeLeft / currentTotalTime;
 
   // 모임 생성 폼
   const [newGroupName, setNewGroupName] = useState('');

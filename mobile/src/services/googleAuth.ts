@@ -1,7 +1,6 @@
 import {
   GoogleSignin,
   statusCodes,
-  type User,
 } from '@react-native-google-signin/google-signin';
 
 // Google Sign-In 초기화
@@ -18,16 +17,24 @@ export const configureGoogleSignIn = () => {
 // Google 로그인
 export const signInWithGoogle = async (): Promise<{
   idToken: string;
-  user: User['data'];
+  user: any;
 } | null> => {
   try {
     await GoogleSignin.hasPlayServices();
-    const response = await GoogleSignin.signIn();
+    const response: any = await GoogleSignin.signIn();
 
-    if ('data' in response && response.data?.idToken) {
+    if (response?.data?.idToken) {
       return {
         idToken: response.data.idToken,
         user: response.data,
+      };
+    }
+
+    // Legacy format support
+    if (response?.idToken) {
+      return {
+        idToken: response.idToken,
+        user: response.user,
       };
     }
 
@@ -56,10 +63,10 @@ export const signOutGoogle = async (): Promise<void> => {
 };
 
 // 현재 로그인된 사용자 확인
-export const getCurrentUser = async (): Promise<User['data'] | null> => {
+export const getCurrentUser = async (): Promise<any | null> => {
   try {
-    const response = await GoogleSignin.getCurrentUser();
-    return response?.data ?? null;
+    const response: any = await GoogleSignin.getCurrentUser();
+    return response?.data ?? response?.user ?? null;
   } catch (error) {
     return null;
   }

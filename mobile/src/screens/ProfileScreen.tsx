@@ -14,7 +14,6 @@ import {
 import Icon from '@react-native-vector-icons/ionicons';
 import {useTranslation} from 'react-i18next';
 import {useThemeStore} from '../store/themeStore';
-import {useLanguageStore} from '../store/languageStore';
 import {safeGetColorScheme, safeAddAppearanceListener} from '../utils/appearance';
 import ProfileCard, {CARD_FRAMES, CardFrameType, defaultUser, AVATAR_FRAME_DATA} from '../components/ProfileCard';
 import {sp, hp, fp, iconSize} from '../utils/responsive';
@@ -74,7 +73,7 @@ const BADGES: {id: string; name: string; description: string; icon: string; colo
 ];
 
 const ProfileScreen: React.FC<{onBack: () => void}> = ({onBack}) => {
-  const {t, i18n} = useTranslation();
+  const {t} = useTranslation();
   const [systemColorScheme, setSystemColorScheme] = useState<'light' | 'dark'>('light');
   const [showNicknameModal, setShowNicknameModal] = useState(false);
   const [showProfilePhotoModal, setShowProfilePhotoModal] = useState(false);
@@ -89,8 +88,8 @@ const ProfileScreen: React.FC<{onBack: () => void}> = ({onBack}) => {
   const [selectedBadges, setSelectedBadges] = useState<string[]>(['steady']);
   const [previewBadge, setPreviewBadge] = useState<string | null>(null);
   const [badgeTab, setBadgeTab] = useState<BadgeCategory>('basic');
-  const [ownedFrames, setOwnedFrames] = useState<CardFrameType[]>(['default', 'gold', 'bronze', 'space']);
-  const [ownedBadges, setOwnedBadges] = useState<string[]>(['beginner', 'steady', 'focused', 'level10', 'streak7']);
+  const [ownedFrames, _setOwnedFrames] = useState<CardFrameType[]>(['default', 'gold', 'bronze', 'space']);
+  const [ownedBadges, _setOwnedBadges] = useState<string[]>(['beginner', 'steady', 'focused', 'level10', 'streak7']);
   const [bio, setBio] = useState('매일 조금씩 성장하는 중입니다 🌱');
   const [showBioModal, setShowBioModal] = useState(false);
   const [tempBio, setTempBio] = useState(bio);
@@ -139,8 +138,9 @@ const ProfileScreen: React.FC<{onBack: () => void}> = ({onBack}) => {
 
   const styles = getStyles(isDark);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const getCurrentBadge = () => {
-    if (selectedBadges.length === 0) return null;
+    if (selectedBadges.length === 0) {return null;}
     const badge = BADGES.find(b => b.id === selectedBadges[0]);
     return badge || null;
   };
@@ -606,8 +606,8 @@ const ProfileScreen: React.FC<{onBack: () => void}> = ({onBack}) => {
                   .sort((a, b) => {
                     const aOwned = ownedFrames.includes(a);
                     const bOwned = ownedFrames.includes(b);
-                    if (aOwned && !bOwned) return -1;
-                    if (!aOwned && bOwned) return 1;
+                    if (aOwned && !bOwned) {return -1;}
+                    if (!aOwned && bOwned) {return 1;}
                     return 0;
                   })
                   .map((frameKey) => {
@@ -812,8 +812,8 @@ const ProfileScreen: React.FC<{onBack: () => void}> = ({onBack}) => {
                   .sort((a, b) => {
                     const aOwned = ownedBadges.includes(a.id);
                     const bOwned = ownedBadges.includes(b.id);
-                    if (aOwned && !bOwned) return -1;
-                    if (!aOwned && bOwned) return 1;
+                    if (aOwned && !bOwned) {return -1;}
+                    if (!aOwned && bOwned) {return 1;}
                     return 0;
                   })
                   .map((badge) => {
@@ -1520,7 +1520,7 @@ const getStyles = (isDark: boolean) =>
       shadowRadius: 4,
       elevation: 3,
     },
-    badgeIconContainer: {
+    badgeIconContainerLarge: {
       width: sp(56),
       height: sp(56),
       borderRadius: sp(10),

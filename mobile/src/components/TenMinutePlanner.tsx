@@ -18,7 +18,6 @@ import type {RenderThumbProps} from 'reanimated-color-picker';
 import Animated, {useAnimatedStyle} from 'react-native-reanimated';
 import {
   StudyRecordTheme,
-  getThemeShadow,
 } from '../themes/studyRecordThemes';
 import {sp, hp, fp, iconSize} from '../utils/responsive';
 
@@ -106,7 +105,7 @@ const TenMinutePlanner: React.FC<TenMinutePlannerProps> = ({
   onUpdateSubject,
   onDeleteSubject,
   startHour = 0,
-  endHour = 24,
+  endHour: _endHour = 24,
   editable = true,
   theme,
   showSubjectModalExternal = false,
@@ -242,7 +241,7 @@ const TenMinutePlanner: React.FC<TenMinutePlannerProps> = ({
 
   // 블록 색상 가져오기
   const getBlockColor = (subjectId: string | null): string => {
-    if (!subjectId) return 'transparent';
+    if (!subjectId) {return 'transparent';}
     const subject = subjects.find(s => s.id === subjectId);
     return subject?.color || '#007AFF';
   };
@@ -261,10 +260,10 @@ const TenMinutePlanner: React.FC<TenMinutePlannerProps> = ({
 
   // 블록 롱프레스 핸들러 (인라인 편집 열기)
   const handleBlockLongPress = (hour: number, minute: number) => {
-    if (!editable || !onBlockChange) return;
+    if (!editable || !onBlockChange) {return;}
 
     const block = blocks.find(b => b.hour === hour && b.minute === minute);
-    if (!block) return; // 색칠된 블록만 선택 가능
+    if (!block) {return;} // 색칠된 블록만 선택 가능
 
     setEditingBlock({hour, minute});
     setBlockMemo(block.memo || '');
@@ -272,7 +271,7 @@ const TenMinutePlanner: React.FC<TenMinutePlannerProps> = ({
 
   // 메모 저장
   const handleSaveMemo = () => {
-    if (!editingBlock || !onBlockChange) return;
+    if (!editingBlock || !onBlockChange) {return;}
 
     const newBlocks = blocks.map(b => {
       if (b.hour === editingBlock.hour && b.minute === editingBlock.minute) {
@@ -288,7 +287,7 @@ const TenMinutePlanner: React.FC<TenMinutePlannerProps> = ({
 
   // 블록 터치 핸들러
   const handleBlockPress = (hour: number, minute: number) => {
-    if (!editable || !onBlockChange) return;
+    if (!editable || !onBlockChange) {return;}
 
     const existingBlock = blocks.find(b => b.hour === hour && b.minute === minute);
 
@@ -316,7 +315,7 @@ const TenMinutePlanner: React.FC<TenMinutePlannerProps> = ({
   const formatMinutes = (mins: number) => {
     const h = Math.floor(mins / 60);
     const m = mins % 60;
-    if (h > 0) return `${h}시간 ${m > 0 ? `${m}분` : ''}`;
+    if (h > 0) {return `${h}시간 ${m > 0 ? `${m}분` : ''}`;}
     return `${m}분`;
   };
 
@@ -354,7 +353,7 @@ const TenMinutePlanner: React.FC<TenMinutePlannerProps> = ({
 
   // 과목 삭제
   const handleDeleteSubject = () => {
-    if (!editingSubject) return;
+    if (!editingSubject) {return;}
 
     Alert.alert(
       '과목 삭제',
@@ -646,7 +645,7 @@ const TenMinutePlanner: React.FC<TenMinutePlannerProps> = ({
                 />
                 <Text style={[
                   styles.statusButtonText,
-                  {color: blockStatus === 'completed' ? '#FFFFFF' : subtextColor}
+                  {color: blockStatus === 'completed' ? '#FFFFFF' : subtextColor},
                 ]}>
                   {blockStatus === 'completed' ? '완료됨' : '미완료'}
                 </Text>

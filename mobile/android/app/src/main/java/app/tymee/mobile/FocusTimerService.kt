@@ -1,4 +1,4 @@
-package com.mobile
+package app.tymee.mobile
 
 import android.app.*
 import android.content.Context
@@ -20,11 +20,11 @@ class FocusTimerService : Service() {
         const val CHANNEL_ID = "focus_timer_channel"
         const val NOTIFICATION_ID = 1001
 
-        const val ACTION_START = "com.mobile.action.START"
-        const val ACTION_PAUSE = "com.mobile.action.PAUSE"
-        const val ACTION_RESUME = "com.mobile.action.RESUME"
-        const val ACTION_STOP = "com.mobile.action.STOP"
-        const val ACTION_SYNC = "com.mobile.action.SYNC"
+        const val ACTION_START = "app.tymee.mobile.action.START"
+        const val ACTION_PAUSE = "app.tymee.mobile.action.PAUSE"
+        const val ACTION_RESUME = "app.tymee.mobile.action.RESUME"
+        const val ACTION_STOP = "app.tymee.mobile.action.STOP"
+        const val ACTION_SYNC = "app.tymee.mobile.action.SYNC"
 
         const val EXTRA_TIMER_MODE = "timer_mode"
         const val EXTRA_TARGET_DURATION = "target_duration"
@@ -33,7 +33,7 @@ class FocusTimerService : Service() {
         const val EXTRA_BREAK_COLOR = "break_color"
 
         // For legacy compatibility
-        const val ACTION_UPDATE = "com.mobile.action.UPDATE"
+        const val ACTION_UPDATE = "app.tymee.mobile.action.UPDATE"
         const val EXTRA_ELAPSED_SECONDS = "elapsed_seconds"
         const val EXTRA_IS_RUNNING = "is_running"
 

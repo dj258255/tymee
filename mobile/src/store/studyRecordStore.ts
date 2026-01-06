@@ -427,7 +427,7 @@ export const useStudyRecordStore = create<StudyRecordState>()(
       reorderTasks: (date, orderedTaskIds) => {
         set((state) => ({
           tasks: state.tasks.map((t) => {
-            if (t.date !== date) return t;
+            if (t.date !== date) {return t;}
             const newPriority = orderedTaskIds.indexOf(t.id);
             return newPriority >= 0 ? {...t, priority: newPriority} : t;
           }),
@@ -629,7 +629,7 @@ export const useStudyRecordStore = create<StudyRecordState>()(
 
       getDdayRemaining: () => {
         const state = get();
-        if (!state.dday) return null;
+        if (!state.dday) {return null;}
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -706,7 +706,7 @@ export const useStudyRecordStore = create<StudyRecordState>()(
 
       getDdayRemainingById: (id) => {
         const dday = get().ddays.find((d) => d.id === id);
-        if (!dday) return null;
+        if (!dday) {return null;}
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -790,7 +790,7 @@ export const useStudyRecordStore = create<StudyRecordState>()(
       reorderGoals: (period, orderedGoalIds) => {
         set((state) => ({
           goals: state.goals.map((g) => {
-            if (g.period !== period) return g;
+            if (g.period !== period) {return g;}
             const newOrder = orderedGoalIds.indexOf(g.id);
             return newOrder >= 0 ? {...g, order: newOrder} : g;
           }),
@@ -829,7 +829,7 @@ export const useStudyRecordStore = create<StudyRecordState>()(
           const dateStr = getDateString(current);
           const stats = get().getStatsForDate(dateStr);
           totalMinutes += stats.totalMinutes;
-          if (stats.totalMinutes > 0) days++;
+          if (stats.totalMinutes > 0) {days++;}
           current.setDate(current.getDate() + 1);
         }
 
@@ -849,7 +849,7 @@ export const useStudyRecordStore = create<StudyRecordState>()(
         const today = getDateString();
         const todayBlocks = state.timeBlocks.filter((b) => b.date === today);
 
-        if (todayBlocks.length === 0) return;
+        if (todayBlocks.length === 0) {return;}
 
         const template: TimetableTemplate = {
           id: generateId(),
@@ -870,7 +870,7 @@ export const useStudyRecordStore = create<StudyRecordState>()(
       loadTemplate: (templateId, date) => {
         const state = get();
         const template = state.timetableTemplates.find((t) => t.id === templateId);
-        if (!template) return;
+        if (!template) {return;}
 
         const targetDate = date || getDateString();
 
@@ -937,14 +937,14 @@ export const useStudyRecordStore = create<StudyRecordState>()(
 
       applyWeeklyTimetable: (date) => {
         const state = get();
-        if (!state.weeklyTimetableEnabled) return;
+        if (!state.weeklyTimetableEnabled) {return;}
 
         const targetDate = date || getDateString();
         const dayOfWeek = new Date(targetDate).getDay() as DayOfWeek;
 
         // 해당 날짜에 이미 블록이 있으면 적용하지 않음
         const existingBlocks = state.timeBlocks.filter((b) => b.date === targetDate);
-        if (existingBlocks.length > 0) return;
+        if (existingBlocks.length > 0) {return;}
 
         // 1. 먼저 템플릿 매핑 확인
         const mappedTemplateId = state.weeklyTemplateMapping[dayOfWeek];
@@ -967,7 +967,7 @@ export const useStudyRecordStore = create<StudyRecordState>()(
 
         // 2. 템플릿 매핑이 없으면 기존 weeklyTimetable 사용 (하위 호환)
         const dayBlocks = state.weeklyTimetable[dayOfWeek];
-        if (!dayBlocks || dayBlocks.length === 0) return;
+        if (!dayBlocks || dayBlocks.length === 0) {return;}
 
         const newBlocks: TimeBlock[] = dayBlocks.map((b) => ({
           hour: b.hour,

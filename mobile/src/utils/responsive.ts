@@ -1,4 +1,4 @@
-import {Dimensions, PixelRatio} from 'react-native';
+import {Dimensions} from 'react-native';
 
 // 기준 디자인 크기 (iPhone 14 기준)
 const BASE_WIDTH = 390;
@@ -42,7 +42,6 @@ export const sp = (size: number): number => {
  * 접근성 설정을 반영한 폰트 크기
  */
 export const fp = (size: number): number => {
-  const scaledSize = size * scale;
   // 폰트 스케일 제한 (너무 크거나 작지 않도록)
   const minScale = 0.8;
   const maxScale = 1.3;
@@ -104,10 +103,10 @@ export const deviceValue = <T>(options: {
   tablet?: T;
   default: T;
 }): T => {
-  if (screen.isSmall && options.small !== undefined) return options.small;
-  if (screen.isMedium && options.medium !== undefined) return options.medium;
-  if (screen.isLarge && options.large !== undefined) return options.large;
-  if (screen.isTablet && options.tablet !== undefined) return options.tablet;
+  if (screen.isSmall && options.small !== undefined) {return options.small;}
+  if (screen.isMedium && options.medium !== undefined) {return options.medium;}
+  if (screen.isLarge && options.large !== undefined) {return options.large;}
+  if (screen.isTablet && options.tablet !== undefined) {return options.tablet;}
   return options.default;
 };
 

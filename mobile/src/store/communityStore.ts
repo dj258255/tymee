@@ -459,9 +459,9 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
 
   getFilteredFeeds: () => {
     const {feeds, selectedCategory} = get();
-    if (selectedCategory === 'all') return feeds;
+    if (selectedCategory === 'all') {return feeds;}
     // 인기 게시판은 모든 피드를 반환 (정렬은 CommunityScreen의 displayFeeds에서 처리)
-    if (selectedCategory === 'popular') return feeds;
+    if (selectedCategory === 'popular') {return feeds;}
     return feeds.filter((feed) => feed.category === selectedCategory);
   },
 

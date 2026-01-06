@@ -715,7 +715,7 @@ export const getSessionCardColor = (
 // 회전 각도 계산 (포스트잇 스타일용)
 export const getRotation = (theme: StudyRecordTheme, index: number): number => {
   const range = theme?.task?.item?.rotationRange || 0;
-  if (range === 0) return 0;
+  if (range === 0) {return 0;}
   return index % 2 === 0 ? -range : range;
 };
 

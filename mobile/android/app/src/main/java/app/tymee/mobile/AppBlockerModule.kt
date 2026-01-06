@@ -1,4 +1,4 @@
-package com.mobile
+package app.tymee.mobile
 
 import android.app.AppOpsManager
 import android.app.usage.UsageStats

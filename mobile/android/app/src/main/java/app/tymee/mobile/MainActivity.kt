@@ -1,4 +1,4 @@
-package com.mobile
+package app.tymee.mobile
 
 import android.os.Bundle
 import com.facebook.react.ReactActivity

@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
 
+/** Refresh Token Redis 저장소. 기기별 토큰 관리 및 TTL 자동 만료. */
 @Repository
 @RequiredArgsConstructor
 public class RedisTokenRepository {
@@ -17,6 +18,7 @@ public class RedisTokenRepository {
 
   private final StringRedisTemplate redisTemplate;
 
+  /** Refresh Token 저장. TTL 설정으로 자동 만료. */
   public void saveRefreshToken(RefreshToken refreshToken) {
     String key = buildRefreshTokenKey(refreshToken.getUserId(), refreshToken.getDeviceId());
     long ttl = refreshToken.getTtlSeconds();
@@ -29,6 +31,7 @@ public class RedisTokenRepository {
     }
   }
 
+  /** 사용자/기기 기준 Refresh Token 조회. */
   public Optional<RefreshToken> findRefreshToken(Long userId, String deviceId) {
     String key = buildRefreshTokenKey(userId, deviceId);
     String token = redisTemplate.opsForValue().get(key);
@@ -51,6 +54,7 @@ public class RedisTokenRepository {
             .build());
   }
 
+  /** 특정 기기의 Refresh Token 삭제. 로그아웃 시 호출. */
   public void deleteRefreshToken(Long userId, String deviceId) {
     String key = buildRefreshTokenKey(userId, deviceId);
     redisTemplate.delete(key);
@@ -59,6 +63,7 @@ public class RedisTokenRepository {
     redisTemplate.opsForSet().remove(userDevicesKey, deviceId);
   }
 
+  /** 사용자의 모든 기기 Refresh Token 삭제. 토큰 탈취 감지 시 호출. */
   public void deleteAllRefreshTokens(Long userId) {
     String userDevicesKey = USER_DEVICES_PREFIX + userId;
     Set<String> deviceIds = redisTemplate.opsForSet().members(userDevicesKey);

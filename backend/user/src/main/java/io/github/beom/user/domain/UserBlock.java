@@ -16,6 +16,7 @@ public class UserBlock {
   private Long id;
   private Long blockerId;
   private Long blockedId;
+  private String reason;
   private LocalDateTime createdAt;
 
   /**
@@ -23,12 +24,14 @@ public class UserBlock {
    *
    * @param blockerId 차단하는 사용자 ID
    * @param blockedId 차단당하는 사용자 ID
+   * @param reason 차단 사유 (선택)
    * @return 새로운 UserBlock 인스턴스
    */
-  public static UserBlock create(Long blockerId, Long blockedId) {
+  public static UserBlock create(Long blockerId, Long blockedId, String reason) {
     return UserBlock.builder()
         .blockerId(blockerId)
         .blockedId(blockedId)
+        .reason(reason)
         .createdAt(LocalDateTime.now())
         .build();
   }

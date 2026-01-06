@@ -1,4 +1,4 @@
-package com.mobile
+package app.tymee.mobile
 
 import android.app.Activity
 import android.os.PowerManager

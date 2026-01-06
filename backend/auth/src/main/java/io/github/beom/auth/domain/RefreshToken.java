@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Getter;
 
+/** Refresh Token 도메인. Redis에 저장되며 기기별로 관리된다. */
 @Getter
 public class RefreshToken {
 

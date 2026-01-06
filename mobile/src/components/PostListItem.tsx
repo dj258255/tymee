@@ -87,28 +87,6 @@ const getFrameBorderStyle = (frame?: CardFrameType, isDark?: boolean) => {
   }
 };
 
-// 레벨 테두리 색상 (프레임 기반)
-const getLevelBorderColor = (frame?: CardFrameType) => {
-  switch (frame) {
-    case 'fire':
-      return '#FF4500';
-    case 'neon':
-      return '#FF00FF';
-    case 'space':
-      return '#6B5BFF';
-    case 'diamond':
-      return '#00CED1';
-    case 'gold':
-      return '#FFD700';
-    case 'silver':
-      return '#C0C0C0';
-    case 'bronze':
-      return '#CD7F32';
-    default:
-      return '#007AFF';
-  }
-};
-
 // 티어별 스타일 (ProfileCard와 동일)
 const getTierStyle = (tier?: string) => {
   switch (tier) {
@@ -180,10 +158,10 @@ const PostListItem: React.FC<PostListItemProps> = ({post, isDark, onPress, highl
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-    if (minutes < 1) return '방금 전';
-    if (minutes < 60) return `${minutes}분 전`;
-    if (hours < 24) return `${hours}시간 전`;
-    if (days < 7) return `${days}일 전`;
+    if (minutes < 1) {return '방금 전';}
+    if (minutes < 60) {return `${minutes}분 전`;}
+    if (hours < 24) {return `${hours}시간 전`;}
+    if (days < 7) {return `${days}일 전`;}
     return new Date(date).toLocaleDateString('ko-KR');
   };
 

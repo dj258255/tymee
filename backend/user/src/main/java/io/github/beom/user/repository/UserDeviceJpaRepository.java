@@ -4,6 +4,7 @@ import io.github.beom.user.entity.UserDeviceEntity;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 
 /** 사용자 디바이스 JPA 레포지토리. */
 public interface UserDeviceJpaRepository extends JpaRepository<UserDeviceEntity, Long> {
@@ -15,8 +16,10 @@ public interface UserDeviceJpaRepository extends JpaRepository<UserDeviceEntity,
   List<UserDeviceEntity> findAllByUserId(Long userId);
 
   /** 사용자 ID와 디바이스 ID로 디바이스를 삭제한다. */
+  @Modifying
   void deleteByUserIdAndDeviceId(Long userId, String deviceId);
 
   /** 사용자의 모든 디바이스를 삭제한다. 회원 탈퇴 시 사용. */
+  @Modifying
   void deleteAllByUserId(Long userId);
 }

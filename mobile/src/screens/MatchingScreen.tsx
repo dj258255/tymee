@@ -14,14 +14,13 @@ import {
   Alert,
   TextInput,
 } from 'react-native';
-import {useTranslation} from 'react-i18next';
 import {useThemeStore} from '../store/themeStore';
 import {safeGetColorScheme, safeAddAppearanceListener} from '../utils/appearance';
 import Icon from '@react-native-vector-icons/ionicons';
 import {sp, hp, fp, iconSize} from '../utils/responsive';
 import TimeTimer from '../components/TimeTimer';
 import ProfileCard, {CARD_FRAMES, CardFrameType} from '../components/ProfileCard';
-import {useCurrencyStore, REWARD_CONFIG} from '../store/currencyStore';
+import {useCurrencyStore} from '../store/currencyStore';
 
 const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
 
@@ -44,7 +43,6 @@ const TIER_DATA = [
 ];
 
 const MatchingScreen: React.FC = () => {
-  const {t} = useTranslation();
   const [systemColorScheme, setSystemColorScheme] = useState<'light' | 'dark'>('light');
   const [screenState, setScreenState] = useState<ScreenState>('main');
   const [matchingType, setMatchingType] = useState<MatchingType>(null);
@@ -642,6 +640,7 @@ const MatchingScreen: React.FC = () => {
       }
     }
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screenState, isSessionRunning, sessionTimeLeft, isBreakTime, matchingType, grantMatchingReward]);
 
   // 세션 시작 시 타이머 리셋
@@ -651,6 +650,7 @@ const MatchingScreen: React.FC = () => {
       setIsSessionRunning(true);
       setIsBreakTime(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screenState]);
 
   const formatTime = (seconds: number) => {
@@ -674,26 +674,6 @@ const MatchingScreen: React.FC = () => {
     );
   };
 
-  // 매칭된 유저 미니 프로필 카드 (내부 컴포넌트)
-  const MatchedUserMiniCard = ({user, color}: {user: typeof matchedUsers[0], color: string}) => (
-    <View style={[styles.profileCard, {backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF'}]}>
-      <View style={[styles.profileAvatar, {backgroundColor: color + '20'}]}>
-        <Text style={[styles.profileAvatarText, {color}]}>{user.avatar}</Text>
-      </View>
-      <Text style={[styles.profileName, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]} numberOfLines={1}>
-        {user.name}
-      </Text>
-      <Text style={[styles.profileSubject, {color: isDark ? '#888888' : '#666666'}]} numberOfLines={1}>
-        {user.subject}
-      </Text>
-      <View style={styles.profileStreak}>
-        <Icon name="flame" size={iconSize(12)} color="#FF9800" />
-        <Text style={styles.profileStreakText}>{user.streak}일</Text>
-      </View>
-      {/* 온라인 표시 */}
-      <View style={styles.onlineDot} />
-    </View>
-  );
 
   // 캠 박스 프레임 스타일 가져오기 헬퍼
   const getCamFrameStyle = (frameType: CardFrameType) => {
@@ -760,7 +740,7 @@ const MatchingScreen: React.FC = () => {
                     backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF',
                     borderWidth: myFrameStyle.borderWidth,
                     borderColor: myFrameStyle.borderColor,
-                  }
+                  },
                 ]}>
                   <View style={[styles.focusCamPlaceholder, {backgroundColor: isDark ? '#2A2A2A' : '#F5F5F5'}]}>
                     <Icon name="videocam" size={iconSize(24)} color={isDark ? '#666666' : '#999999'} />
@@ -849,7 +829,7 @@ const MatchingScreen: React.FC = () => {
                     borderColor: (isHidden || !user.isCamOn)
                       ? (isDark ? '#3A3A3A' : '#E0E0E0')
                       : userFrameStyle.borderColor,
-                  }
+                  },
                 ]}>
                   {isHidden ? (
                     // 내가 화면을 숨긴 경우
@@ -913,7 +893,7 @@ const MatchingScreen: React.FC = () => {
               {
                 backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF',
                 // 테두리 제거로 더 깔끔한 UI
-              }
+              },
             ]}>
               <Text style={[styles.timerStatusLabel, {color: timerColor}]}>
                 {isBreakTime ? '휴식 시간' : '자유 공부'}
@@ -945,7 +925,7 @@ const MatchingScreen: React.FC = () => {
                 backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF',
                 borderWidth: 1,
                 borderColor: isDark ? '#333333' : '#E8E8E8',
-              }
+              },
             ]}>
               <View style={styles.chatHeader}>
                 <View style={{flexDirection: 'row', alignItems: 'center', gap: sp(6)}}>
@@ -1039,7 +1019,7 @@ const MatchingScreen: React.FC = () => {
                     style={[styles.profileModalBtn, {
                       backgroundColor: mutedUsers.has(selectedCamUser.id)
                         ? '#FF980020'
-                        : (isDark ? '#2A2A2A' : '#F5F5F5')
+                        : (isDark ? '#2A2A2A' : '#F5F5F5'),
                     }]}
                     onPress={() => {
                       toggleMuteUser(selectedCamUser.id);
@@ -1052,7 +1032,7 @@ const MatchingScreen: React.FC = () => {
                       color={mutedUsers.has(selectedCamUser.id) ? '#FF9800' : (isDark ? '#FFFFFF' : '#1A1A1A')}
                     />
                     <Text style={[styles.profileModalBtnText, {
-                      color: mutedUsers.has(selectedCamUser.id) ? '#FF9800' : (isDark ? '#FFFFFF' : '#1A1A1A')
+                      color: mutedUsers.has(selectedCamUser.id) ? '#FF9800' : (isDark ? '#FFFFFF' : '#1A1A1A'),
                     }]}>
                       {mutedUsers.has(selectedCamUser.id) ? '음소거 해제' : '음소거'}
                     </Text>
@@ -1062,7 +1042,7 @@ const MatchingScreen: React.FC = () => {
                   style={[styles.profileModalBtn, {
                     backgroundColor: hiddenUsers.has(selectedCamUser.id)
                       ? '#2196F320'
-                      : (isDark ? '#2A2A2A' : '#F5F5F5')
+                      : (isDark ? '#2A2A2A' : '#F5F5F5'),
                   }]}
                   onPress={() => {
                     toggleHideUser(selectedCamUser.id);
@@ -1075,7 +1055,7 @@ const MatchingScreen: React.FC = () => {
                     color={hiddenUsers.has(selectedCamUser.id) ? '#2196F3' : (isDark ? '#FFFFFF' : '#1A1A1A')}
                   />
                   <Text style={[styles.profileModalBtnText, {
-                    color: hiddenUsers.has(selectedCamUser.id) ? '#2196F3' : (isDark ? '#FFFFFF' : '#1A1A1A')
+                    color: hiddenUsers.has(selectedCamUser.id) ? '#2196F3' : (isDark ? '#FFFFFF' : '#1A1A1A'),
                   }]}>
                     {hiddenUsers.has(selectedCamUser.id) ? '화면 보기' : '화면 숨기기'}
                   </Text>
@@ -1184,7 +1164,7 @@ const MatchingScreen: React.FC = () => {
             {chatMessages.map((msg) => (
               <View key={msg.id} style={[
                 styles.chatFullScreenBubble,
-                {backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF'}
+                {backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF'},
               ]}>
                 <View style={styles.chatFullScreenBubbleHeader}>
                   <Text style={[styles.chatFullScreenSender, {color: msg.color}]}>{msg.sender}</Text>
@@ -1203,11 +1183,11 @@ const MatchingScreen: React.FC = () => {
             {
               backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF',
               borderTopColor: isDark ? '#333333' : '#E8E8E8',
-            }
+            },
           ]}>
             <View style={[
               styles.chatFullScreenInput,
-              {backgroundColor: isDark ? '#2A2A2A' : '#F5F5F5'}
+              {backgroundColor: isDark ? '#2A2A2A' : '#F5F5F5'},
             ]}>
               <TextInput
                 style={[styles.chatFullScreenTextInput, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}
@@ -1284,7 +1264,7 @@ const MatchingScreen: React.FC = () => {
                   backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF',
                   borderWidth: myFrameStyle.borderWidth,
                   borderColor: myFrameStyle.borderColor,
-                }
+                },
               ]}>
                 <View style={[styles.focusCamPlaceholder, {backgroundColor: isDark ? '#2A2A2A' : '#F5F5F5'}]}>
                   <Icon name="videocam" size={iconSize(24)} color={isDark ? '#666666' : '#999999'} />
@@ -1329,7 +1309,7 @@ const MatchingScreen: React.FC = () => {
                     borderColor: (isHidden || !user.isCamOn)
                       ? (isDark ? '#3A3A3A' : '#E0E0E0')
                       : userFrameStyle.borderColor,
-                  }
+                  },
                 ]}>
                   {isHidden ? (
                     <View style={styles.hiddenCamPlaceholder}>
@@ -1393,7 +1373,7 @@ const MatchingScreen: React.FC = () => {
               {
                 backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF',
                 // 테두리 제거로 더 깔끔한 UI
-              }
+              },
             ]}>
               <Text style={[styles.timerStatusLabel, {color: timerColor}]}>
                 {isBreakTime ? '휴식 시간' : '집중 시간'}
@@ -1425,7 +1405,7 @@ const MatchingScreen: React.FC = () => {
                 backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF',
                 borderWidth: 1,
                 borderColor: isDark ? '#333333' : '#E8E8E8',
-              }
+              },
             ]}>
               <View style={styles.chatHeader}>
                 <View style={{flexDirection: 'row', alignItems: 'center', gap: sp(6)}}>
@@ -1508,7 +1488,7 @@ const MatchingScreen: React.FC = () => {
           <Text style={[styles.tierListTitle, {color: isDark ? '#888888' : '#666666'}]}>
             전체 티어
           </Text>
-          {TIER_DATA.map((tier, index) => {
+          {TIER_DATA.map((tier) => {
             const isCurrentTier = tier.name === '학사 II';
             return (
               <View
@@ -2457,7 +2437,7 @@ const styles = StyleSheet.create({
     height: sp(6),
     borderRadius: sp(3),
   },
-  focusStatusText: {
+  focusStatusTextSmall: {
     color: '#888888',
     fontSize: fp(11),
   },

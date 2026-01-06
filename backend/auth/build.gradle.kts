@@ -23,6 +23,9 @@ dependencies {
     runtimeOnly(libs.jjwt.impl)
     runtimeOnly(libs.jjwt.jackson)
 
+    // OAuth (Google idToken 검증)
+    implementation(libs.google.api.client)
+
     // Spring Transaction
     implementation(libs.spring.tx)
 

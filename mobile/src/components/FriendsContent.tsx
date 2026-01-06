@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -17,7 +17,6 @@ import {
   useFriendStore,
   Friend,
   FriendRequest,
-  ChatMessage,
 } from '../store/friendStore';
 import {safeGetColorScheme, safeAddAppearanceListener} from '../utils/appearance';
 import {sp, hp, fp, iconSize} from '../utils/responsive';
@@ -106,16 +105,16 @@ const getTierColor = (tier?: string) => {
 
 // 마지막 활동 시간 포맷팅
 const formatLastActive = (date?: Date) => {
-  if (!date) return '';
+  if (!date) {return '';}
   const now = new Date();
   const diff = now.getTime() - date.getTime();
   const minutes = Math.floor(diff / 60000);
   const hours = Math.floor(diff / 3600000);
   const days = Math.floor(diff / 86400000);
 
-  if (minutes < 1) return '방금 전';
-  if (minutes < 60) return `${minutes}분 전`;
-  if (hours < 24) return `${hours}시간 전`;
+  if (minutes < 1) {return '방금 전';}
+  if (minutes < 60) {return `${minutes}분 전`;}
+  if (hours < 24) {return `${hours}시간 전`;}
   return `${days}일 전`;
 };
 
@@ -167,10 +166,7 @@ const FriendsContent: React.FC = () => {
   const {
     friends,
     friendRequests,
-    searchResults,
     chatRooms,
-    searchUsers,
-    clearSearchResults,
     acceptFriendRequest,
     rejectFriendRequest,
     sendFriendRequest,
@@ -264,7 +260,7 @@ const FriendsContent: React.FC = () => {
           <View style={[
             styles.avatar,
             {backgroundColor: item.profileImage ? 'transparent' : '#4a6785'},
-            item.tier && {borderWidth: 2, borderColor: getTierColor(item.tier)}
+            item.tier && {borderWidth: 2, borderColor: getTierColor(item.tier)},
           ]}>
             <Icon name="person" size={iconSize(24)} color="#c7d5e0" />
           </View>
@@ -307,7 +303,7 @@ const FriendsContent: React.FC = () => {
                 {
                   backgroundColor: getTierColor(item.tier) + '20',
                   borderColor: getTierColor(item.tier),
-                }
+                },
               ]}>
                 <Text style={[styles.tierTextStyled, {color: getTierColor(item.tier)}]}>
                   {item.tier}
@@ -398,32 +394,6 @@ const FriendsContent: React.FC = () => {
     </View>
   );
 
-  // 메시지 아이템
-  const renderMessageItem = ({item}: {item: ChatMessage}) => {
-    const isMe = item.senderId === 'me';
-    return (
-      <View style={[styles.messageRow, isMe && styles.messageRowMe]}>
-        {!isMe && (
-          <View style={[styles.messageAvatar, {backgroundColor: '#4a6785'}]}>
-            <Icon name="person" size={iconSize(14)} color="#c7d5e0" />
-          </View>
-        )}
-        <View style={[
-          styles.messageBubble,
-          isMe ? styles.messageBubbleMe : styles.messageBubbleOther,
-          {backgroundColor: isMe ? STEAM_COLORS.accent : (isDark ? '#32404f' : '#f0f0f0')}
-        ]}>
-          <Text style={[styles.messageText, {color: isMe ? '#FFFFFF' : textColor}]}>
-            {item.content}
-          </Text>
-          <Text style={[styles.messageTime, {color: isMe ? 'rgba(255,255,255,0.7)' : subtextColor}]}>
-            {formatMessageTime(item.createdAt)}
-          </Text>
-        </View>
-      </View>
-    );
-  };
-
   return (
     <View style={[styles.container, {backgroundColor: bgColor}]}>
       {/* 내 프로필 카드 (Steam 스타일) */}
@@ -437,7 +407,7 @@ const FriendsContent: React.FC = () => {
             <View style={[
               styles.myAvatar,
               {backgroundColor: '#E0E0E0'},
-              {borderWidth: 2, borderColor: getTierColor(MY_PROFILE.tier)}
+              {borderWidth: 2, borderColor: getTierColor(MY_PROFILE.tier)},
             ]}>
               <Icon name="person" size={iconSize(28)} color="#9E9E9E" />
             </View>
@@ -472,7 +442,7 @@ const FriendsContent: React.FC = () => {
                 {
                   backgroundColor: getTierColor(MY_PROFILE.tier) + '20',
                   borderColor: getTierColor(MY_PROFILE.tier),
-                }
+                },
               ]}>
                 <Text style={[styles.tierTextStyled, {color: getTierColor(MY_PROFILE.tier)}]}>
                   {MY_PROFILE.tier}
@@ -520,7 +490,7 @@ const FriendsContent: React.FC = () => {
           >
             <Text style={[
               styles.tabText,
-              {color: activeTab === 'all' ? STEAM_COLORS.accent : subtextColor}
+              {color: activeTab === 'all' ? STEAM_COLORS.accent : subtextColor},
             ]}>
               전체 ({friends.length})
             </Text>
@@ -531,7 +501,7 @@ const FriendsContent: React.FC = () => {
           >
             <Text style={[
               styles.tabText,
-              {color: activeTab === 'online' ? STEAM_COLORS.accent : subtextColor}
+              {color: activeTab === 'online' ? STEAM_COLORS.accent : subtextColor},
             ]}>
               온라인 ({onlineCount})
             </Text>
@@ -542,7 +512,7 @@ const FriendsContent: React.FC = () => {
           >
             <Text style={[
               styles.tabText,
-              {color: activeTab === 'requests' ? STEAM_COLORS.accent : subtextColor}
+              {color: activeTab === 'requests' ? STEAM_COLORS.accent : subtextColor},
             ]}>
               요청 ({friendRequests.length})
             </Text>
@@ -703,7 +673,7 @@ const FriendsContent: React.FC = () => {
                   style={[styles.profileActionButton, {backgroundColor: STEAM_COLORS.accent}]}
                   onPress={() => {
                     setShowProfileModal(false);
-                    if (profileFriend) handleOpenChat(profileFriend);
+                    if (profileFriend) {handleOpenChat(profileFriend);}
                   }}
                 >
                   <Icon name="chatbubble" size={iconSize(18)} color="#FFFFFF" />
@@ -1087,7 +1057,7 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: sp(6),
   },
-  messageRow: {
+  messageRowSmall: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: sp(6),

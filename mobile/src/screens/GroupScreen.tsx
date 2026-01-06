@@ -7,20 +7,15 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
-  Image,
   Animated,
-  Dimensions,
 } from 'react-native';
-import {useTranslation} from 'react-i18next';
 import {useThemeStore} from '../store/themeStore';
-import {useGroupStore, GroupPost} from '../store/groupStore';
 import {safeGetColorScheme, safeAddAppearanceListener} from '../utils/appearance';
 import Icon from '@react-native-vector-icons/ionicons';
 import ProfileCard from '../components/ProfileCard';
 import {sp, hp, fp, iconSize} from '../utils/responsive';
 import {PanGestureHandler, PanGestureHandlerGestureEvent, State} from 'react-native-gesture-handler';
 
-const {width: SCREEN_WIDTH} = Dimensions.get('window');
 
 type TabType = 'community' | 'group';
 type BoardCategory = 'all' | 'free' | 'study' | 'qna' | 'tips' | 'anonymous' | 'anon_free';
@@ -87,22 +82,11 @@ interface GroupRoom {
   joinConditions?: string[];
 }
 
-interface GroupPost {
-  id: string;
-  author: string;
-  title: string;
-  content: string;
-  time: string;
-  isPinned?: boolean;
-  likes: number;
-  comments: number;
-}
 
 const DETAIL_TABS: GroupDetailTab[] = ['info', 'members', 'board'];
 const SWIPE_THRESHOLD = 50;
 
 const GroupScreen: React.FC = () => {
-  const {t} = useTranslation();
   const [systemColorScheme, setSystemColorScheme] = useState<'light' | 'dark'>('light');
   const [selectedTab, setSelectedTab] = useState<TabType>('community');
   const [selectedBoard, setSelectedBoard] = useState<BoardCategory>('all');
@@ -465,8 +449,8 @@ const GroupScreen: React.FC = () => {
 
   // 게시글 정렬: 핀 고정된 것 먼저, 그 다음 시간순
   const sortedBoardPosts = [...boardPosts].sort((a, b) => {
-    if (a.isPinned && !b.isPinned) return -1;
-    if (!a.isPinned && b.isPinned) return 1;
+    if (a.isPinned && !b.isPinned) {return -1;}
+    if (!a.isPinned && b.isPinned) {return 1;}
     return 0;
   });
 
@@ -610,7 +594,7 @@ const GroupScreen: React.FC = () => {
 
   // 모임 상세보기 렌더링
   const renderGroupDetail = () => {
-    if (!selectedGroup) return null;
+    if (!selectedGroup) {return null;}
 
     return (
       <View style={styles.tabContent}>

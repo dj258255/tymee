@@ -1,4 +1,4 @@
-package com.mobile
+package app.tymee.mobile
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
@@ -14,7 +14,7 @@ class PomodoroWidgetProvider : AppWidgetProvider() {
     companion object {
         const val PREFS_NAME = "PomodoroWidgetPrefs"
         const val KEY_WIDGET_DATA = "widget_data"
-        const val ACTION_UPDATE_WIDGET = "com.mobile.ACTION_UPDATE_POMODORO_WIDGET"
+        const val ACTION_UPDATE_WIDGET = "app.tymee.mobile.ACTION_UPDATE_POMODORO_WIDGET"
 
         fun updateAllWidgets(context: Context) {
             val intent = Intent(context, PomodoroWidgetProvider::class.java).apply {

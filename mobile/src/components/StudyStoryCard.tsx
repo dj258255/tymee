@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   Alert,
   Platform,
-  Image,
   ImageBackground,
   SafeAreaView,
   ScrollView,
@@ -38,7 +37,7 @@ interface StudyStoryCardProps {
 }
 
 const StudyStoryCard: React.FC<StudyStoryCardProps> = ({
-  isDark,
+  isDark: _isDark,
   selectedDate,
   totalStudyTime,
   studyCount,
@@ -142,8 +141,8 @@ const StudyStoryCard: React.FC<StudyStoryCardProps> = ({
     let offsetSet = false;
 
     return PanResponder.create({
-      onStartShouldSetPanResponder: (evt) => true,
-      onStartShouldSetPanResponderCapture: (evt) => evt.nativeEvent.touches.length === 2,
+      onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponderCapture: (_evt) => _evt.nativeEvent.touches.length === 2,
       onMoveShouldSetPanResponder: (evt, gestureState) => {
         // 두 손가락이거나 움직임이 있으면 드래그 시작
         const moved = Math.abs(gestureState.dx) > 5 || Math.abs(gestureState.dy) > 5;
@@ -935,7 +934,7 @@ const StudyStoryCard: React.FC<StudyStoryCardProps> = ({
                     {
                       color: messageColor,
                       fontSize: messageFontSize,
-                    }
+                    },
                   ]}>{customMessage}</Text>
                   {isMessageSelected && (
                     <View style={(CARD_HEIGHT - 40 + messageCurrentY) < (CARD_HEIGHT / 2) ? styles.textButtonGroupBottom : styles.textButtonGroup}>

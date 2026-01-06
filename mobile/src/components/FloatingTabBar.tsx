@@ -167,9 +167,8 @@ const FloatingTabBar: React.FC<BottomTabBarProps> = ({
           const {options} = descriptors[route.key];
           const isFocused = state.index === index;
 
-          // 드래그 중일 때는 물방울 위치의 탭만 강조
-          const isUnderBubble = isDragging && currentBubbleIndex === index;
-          const shouldHighlight = isDragging ? isUnderBubble : isFocused;
+          // 드래그 중일 때는 물방울 위치의 탭만 강조 (isUnderBubble은 향후 사용 예정)
+          void (isDragging && currentBubbleIndex === index);
 
           let iconName: string;
           if (route.name === 'Timer') {
@@ -196,7 +195,7 @@ const FloatingTabBar: React.FC<BottomTabBarProps> = ({
               style={styles.tab}>
               <View style={[
                 styles.tabContent,
-                isFocused && !isDragging && styles.tabContentActive
+                isFocused && !isDragging && styles.tabContentActive,
               ]}>
                 <Icon
                   name={iconName}

@@ -20,7 +20,7 @@ const TimeTimer: React.FC<TimeTimerProps> = ({
   progress,
   color,
   backgroundColor,
-  timeText,
+  timeText: _timeText,
   totalSeconds,
   onProgressChange,
   isRunning = false,
@@ -36,7 +36,7 @@ const TimeTimer: React.FC<TimeTimerProps> = ({
 
   // Create the arc path for the colored disk
   const createArcPath = () => {
-    if (progress === 0) return '';
+    if (progress === 0) {return '';}
     if (progress >= 1) {
       // Full circle
       return `M ${center},${center - radius}
@@ -89,7 +89,7 @@ const TimeTimer: React.FC<TimeTimerProps> = ({
   const generateMinuteTicks = () => {
     const ticks = [];
     for (let i = 0; i < 60; i++) {
-      if (i % 5 === 0) continue; // Skip hour markers
+      if (i % 5 === 0) {continue;} // Skip hour markers
 
       const angle = (i * 6 - 90) * (Math.PI / 180);
       const innerRadius = radius; // 원 테두리에서 시작
@@ -146,7 +146,7 @@ const TimeTimer: React.FC<TimeTimerProps> = ({
   };
 
   const handleTouch = (event: any) => {
-    if (!onProgressChange) return;
+    if (!onProgressChange) {return;}
 
     const {locationX, locationY} = event.nativeEvent;
     const centerX = size / 2;
@@ -159,7 +159,7 @@ const TimeTimer: React.FC<TimeTimerProps> = ({
 
     // Adjust angle to start from top (12 o'clock position)
     angle = angle + 90;
-    if (angle < 0) angle += 360;
+    if (angle < 0) {angle += 360;}
 
     // Convert angle to progress (0-1)
     const newProgress = 1 - (angle / 360);

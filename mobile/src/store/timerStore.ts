@@ -1,5 +1,5 @@
 import {create} from 'zustand';
-import {TimerState, SegmentInfo} from '../types/timer';
+import {TimerState} from '../types/timer';
 import {
   calculateSegments,
   getElapsedTime,
@@ -64,7 +64,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
 
   pause: () => {
     const state = get();
-    if (state.status !== 'running') return;
+    if (state.status !== 'running') {return;}
 
     set({
       pausedAt: Date.now(),
@@ -76,7 +76,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
 
   resume: () => {
     const state = get();
-    if (state.status !== 'paused' || !state.pausedAt) return;
+    if (state.status !== 'paused' || !state.pausedAt) {return;}
 
     set({
       pausedDuration: state.pausedDuration + (Date.now() - state.pausedAt),
@@ -106,10 +106,10 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
   tick: () => {
     const state = get();
 
-    if (state.status !== 'running') return;
+    if (state.status !== 'running') {return;}
 
     const elapsed = getElapsedTime(state);
-    const remaining = getRemainingTime(state);
+    void getRemainingTime(state); // 타이머 상태 확인용
 
     // Check if timer is complete
     if (isTimerComplete(state)) {

@@ -696,7 +696,7 @@ export const useGroupStore = create<GroupStore>((set, get) => ({
 
   joinGroup: (groupId) => {
     const group = get().groups.find((g) => g.id === groupId);
-    if (!group) return;
+    if (!group) {return;}
 
     const newMember: GroupMember = {
       id: 'currentUser',
@@ -749,7 +749,7 @@ export const useGroupStore = create<GroupStore>((set, get) => ({
   processApplication: (applicationId, approve) => {
     set((state) => {
       const application = state.applications.find((a) => a.id === applicationId);
-      if (!application) return state;
+      if (!application) {return state;}
 
       if (approve) {
         // 승인 시 멤버로 추가
@@ -879,11 +879,11 @@ export const useGroupStore = create<GroupStore>((set, get) => ({
   togglePostLike: (groupId, postId, userId) => {
     set((state) => ({
       groups: state.groups.map((g) => {
-        if (g.id !== groupId) return g;
+        if (g.id !== groupId) {return g;}
         return {
           ...g,
           posts: g.posts.map((p) => {
-            if (p.id !== postId) return p;
+            if (p.id !== postId) {return p;}
             const hasLiked = p.likedBy.includes(userId);
             return {
               ...p,

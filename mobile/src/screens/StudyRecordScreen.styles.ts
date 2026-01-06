@@ -1440,7 +1440,7 @@ export const styles = StyleSheet.create({
     opacity: 0.5,
   },
   // 목표 추가 모달 스타일
-  goalModal: {
+  goalModalExtra: {
     width: '90%',
     maxWidth: sp(340),
     borderRadius: sp(16),

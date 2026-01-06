@@ -15,7 +15,6 @@ import {
   Image,
   Alert,
   Animated,
-  Easing,
   Dimensions,
   Switch,
 } from 'react-native';
@@ -28,7 +27,6 @@ import {
   Group,
   GroupCategory,
   GROUP_CATEGORIES,
-  GroupMember,
   GroupNotice,
 } from '../store/groupStore';
 import {safeGetColorScheme, safeAddAppearanceListener} from '../utils/appearance';
@@ -140,7 +138,7 @@ const GroupContent: React.FC = () => {
   const [activeDetailTab, setActiveDetailTab] = useState<'info' | 'members' | 'board' | 'chat' | 'study'>('info');
   const [studyPeriodType, setStudyPeriodType] = useState<'day' | 'week' | 'month'>('day'); // 1일/7일/1달 단위
   const [studyDateOffset, setStudyDateOffset] = useState(0); // 날짜 오프셋 (0=오늘/이번주/이번달)
-  const [showMoreMenu, setShowMoreMenu] = useState(false); // 더보기 메뉴 표시 여부
+  const [_showMoreMenu, _setShowMoreMenu] = useState(false); // 더보기 메뉴 표시 여부 (미래 사용을 위해 보존)
   const [isSearchMode, setIsSearchMode] = useState(false); // 검색 모드 여부
   const [selectedPost, setSelectedPost] = useState<GroupNotice | null>(null); // 선택된 게시글
   const [showPostDetail, setShowPostDetail] = useState(false); // 게시글 상세 페이지
@@ -182,11 +180,10 @@ const GroupContent: React.FC = () => {
   const [newGroupIsPrivate, setNewGroupIsPrivate] = useState(false);
   const [newGroupImage, setNewGroupImage] = useState<string | null>(null);
 
-  // 탭 순서 정의 (스와이프 네비게이션용)
-  const detailTabOrder: Array<'info' | 'members' | 'study' | 'board' | 'chat'> = ['info', 'members', 'study', 'board', 'chat'];
-
   // 스와이프로 탭 전환
   const handleTabSwipe = useCallback((direction: 'left' | 'right') => {
+    // 탭 순서 정의 (스와이프 네비게이션용)
+    const detailTabOrder: Array<'info' | 'members' | 'study' | 'board' | 'chat'> = ['info', 'members', 'study', 'board', 'chat'];
     const currentIndex = detailTabOrder.indexOf(activeDetailTab);
     if (direction === 'left' && currentIndex < detailTabOrder.length - 1) {
       setActiveDetailTab(detailTabOrder[currentIndex + 1]);
@@ -330,7 +327,7 @@ const GroupContent: React.FC = () => {
 
   // 그룹 탈퇴 확인
   const handleLeaveGroup = () => {
-    if (!selectedGroup) return;
+    if (!selectedGroup) {return;}
     Alert.alert(
       '모임 탈퇴',
       `정말 '${selectedGroup.name}' 모임을 탈퇴하시겠습니까?\n탈퇴 후에는 다시 가입해야 합니다.`,
@@ -430,11 +427,10 @@ const GroupContent: React.FC = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const totalSessionTime = isBreakTime ? BREAK_TIME : FOCUS_TIME;
-  const timerProgress = sessionTimeLeft / totalSessionTime;
+  void (isBreakTime ? BREAK_TIME : FOCUS_TIME); // totalSessionTime 계산용
 
   const handleCreateGroup = () => {
-    if (!newGroupName.trim() || !newGroupDesc.trim()) return;
+    if (!newGroupName.trim() || !newGroupDesc.trim()) {return;}
 
     createGroup({
       name: newGroupName.trim(),
@@ -527,52 +523,6 @@ const GroupContent: React.FC = () => {
       </View>
     </View>
   );
-
-  // 내 모임 섹션
-  const renderMyGroups = () => {
-    if (myGroups.length === 0) return null;
-
-    return (
-      <View style={styles.myGroupsSection}>
-        <Text style={[styles.sectionTitle, {color: textColor}]}>내 모임</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.myGroupsList}>
-          {myGroups.map((group) => {
-            const categoryInfo = getCategoryInfo(group.category);
-            return (
-              <TouchableOpacity
-                key={group.id}
-                style={[styles.myGroupCard, {backgroundColor: cardBg}]}
-                onPress={() => {
-                  selectGroup(group);
-                  setShowDetailModal(true);
-                }}>
-                <View style={[styles.myGroupIcon, {backgroundColor: categoryInfo.color + '20'}]}>
-                  <Icon name={categoryInfo.icon as any} size={iconSize(24)} color={categoryInfo.color} />
-                </View>
-                <Text style={[styles.myGroupName, {color: textColor}]} numberOfLines={1}>
-                  {group.name}
-                </Text>
-                <View style={styles.myGroupStats}>
-                  <Icon name="people" size={iconSize(12)} color={subtextColor} />
-                  <Text style={[styles.myGroupStatText, {color: subtextColor}]}>
-                    {group.members.length}/{group.maxMembers}
-                  </Text>
-                </View>
-                {group.unreadCount > 0 && (
-                  <View style={styles.unreadBadge}>
-                    <Text style={styles.unreadText}>{group.unreadCount}</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </View>
-    );
-  };
 
   // 검색 및 필터
   const renderSearchAndFilter = () => (
@@ -771,7 +721,7 @@ const GroupContent: React.FC = () => {
 
   // 모임 상세 모달
   const renderDetailModal = () => {
-    if (!selectedGroup) return null;
+    if (!selectedGroup) {return null;}
     const categoryInfo = getCategoryInfo(selectedGroup.category);
     const isMember = isMyGroup(selectedGroup.id);
 
@@ -958,14 +908,14 @@ const GroupContent: React.FC = () => {
                   const dateInfo = getDateRangeInfo(studyPeriodType, studyDateOffset);
                   const averageStudyTime = Math.round(
                     selectedGroup.members.reduce((sum, m) => {
-                      if (studyPeriodType === 'day') return sum + (m.todayStudyMinutes || 0);
-                      if (studyPeriodType === 'month') return sum + (m.weeklyStudyMinutes * 4);
+                      if (studyPeriodType === 'day') {return sum + (m.todayStudyMinutes || 0);}
+                      if (studyPeriodType === 'month') {return sum + (m.weeklyStudyMinutes * 4);}
                       return sum + m.weeklyStudyMinutes;
                     }, 0) / selectedGroup.members.length
                   );
                   const totalStudyTime = selectedGroup.members.reduce((sum, m) => {
-                    if (studyPeriodType === 'day') return sum + (m.todayStudyMinutes || 0);
-                    if (studyPeriodType === 'month') return sum + (m.weeklyStudyMinutes * 4);
+                    if (studyPeriodType === 'day') {return sum + (m.todayStudyMinutes || 0);}
+                    if (studyPeriodType === 'month') {return sum + (m.weeklyStudyMinutes * 4);}
                     return sum + m.weeklyStudyMinutes;
                   }, 0);
 
@@ -1148,8 +1098,8 @@ const GroupContent: React.FC = () => {
                 ) : (
                   [...selectedGroup.notices]
                     .sort((a, b) => {
-                      if (a.isPinned && !b.isPinned) return -1;
-                      if (!a.isPinned && b.isPinned) return 1;
+                      if (a.isPinned && !b.isPinned) {return -1;}
+                      if (!a.isPinned && b.isPinned) {return 1;}
                       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
                     })
                     .map((notice) => (
@@ -1376,14 +1326,16 @@ const GroupContent: React.FC = () => {
 
   // 스터디 룸 모달 렌더링 (MatchingScreen의 자유매칭 세션과 동일한 UI)
   const renderStudyRoomModal = () => {
-    if (!selectedGroup || !showStudyRoom) return null;
+    if (!selectedGroup || !showStudyRoom) {return null;}
 
     const studyingMembers = selectedGroup.members.filter(m => m.isStudying);
     const currentTotalTime = isBreakTime ? BREAK_TIME : FOCUS_TIME;
-    const timerProgress = sessionTimeLeft / currentTotalTime;
+    const studyRoomTimerProgress = sessionTimeLeft / currentTotalTime;
 
     // 색상 설정: 집중 시간은 빨간색, 휴식 시간은 파란색
     const timerColor = isBreakTime ? '#007AFF' : '#FF3B30';
+    // studyRoomTimerProgress는 나중에 타이머 UI에서 사용될 예정
+    void studyRoomTimerProgress;
 
     return (
       <Modal
@@ -1431,7 +1383,7 @@ const GroupContent: React.FC = () => {
                       backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF',
                       borderWidth: 2,
                       borderColor: timerColor,
-                    }
+                    },
                   ]}>
                     <View style={[styles.focusCamPlaceholder, {backgroundColor: isDark ? '#2A2A2A' : '#F5F5F5'}]}>
                       <Icon name="videocam" size={iconSize(24)} color={isDark ? '#666666' : '#999999'} />
@@ -1475,7 +1427,7 @@ const GroupContent: React.FC = () => {
                         backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF',
                         borderWidth: 2,
                         borderColor: getTierColor(member.tier),
-                      }
+                      },
                     ]}>
                       <View style={[styles.focusCamPlaceholder, {backgroundColor: '#E0E0E020'}]}>
                         {member.profileImageUrl ? (
@@ -1515,7 +1467,7 @@ const GroupContent: React.FC = () => {
                   styles.timerCard,
                   {
                     backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF',
-                  }
+                  },
                 ]}>
                   <Text style={[styles.timerStatusLabel, {color: timerColor}]}>
                     {isBreakTime ? '휴식 시간' : '같이 공부'}
@@ -1547,7 +1499,7 @@ const GroupContent: React.FC = () => {
                     backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF',
                     borderWidth: 1,
                     borderColor: isDark ? '#333333' : '#E8E8E8',
-                  }
+                  },
                 ]}>
                   <View style={styles.sessionChatHeader}>
                     <View style={{flexDirection: 'row', alignItems: 'center', gap: sp(6)}}>
@@ -1571,7 +1523,7 @@ const GroupContent: React.FC = () => {
 
   // 가입 모달
   const renderJoinModal = () => {
-    if (!joinTargetGroup) return null;
+    if (!joinTargetGroup) {return null;}
     const categoryInfo = getCategoryInfo(joinTargetGroup.category);
     const isFull = joinTargetGroup.members.length >= joinTargetGroup.maxMembers;
 
@@ -1721,7 +1673,7 @@ const GroupContent: React.FC = () => {
 
   // 그룹 설정 페이지
   const renderSettingsPage = () => {
-    if (!showSettingsPage || !selectedGroup) return null;
+    if (!showSettingsPage || !selectedGroup) {return null;}
 
     return (
       <PanGestureHandler

@@ -1,4 +1,4 @@
-package com.mobile
+package app.tymee.mobile
 
 import android.content.Intent
 import android.os.Build

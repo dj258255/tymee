@@ -1,8 +1,8 @@
 spring:
   application:
-    name: tymee
+    name: ${SPRING_APPLICATION_NAME}
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:local}
+    active: ${SPRING_PROFILES_ACTIVE}
 
   # Flyway 공통 설정
   flyway:
@@ -19,10 +19,17 @@ spring:
 
 # JWT 설정
 jwt:
-  secret: ${JWT_SECRET:tymee-local-dev-secret-key-256-bits-long-enough}
-  access-token-expiration: ${JWT_ACCESS_EXPIRATION:1800}
-  refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:604800}
-  issuer: tymee
+  secret: ${JWT_SECRET}
+  access-token-expiration: ${JWT_ACCESS_EXPIRATION}
+  refresh-token-expiration: ${JWT_REFRESH_EXPIRATION}
+  issuer: ${JWT_ISSUER}
+
+# OAuth 설정
+oauth:
+  google:
+    client-id: ${GOOGLE_CLIENT_ID}
+  apple:
+    bundle-id: ${APPLE_BUNDLE_ID}
 
 # Springdoc OpenAPI 공통 설정
 springdoc:
@@ -61,9 +68,9 @@ spring:
       on-profile: local
 
   datasource:
-    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:tymee}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: ${MYSQL_USER:tymee}
-    password: ${MYSQL_PASSWORD:tymee}
+    url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: ${MYSQL_USER}
+    password: ${MYSQL_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -77,14 +84,14 @@ spring:
 
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
 
   mongodb:
-    uri: mongodb://${MONGO_USERNAME:tymee}:${MONGO_PASSWORD:tymee}@${MONGO_HOST:localhost}:${MONGO_PORT:27017}/${MONGO_DATABASE:tymee}?authSource=admin
+    uri: mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@${MONGO_HOST}:${MONGO_PORT}/${MONGO_DATABASE}?authSource=admin
 
 server:
-  port: ${SERVER_PORT:8080}
+  port: ${SERVER_PORT}
 
 logging:
   config: classpath:log4j2-spring-local.xml
@@ -148,14 +155,14 @@ spring:
   data:
     redis:
       host: ${REDIS_HOST}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
 
   mongodb:
     uri: mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@${MONGO_HOST}:${MONGO_PORT}/${MONGO_DATABASE}?authSource=admin
 
 server:
-  port: ${SERVER_PORT:8080}
+  port: ${SERVER_PORT}
 
 logging:
   config: classpath:log4j2-spring-staging.xml
@@ -189,14 +196,14 @@ spring:
   data:
     redis:
       host: ${REDIS_HOST}
-      port: ${REDIS_PORT:6379}
+      port: ${REDIS_PORT}
       password: ${REDIS_PASSWORD}
 
   mongodb:
     uri: mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@${MONGO_HOST}:${MONGO_PORT}/${MONGO_DATABASE}?authSource=admin
 
 server:
-  port: ${SERVER_PORT:8080}
+  port: ${SERVER_PORT}
 
 # 프로덕션에서 Swagger 비활성화
 springdoc:

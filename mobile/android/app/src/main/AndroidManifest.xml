@@ -73,7 +73,7 @@
       android:label="@string/widget_name">
       <intent-filter>
         <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-        <action android:name="com.mobile.ACTION_UPDATE_POMODORO_WIDGET" />
+        <action android:name="app.tymee.mobile.ACTION_UPDATE_POMODORO_WIDGET" />
       </intent-filter>
       <meta-data
         android:name="android.appwidget.provider"

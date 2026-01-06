@@ -13,6 +13,9 @@ flyway = "11.1.0"
 # JWT
 jjwt = "0.12.6"
 
+# OAuth
+google-api-client = "2.7.2"
+
 # Validation
 jakarta-validation = "3.1.0"
 
@@ -31,7 +34,7 @@ junit = "5.11.4"
 mockito = "5.15.2"
 
 # Code Quality
-spotless = "7.0.2"
+spotless = "8.0.0"
 checkstyle = "12.3.0"
 spotbugs = "6.4.8"
 spotbugs-annotations = "4.9.8"
@@ -54,6 +57,9 @@ spring-security-test = { module = "org.springframework.security:spring-security-
 jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwt" }
 jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwt" }
 jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
+
+# OAuth
+google-api-client = { module = "com.google.api-client:google-api-client", version.ref = "google-api-client" }
 
 # Database
 h2 = { module = "com.h2database:h2", version.ref = "h2" }

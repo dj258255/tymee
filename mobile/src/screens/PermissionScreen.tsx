@@ -106,6 +106,7 @@ const PermissionScreen: React.FC<{onComplete: () => void}> = ({onComplete}) => {
 
   useEffect(() => {
     checkAllPermissions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const checkAllPermissions = async () => {

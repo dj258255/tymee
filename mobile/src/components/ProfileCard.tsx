@@ -222,7 +222,7 @@ const getTierStyle = (tier?: string) => {
 
 // 칭호 정보 파싱 헬퍼
 const getTitleInfo = (title?: TitleInfo | string): {name: string; icon?: string; iconType: 'ionicon' | 'image' | 'lottie'; color: string} | null => {
-  if (!title) return null;
+  if (!title) {return null;}
   if (typeof title === 'string') {
     return {name: title, icon: 'ribbon', iconType: 'ionicon', color: '#9C27B0'};
   }
@@ -718,7 +718,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   onPress,
   size = 'small',
   user = defaultUser,
-  hideFrame = false,
+  hideFrame: _hideFrame = false,
 }) => {
   const isTiny = size === 'tiny';
   const isMini = size === 'mini';

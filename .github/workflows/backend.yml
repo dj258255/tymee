@@ -53,11 +53,11 @@ jobs:
       - name: Gradle 설정
         uses: gradle/actions/setup-gradle@v4
         with:
-          cache-read-only: ${{ github.ref != 'refs/heads/master' }}
+          cache-disabled: true
 
       - name: 테스트 실행
         working-directory: ./backend
-        run: ./gradlew test --no-daemon
+        run: ./gradlew test --no-daemon --refresh-dependencies
 
       - name: 빌드 확인
         working-directory: ./backend

@@ -55,6 +55,13 @@ yarn-error.log
 **/fastlane/Preview.html
 **/fastlane/screenshots
 **/fastlane/test_output
+**/fastlane/.env
+**/fastlane/.env.*
+!**/fastlane/.env.default
+fastlane/google-play-key.json
+fastlane/*.p8
+fastlane/*.p12
+fastlane/*.mobileprovision
 
 # Bundle artifact
 *.jsbundle

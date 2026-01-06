@@ -6,12 +6,25 @@ pluginManagement {
     repositories {
         gradlePluginPortal()
         mavenCentral()
+        google()
+        // Maven Central 미러 (GitHub Actions 403 에러 대비)
+        maven {
+            url = uri("https://maven.aliyun.com/repository/public")
+        }
     }
 }
 
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
+        google()
+        // Maven Central 미러 (GitHub Actions 403 에러 대비)
+        maven {
+            url = uri("https://maven.aliyun.com/repository/public")
+        }
+        maven {
+            url = uri("https://maven.aliyun.com/repository/gradle-plugin")
+        }
     }
 }
 

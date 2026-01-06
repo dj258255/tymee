@@ -4,6 +4,9 @@ pluginManagement {
         google()
         mavenCentral()
         gradlePluginPortal()
+        // Maven Central 미러 (403 에러 대비)
+        maven { url "https://maven.aliyun.com/repository/central" }
+        maven { url "https://maven.aliyun.com/repository/gradle-plugin" }
     }
 }
 
@@ -14,6 +17,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven { url "https://maven.aliyun.com/repository/central" }
     }
 }
 

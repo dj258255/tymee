@@ -20,7 +20,7 @@ const env: EnvConfig = {
   API_URL: Config.API_URL || 'http://localhost:8080',
   API_TIMEOUT: parseInt(Config.API_TIMEOUT || '30000', 10),
   APP_NAME: Config.APP_NAME || 'Tymee',
-  BUNDLE_ID: Config.BUNDLE_ID || 'com.tymee.app',
+  BUNDLE_ID: Config.BUNDLE_ID || 'app.tymee.mobile',
   ENABLE_ANALYTICS: parseBoolean(Config.ENABLE_ANALYTICS),
   ENABLE_CRASHLYTICS: parseBoolean(Config.ENABLE_CRASHLYTICS),
   DEBUG_MODE: parseBoolean(Config.DEBUG_MODE),

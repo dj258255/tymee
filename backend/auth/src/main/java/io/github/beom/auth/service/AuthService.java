@@ -58,7 +58,9 @@ public class AuthService {
     } else {
       // 3. 이메일로 기존 사용자 확인 또는 신규 생성
       Optional<User> existingUser =
-          userInfo.email() != null ? userRepository.findByEmail(userInfo.email()) : Optional.empty();
+          userInfo.email() != null
+              ? userRepository.findByEmail(userInfo.email())
+              : Optional.empty();
 
       if (existingUser.isPresent()) {
         user = existingUser.get();

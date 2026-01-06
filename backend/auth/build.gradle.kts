@@ -31,6 +31,9 @@ dependencies {
 
     // Servlet API (Jakarta EE 11)
     compileOnly("jakarta.servlet:jakarta.servlet-api:6.1.0")
+
+    // Jackson (for Kakao/Apple OAuth)
+    implementation("com.fasterxml.jackson.core:jackson-databind")
 }
 
 dependencyManagement {

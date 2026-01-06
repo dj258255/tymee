@@ -2,7 +2,7 @@ import {create} from 'zustand';
 
 // ============ 타입 정의 ============
 
-export type FeedCategory = 'all' | 'popular' | 'study_done' | 'general' | 'question' | 'info' | 'recommend' | 'success' | 'study_group';
+export type FeedCategory = 'all' | 'popular' | 'study_done' | 'general' | 'question' | 'info' | 'recommend' | 'success' | 'study_group' | 'free';
 
 export type CardFrameType = 'default' | 'bronze' | 'silver' | 'gold' | 'diamond' | 'neon' | 'space' | 'fire';
 

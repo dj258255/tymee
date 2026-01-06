@@ -60,7 +60,7 @@ const TimeTimer: React.FC<TimeTimerProps> = ({
 
   // Generate hour markers (12 positions) - Time Timer style: outside the circle only
   const generateMarkers = () => {
-    const markers = [];
+    const markers: React.ReactElement[] = [];
     for (let i = 0; i < 12; i++) {
       const angle = (i * 30 - 90) * (Math.PI / 180);
       const innerRadius = radius; // 원 테두리에서 시작
@@ -87,7 +87,7 @@ const TimeTimer: React.FC<TimeTimerProps> = ({
 
   // Generate minute tick marks (60 positions, skip hour positions) - outside the circle only
   const generateMinuteTicks = () => {
-    const ticks = [];
+    const ticks: React.ReactElement[] = [];
     for (let i = 0; i < 60; i++) {
       if (i % 5 === 0) {continue;} // Skip hour markers
 
@@ -115,7 +115,7 @@ const TimeTimer: React.FC<TimeTimerProps> = ({
 
   // Generate time labels based on total duration (12 divisions)
   const generateNumbers = () => {
-    const labels = [];
+    const labels: React.ReactElement[] = [];
     const totalMinutes = Math.floor(totalSeconds / 60);
 
     for (let i = 0; i < 12; i++) {

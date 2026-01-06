@@ -52,10 +52,10 @@ function TabNavigator() {
       }
       screenOptions={{
         headerShown: false,
-        sceneContainerStyle: {
+        tabBarStyle: isLocked ? {display: 'none'} : undefined,
+        sceneStyle: {
           paddingBottom: shouldHideTabBar ? 0 : 160, // 탭바(70) + 여백(20) + 광고배너(50) + 추가여백(20)
         },
-        tabBarStyle: isLocked ? {display: 'none'} : undefined,
       }}>
       <Tab.Screen
         name="Timer"

@@ -15,7 +15,7 @@ const resources = {
 const deviceLanguage = RNLocalize.getLocales()[0]?.languageCode || 'ko';
 
 i18n.use(initReactI18next).init({
-  compatibilityJSON: 'v3',
+  compatibilityJSON: 'v4',
   resources,
   lng: deviceLanguage,
   fallbackLng: 'ko',

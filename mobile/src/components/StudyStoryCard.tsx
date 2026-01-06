@@ -171,7 +171,7 @@ const StudyStoryCard: React.FC<StudyStoryCardProps> = ({
         } else {
           // 드래그 준비 (아직 offset 설정 안함)
           isPinching = false;
-          offsetY = position.y._value;
+          offsetY = (position.y as any)._value;
         }
       },
       onPanResponderMove: (evt, gestureState) => {
@@ -196,8 +196,8 @@ const StudyStoryCard: React.FC<StudyStoryCardProps> = ({
           // 드래그 동작 - 실제로 움직일 때만 offset 설정
           if (!offsetSet) {
             position.setOffset({
-              x: position.x._value,
-              y: position.y._value,
+              x: (position.x as any)._value,
+              y: (position.y as any)._value,
             });
             position.setValue({x: 0, y: 0});
             offsetSet = true;
@@ -218,7 +218,7 @@ const StudyStoryCard: React.FC<StudyStoryCardProps> = ({
           position.flattenOffset();
           // 최종 Y 위치 업데이트
           if (setCurrentY) {
-            setCurrentY(position.y._value);
+            setCurrentY((position.y as any)._value);
           }
         } else if (!isPinching && !hasMoved) {
           // 탭 이벤트 처리 - 싱글탭만 지원

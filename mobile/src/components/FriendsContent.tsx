@@ -259,7 +259,7 @@ const FriendsContent: React.FC = () => {
         <View style={styles.avatarContainer}>
           <View style={[
             styles.avatar,
-            {backgroundColor: item.profileImage ? 'transparent' : '#4a6785'},
+            {backgroundColor: item.profileImageUrl ? 'transparent' : '#4a6785'},
             item.tier && {borderWidth: 2, borderColor: getTierColor(item.tier)},
           ]}>
             <Icon name="person" size={iconSize(24)} color="#c7d5e0" />

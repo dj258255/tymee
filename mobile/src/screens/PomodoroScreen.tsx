@@ -2013,24 +2013,24 @@ const PomodoroScreen: React.FC = () => {
               style={[
                 styles.lockSettingsOption,
                 {
-                  backgroundColor: settings.appBlockEnabled
+                  backgroundColor: settings.lockEnabled
                     ? (isDark ? 'rgba(255, 82, 82, 0.15)' : 'rgba(255, 82, 82, 0.1)')
                     : (isDark ? '#2A2A2A' : '#F5F5F5'),
-                  borderColor: settings.appBlockEnabled ? themeColors.focusColor : 'transparent',
+                  borderColor: settings.lockEnabled ? themeColors.focusColor : 'transparent',
                 },
               ]}
               onPress={() => {
                 if (appBlockerPermission !== 'approved') {
                   requestUsageStatsPermission();
                 } else {
-                  updateSettings({appBlockEnabled: !settings.appBlockEnabled});
+                  updateSettings({lockEnabled: !settings.lockEnabled});
                 }
               }}>
               <View style={styles.lockSettingsOptionLeft}>
                 <Icon
                   name="apps"
                   size={iconSize(22)}
-                  color={settings.appBlockEnabled ? themeColors.focusColor : (isDark ? '#666666' : '#999999')}
+                  color={settings.lockEnabled ? themeColors.focusColor : (isDark ? '#666666' : '#999999')}
                 />
                 <View>
                   <Text style={[styles.lockSettingsOptionTitle, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
@@ -2042,9 +2042,9 @@ const PomodoroScreen: React.FC = () => {
                 </View>
               </View>
               <Icon
-                name={settings.appBlockEnabled && appBlockerPermission === 'approved' ? 'checkmark-circle' : 'ellipse-outline'}
+                name={settings.lockEnabled && appBlockerPermission === 'approved' ? 'checkmark-circle' : 'ellipse-outline'}
                 size={iconSize(24)}
-                color={settings.appBlockEnabled && appBlockerPermission === 'approved' ? themeColors.focusColor : (isDark ? '#666666' : '#CCCCCC')}
+                color={settings.lockEnabled && appBlockerPermission === 'approved' ? themeColors.focusColor : (isDark ? '#666666' : '#CCCCCC')}
               />
             </TouchableOpacity>
 

@@ -27,6 +27,9 @@ dependencies {
 
     // Spring Transaction
     implementation(libs.spring.tx)
+
+    // Redis
+    implementation(libs.spring.boot.starter.data.redis)
 }
 
 dependencyManagement {

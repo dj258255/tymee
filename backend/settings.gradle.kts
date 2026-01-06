@@ -2,6 +2,19 @@ rootProject.name = "tymee"
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+    }
+}
+
 // Core module (공통 + 도메인 추상화 + 인프라 설정)
 include("core")
 

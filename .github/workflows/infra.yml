@@ -1,20 +1,11 @@
 # 인프라 워크플로우
-# - infra/** 변경 시: Ansible Lint (검증만)
+# - staging/master PR 시: Ansible Lint (검증만)
 # - 수동 실행: 실제 서버 세팅 (Ansible 적용)
 name: Infrastructure
 
 on:
-  push:
-    branches:
-      - develop
-      - staging
-      - master
-    paths:
-      - 'infra/**'
-      - '.github/workflows/infra.yml'
   pull_request:
     branches:
-      - develop
       - staging
       - master
     paths:

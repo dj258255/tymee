@@ -9,26 +9,12 @@ buildscript {
     }
     repositories {
         google()
-        mavenCentral {
-            content {
-                excludeGroup "com.facebook.react"
-            }
-        }
-        // Maven Central 미러 (403 에러 대비)
-        maven { url "https://maven.aliyun.com/repository/central" }
+        mavenCentral()
     }
     dependencies {
         classpath("com.android.tools.build:gradle:8.10.1")
         classpath("com.facebook.react:react-native-gradle-plugin")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
-    }
-}
-
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-        maven { url "https://maven.aliyun.com/repository/central" }
     }
 }
 

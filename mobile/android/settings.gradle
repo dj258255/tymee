@@ -4,22 +4,10 @@ pluginManagement {
         google()
         mavenCentral()
         gradlePluginPortal()
-        // Maven Central 미러 (403 에러 대비)
-        maven { url "https://maven.aliyun.com/repository/central" }
-        maven { url "https://maven.aliyun.com/repository/gradle-plugin" }
     }
 }
 
 plugins { id("com.facebook.react.settings") }
-
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
-    repositories {
-        google()
-        mavenCentral()
-        maven { url "https://maven.aliyun.com/repository/central" }
-    }
-}
 
 extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
 rootProject.name = 'mobile'

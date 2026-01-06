@@ -1,17 +1,14 @@
-import React, {useMemo, useState} from 'react';
+import React, {useMemo, useState, useCallback} from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
-  ScrollView,
   StyleSheet,
   Dimensions,
 } from 'react-native';
 import Icon from '@react-native-vector-icons/ionicons';
-import Svg, {Path, G, Circle as SvgCircle, Rect, Line, Text as SvgText} from 'react-native-svg';
 import {useStudyRecordStore, DailyStats} from '../store/studyRecordStore';
 import {usePomodoroStore} from '../store/pomodoroStore';
-import {PomodoroSession} from '../types/pomodoro';
 import {StudyRecordTheme} from '../themes/studyRecordThemes';
 import NotebookCard from './NotebookCard';
 import {sp, hp, fp, iconSize} from '../utils/responsive';
@@ -58,7 +55,6 @@ const StudyReport: React.FC<StudyReportProps> = ({theme, isDark}) => {
   const [monthOffset, setMonthOffset] = useState(0); // 0 = 이번 달, -1 = 지난 달
 
   const {
-    getStatsForDate,
     dailyGoalMinutes,
     weeklyGoalMinutes,
   } = useStudyRecordStore();
@@ -67,9 +63,9 @@ const StudyReport: React.FC<StudyReportProps> = ({theme, isDark}) => {
   const pomodoroSessions = usePomodoroStore(state => state.sessions);
 
   // 날짜별 집중세션 통계 계산 함수
-  const getFocusStatsForDate = (dateStr: string): FocusDayStats => {
+  const getFocusStatsForDate = useCallback((dateStr: string): FocusDayStats => {
     const completedFocusSessions = pomodoroSessions.filter(s => {
-      if (s.mode !== 'FOCUS' || !s.completed) return false;
+      if (s.mode !== 'FOCUS' || !s.completed) {return false;}
       const sessionDate = new Date(s.startTime);
       const sessionDateStr = getDateString(sessionDate);
       return sessionDateStr === dateStr;
@@ -84,7 +80,7 @@ const StudyReport: React.FC<StudyReportProps> = ({theme, isDark}) => {
       totalMinutes,
       sessions: completedFocusSessions.length,
     };
-  };
+  }, [pomodoroSessions]);
 
   // 색상 설정
   const textColor = isDark ? theme.text.primary.dark : theme.text.primary.light;
@@ -148,7 +144,7 @@ const StudyReport: React.FC<StudyReportProps> = ({theme, isDark}) => {
       startDate: startOfWeek,
       endDate: endOfWeek,
     };
-  }, [weekOffset, pomodoroSessions, weeklyGoalMinutes]);
+  }, [weekOffset, weeklyGoalMinutes, getFocusStatsForDate]);
 
   // 월간 데이터 계산
   const monthlyData = useMemo(() => {
@@ -223,7 +219,7 @@ const StudyReport: React.FC<StudyReportProps> = ({theme, isDark}) => {
       month,
       daysInMonth,
     };
-  }, [monthOffset, pomodoroSessions]);
+  }, [monthOffset, getFocusStatsForDate]);
 
   // 막대 차트 렌더링 (주간)
   const renderWeeklyBarChart = () => {
@@ -267,7 +263,7 @@ const StudyReport: React.FC<StudyReportProps> = ({theme, isDark}) => {
                       index === 0 ? theme.colors.sunday :
                       index === 6 ? theme.colors.saturday : textColor,
                     fontWeight: isToday ? '700' : '500',
-                  }
+                  },
                 ]}>
                   {WEEKDAY_LABELS[index]}
                 </Text>
@@ -282,7 +278,7 @@ const StudyReport: React.FC<StudyReportProps> = ({theme, isDark}) => {
             {
               bottom: (dailyGoalMinutes / maxValue) * chartHeight + 30,
               borderColor: warningColor,
-            }
+            },
           ]}>
             <Text style={[localStyles.goalLineLabel, {color: warningColor}]}>
               일일 목표 {formatTime(dailyGoalMinutes)}
@@ -299,7 +295,6 @@ const StudyReport: React.FC<StudyReportProps> = ({theme, isDark}) => {
     const month = monthlyData.month;
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = monthlyData.daysInMonth;
-    const maxMinutes = Math.max(...monthlyData.days.map(d => d.totalMinutes), 1);
 
     const cellSize = (SCREEN_WIDTH - sp(80)) / 7 - sp(4);
     const weeks: (DailyStats | null)[][] = [];
@@ -328,11 +323,11 @@ const StudyReport: React.FC<StudyReportProps> = ({theme, isDark}) => {
     }
 
     const getHeatmapColor = (minutes: number): string => {
-      if (minutes === 0) return isDark ? '#2A2A2A' : '#F0F0F0';
+      if (minutes === 0) {return isDark ? '#2A2A2A' : '#F0F0F0';}
       const intensity = Math.min(minutes / (dailyGoalMinutes || 180), 1);
-      if (intensity < 0.25) return isDark ? '#1E3A2F' : '#C6E48B';
-      if (intensity < 0.5) return isDark ? '#2E5A3F' : '#7BC96F';
-      if (intensity < 0.75) return isDark ? '#3E7A4F' : '#239A3B';
+      if (intensity < 0.25) {return isDark ? '#1E3A2F' : '#C6E48B';}
+      if (intensity < 0.5) {return isDark ? '#2E5A3F' : '#7BC96F';}
+      if (intensity < 0.75) {return isDark ? '#3E7A4F' : '#239A3B';}
       return isDark ? '#4E9A5F' : '#196127';
     };
 
@@ -347,7 +342,7 @@ const StudyReport: React.FC<StudyReportProps> = ({theme, isDark}) => {
                 {
                   color: index === 0 ? theme.colors.sunday :
                     index === 6 ? theme.colors.saturday : subtextColor,
-                }
+                },
               ]}>
                 {label}
               </Text>
@@ -359,7 +354,6 @@ const StudyReport: React.FC<StudyReportProps> = ({theme, isDark}) => {
         {weeks.map((week, weekIndex) => (
           <View key={weekIndex} style={localStyles.heatmapRow}>
             {week.map((day, dayIndex) => {
-              const dayNumber = day ? weekIndex * 7 + dayIndex - firstDay + 1 + (weekIndex === 0 ? firstDay : 0) : null;
               const actualDayNumber = day ? monthlyData.days.indexOf(day) + 1 : null;
 
               return (
@@ -377,7 +371,7 @@ const StudyReport: React.FC<StudyReportProps> = ({theme, isDark}) => {
                   {actualDayNumber && (
                     <Text style={[
                       localStyles.heatmapDayText,
-                      {color: day && day.totalMinutes > 0 ? '#FFFFFF' : subtextColor}
+                      {color: day && day.totalMinutes > 0 ? '#FFFFFF' : subtextColor},
                     ]}>
                       {actualDayNumber}
                     </Text>
@@ -449,7 +443,7 @@ const StudyReport: React.FC<StudyReportProps> = ({theme, isDark}) => {
                   {
                     color: index === 0 ? theme.colors.sunday :
                       index === 6 ? theme.colors.saturday : textColor,
-                  }
+                  },
                 ]}>
                   {WEEKDAY_LABELS[index]}
                 </Text>
@@ -478,7 +472,7 @@ const StudyReport: React.FC<StudyReportProps> = ({theme, isDark}) => {
           />
           <Text style={[
             localStyles.tabText,
-            {color: reportType === 'weekly' ? '#FFFFFF' : subtextColor}
+            {color: reportType === 'weekly' ? '#FFFFFF' : subtextColor},
           ]}>
             주간 리포트
           </Text>
@@ -496,7 +490,7 @@ const StudyReport: React.FC<StudyReportProps> = ({theme, isDark}) => {
           />
           <Text style={[
             localStyles.tabText,
-            {color: reportType === 'monthly' ? '#FFFFFF' : subtextColor}
+            {color: reportType === 'monthly' ? '#FFFFFF' : subtextColor},
           ]}>
             월간 리포트
           </Text>

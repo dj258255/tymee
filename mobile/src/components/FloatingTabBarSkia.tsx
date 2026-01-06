@@ -1,8 +1,7 @@
-import React, {useState, useCallback, useEffect, useMemo} from 'react';
+import React, {useState, useCallback, useEffect} from 'react';
 import {
   View,
   TouchableOpacity,
-  Text,
   StyleSheet,
   Platform,
   LayoutChangeEvent,
@@ -25,7 +24,6 @@ import Animated, {
   useDerivedValue,
   runOnJS,
   interpolate,
-  Extrapolation,
 } from 'react-native-reanimated';
 import {Gesture, GestureDetector} from 'react-native-gesture-handler';
 import {sp, hp, iconSize, fp} from '../utils/responsive';
@@ -63,7 +61,7 @@ vec4 main(vec2 fragCoord) {
 
   return vec4(1.0, 1.0, 1.0, gradient);
 }
-`)!
+`)!;
 
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 const AnimatedIcon = Animated.createAnimatedComponent(Icon);
@@ -86,19 +84,21 @@ const COMMUNITY_SUB_TABS: {name: CommunitySubTab; icon: string; label: string}[]
 
 const FloatingTabBarSkia: React.FC<BottomTabBarProps> = ({
   state,
-  descriptors,
+  // descriptors is provided by BottomTabBarProps but not used in this component
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  descriptors: _descriptors,
   navigation,
 }) => {
   const [containerWidth, setContainerWidth] = useState(0);
-  const {isCommunityMode, activeCommunityTab, exitCommunityMode, setCommunityTab, previousTab} = useNavigationStore();
+  const {isCommunityMode, activeCommunityTab, exitCommunityMode, setCommunityTab} = useNavigationStore();
   const {isRunning, mode, settings} = usePomodoroStore();
 
   // 탭이 차단되었는지 확인
   // 집중모드 + 타이머 실행 중 + FOCUS 모드 + 해당 탭이 차단 목록에 있으면 차단
   const isTabBlocked = useCallback((tabName: string): boolean => {
-    if (settings.appMode !== 'CONCENTRATION') return false;
-    if (!isRunning) return false;
-    if (mode !== 'FOCUS') return false;
+    if (settings.appMode !== 'CONCENTRATION') {return false;}
+    if (!isRunning) {return false;}
+    if (mode !== 'FOCUS') {return false;}
     return settings.blockedTabs.includes(tabName as TabName);
   }, [settings.appMode, settings.blockedTabs, isRunning, mode]);
 
@@ -148,7 +148,7 @@ const FloatingTabBarSkia: React.FC<BottomTabBarProps> = ({
     }, () => {
       runOnJS(setIsTransitioning)(false);
     });
-  }, [isCommunityMode]);
+  }, [isCommunityMode, modeTransition]);
 
   // Handle layout to get actual width
   const onContainerLayout = useCallback((event: LayoutChangeEvent) => {
@@ -184,7 +184,7 @@ const FloatingTabBarSkia: React.FC<BottomTabBarProps> = ({
       });
       indicatorWidth.value = tabWidth;
     }
-  }, [currentIndex, tabWidth, isCommunityMode]);
+  }, [currentIndex, tabWidth, isCommunityMode, indicatorX, indicatorWidth]);
 
   // Animated indicator style
   const indicatorStyle = useAnimatedStyle(() => {
@@ -227,7 +227,7 @@ const FloatingTabBarSkia: React.FC<BottomTabBarProps> = ({
   };
 
   // 메인 탭 프레스 핸들러
-  const handleMainTabPress = (tabName: string, index: number) => {
+  const handleMainTabPress = (tabName: string, _index: number) => {
     // 탭이 차단되었으면 이동하지 않음
     if (isTabBlocked(tabName)) {
       return;
@@ -302,15 +302,15 @@ const FloatingTabBarSkia: React.FC<BottomTabBarProps> = ({
         {/* 메인 탭 모드 - 전환 중이거나 메인 모드일 때만 렌더링 */}
         {(isTransitioning || !isCommunityMode) && (
           <Animated.View style={[styles.tabBarInner, isCommunityMode && styles.tabBarAbsolute, mainTabsAnimatedStyle]} pointerEvents={isCommunityMode ? 'none' : 'auto'}>
-            {MAIN_TABS.map((tab, index) => {
-              const isFocused = !isCommunityMode && currentIndex === index;
+            {MAIN_TABS.map((tab, idx) => {
+              const isFocused = !isCommunityMode && currentIndex === idx;
               return (
                 <MainTabItem
                   key={tab.name}
                   tab={tab}
-                  index={index}
+                  index={idx}
                   isFocused={isFocused}
-                  onPress={() => handleMainTabPress(tab.name, index)}
+                  onPress={() => handleMainTabPress(tab.name, idx)}
                   tabWidth={tabWidth}
                   tabCount={MAIN_TABS.length}
                   indicatorX={indicatorX}
@@ -560,7 +560,7 @@ const MainTabItem: React.FC<{
   enterCommunityModeWithDelay: () => void;
   navigateCallback: (tabName: string) => void;
   getCurrentMainTab: () => MainTab;
-}> = ({tab, index, isFocused, onPress, tabWidth, tabCount, indicatorX, indicatorScale, indicatorWidth, enterCommunityModeCallback, enterCommunityModeWithDelay, navigateCallback, getCurrentMainTab}) => {
+}> = ({tab, index, isFocused, onPress, tabWidth, tabCount, indicatorX, indicatorScale, indicatorWidth, navigateCallback, enterCommunityModeWithDelay}) => {
   const scale = useSharedValue(1);
   const rippleScale = useSharedValue(0);
   const rippleOpacity = useSharedValue(0);

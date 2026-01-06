@@ -47,15 +47,20 @@ public class UserBlockEntity {
   @Column(name = "blocked_id", nullable = false)
   private Long blockedId;
 
+  @Column(name = "reason")
+  private String reason;
+
   @CreationTimestamp
-  @Column(name = "created_at", nullable = false, updatable = false)
+  @Column(name = "created_at", updatable = false)
   private LocalDateTime createdAt;
 
   @Builder
-  public UserBlockEntity(Long id, Long blockerId, Long blockedId, LocalDateTime createdAt) {
+  public UserBlockEntity(
+      Long id, Long blockerId, Long blockedId, String reason, LocalDateTime createdAt) {
     this.id = id;
     this.blockerId = blockerId;
     this.blockedId = blockedId;
+    this.reason = reason;
     this.createdAt = createdAt;
   }
 
@@ -65,6 +70,7 @@ public class UserBlockEntity {
         .id(userBlock.getId())
         .blockerId(userBlock.getBlockerId())
         .blockedId(userBlock.getBlockedId())
+        .reason(userBlock.getReason())
         .createdAt(userBlock.getCreatedAt())
         .build();
   }
@@ -75,6 +81,7 @@ public class UserBlockEntity {
         .id(id)
         .blockerId(blockerId)
         .blockedId(blockedId)
+        .reason(reason)
         .createdAt(createdAt)
         .build();
   }

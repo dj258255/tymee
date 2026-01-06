@@ -108,7 +108,7 @@ class AlarmServiceClass {
       });
 
       const file = result[0];
-      if (!file.uri || !file.name) return null;
+      if (!file.uri || !file.name) {return null;}
 
       // 사운드 파일 복사
       const destPath = `${CUSTOM_SOUNDS_DIR}/${file.name}`;
@@ -143,7 +143,7 @@ class AlarmServiceClass {
   async removeCustomSound(soundId: string): Promise<boolean> {
     try {
       const sound = this.customSounds.find(s => s.id === soundId);
-      if (!sound || !sound.uri) return false;
+      if (!sound || !sound.uri) {return false;}
 
       await RNFS.unlink(sound.uri);
       this.customSounds = this.customSounds.filter(s => s.id !== soundId);
@@ -262,7 +262,7 @@ class AlarmServiceClass {
   async showNotification(
     title: string,
     body: string,
-    soundType: AlarmSoundType | string = 'default',
+    _soundType: AlarmSoundType | string = 'default',
     withSound = false
   ): Promise<void> {
     try {

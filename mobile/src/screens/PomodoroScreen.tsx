@@ -31,7 +31,7 @@ import LiveActivity, {LiveActivityTimerMode, LiveActivityColors} from '../module
 import FocusTimer, {FocusTimerColors} from '../modules/FocusTimer';
 import ScreenLock from '../modules/ScreenLock';
 import {getPomodoroTheme} from '../themes/pomodoroThemes';
-import {sp, hp, fp, iconSize, touchSize} from '../utils/responsive';
+import {sp, hp, fp, iconSize} from '../utils/responsive';
 import {getStyles} from './PomodoroScreen.styles';
 import {REWARD_CONFIG} from '../store/currencyStore';
 
@@ -50,16 +50,16 @@ const PomodoroScreen: React.FC = () => {
   const [installedApps, setInstalledApps] = useState<Array<{packageName: string; appName: string}>>([]);
   const [loadingApps, setLoadingApps] = useState(false);
   const [appBlockerPermission, setAppBlockerPermission] = useState<string>('notDetermined');
-  const [accessibilityPermission, setAccessibilityPermission] = useState(false);
+  const [_accessibilityPermission, setAccessibilityPermission] = useState(false);
 
   // 화면 잠금 감지 상태
-  const [isScreenLocked, setIsScreenLocked] = useState(false);
+  const [_isScreenLocked, setIsScreenLocked] = useState(false);
   const [isScreenDimmed, setIsScreenDimmed] = useState(false); // 화면 어둡게 (잠금 버튼)
   const [showMemoModal, setShowMemoModal] = useState(false); // 세션 메모 모달
   const [sessionMemo, setSessionMemo] = useState(''); // 세션 메모 입력값
   const [showTimerHelpModal, setShowTimerHelpModal] = useState(false); // 타이머 도움말 모달
   const [showModeChangeConfirm, setShowModeChangeConfirm] = useState(false); // 집중→자유 모드 전환 확인 모달
-  const [pendingModeChange, setPendingModeChange] = useState<'FREE' | 'CONCENTRATION' | null>(null); // 대기 중인 모드 변경
+  const [_pendingModeChange, setPendingModeChange] = useState<'FREE' | 'CONCENTRATION' | null>(null); // 대기 중인 모드 변경
   const [showLockSettingsModal, setShowLockSettingsModal] = useState(false); // 집중모드 시작 전 잠금 설정 모달
   const [tempLockEnabled, setTempLockEnabled] = useState(false); // 임시 잠금 활성화 여부 (기본 off)
   const [tempStartBlockedTabs, setTempStartBlockedTabs] = useState<TabName[]>([]); // 시작 시 차단할 탭 (기본 없음)
@@ -123,7 +123,7 @@ const PomodoroScreen: React.FC = () => {
     mode,
     timeLeft,
     isRunning,
-    completedCycles,
+    completedCycles: _completedCycles,
     currentCycle,
     settings,
     isFullscreen,
@@ -247,7 +247,7 @@ const PomodoroScreen: React.FC = () => {
 
   useEffect(() => {
     const manageLiveActivity = async () => {
-      if (Platform.OS !== 'ios') return;
+      if (Platform.OS !== 'ios') {return;}
 
       const wasRunning = prevIsRunningForLiveActivity.current;
       // settings에서 직접 시간 계산 (store의 timeLeft가 아닌 설정값 기준)
@@ -329,11 +329,12 @@ const PomodoroScreen: React.FC = () => {
       prevIsRunningForLiveActivity.current = isRunning;
     };
     manageLiveActivity();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning, liveActivitySupported, mode, settings.appMode, settings.focusDuration, settings.breakDuration, timeLeft]);
 
   // 타이머 완료 또는 리셋 시 Live Activity 종료
   useEffect(() => {
-    if (!liveActivitySupported || Platform.OS !== 'ios') return;
+    if (!liveActivitySupported || Platform.OS !== 'ios') {return;}
 
     // timeLeft가 0이면 종료
     if (timeLeft === 0 && liveActivityActive.current) {
@@ -351,7 +352,7 @@ const PomodoroScreen: React.FC = () => {
   });
 
   useEffect(() => {
-    if (!liveActivitySupported || Platform.OS !== 'ios') return;
+    if (!liveActivitySupported || Platform.OS !== 'ios') {return;}
 
     const prevSettings = prevSettingsRef.current;
     const settingsChanged =
@@ -360,7 +361,7 @@ const PomodoroScreen: React.FC = () => {
 
     // 설정이 변경되었고, 타이머가 멈춰있고, Live Activity가 활성화되어 있으면 종료
     if (settingsChanged && !isRunning && liveActivityActive.current) {
-      console.log(`🔧 Settings changed while paused, ending Live Activity`);
+      console.log('🔧 Settings changed while paused, ending Live Activity');
       LiveActivity.endActivity().catch(() => {});
       liveActivityActive.current = false;
       prevIsRunningForLiveActivity.current = null;
@@ -381,7 +382,7 @@ const PomodoroScreen: React.FC = () => {
   // iOS: 앱이 포그라운드로 돌아올 때 시간 동기화
   // Live Activity의 endTime 기준으로 앱의 timeLeft를 맞춤 (시간 오차 방지)
   useEffect(() => {
-    if (!liveActivitySupported || Platform.OS !== 'ios') return;
+    if (!liveActivitySupported || Platform.OS !== 'ios') {return;}
 
     const handleAppStateChange = async (nextAppState: AppStateStatus) => {
       if (nextAppState === 'active' && isRunning && liveActivityActive.current) {
@@ -425,6 +426,7 @@ const PomodoroScreen: React.FC = () => {
 
     const subscription = AppState.addEventListener('change', handleAppStateChange);
     return () => subscription.remove();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [liveActivitySupported, isRunning, setTimeLeft]);
 
   // Android 알림 시작/종료/업데이트 관리
@@ -433,8 +435,8 @@ const PomodoroScreen: React.FC = () => {
   useEffect(() => {
     // Android 알림 권한 요청 함수
     const requestNotificationPermission = async (): Promise<boolean> => {
-      if (Platform.OS !== 'android') return true;
-      if (Platform.Version < 33) return true; // Android 13 미만은 권한 불필요
+      if (Platform.OS !== 'android') {return true;}
+      if (Platform.Version < 33) {return true;} // Android 13 미만은 권한 불필요
 
       try {
         const granted = await PermissionsAndroid.request(
@@ -455,7 +457,7 @@ const PomodoroScreen: React.FC = () => {
 
     const manageAndroidTimer = async () => {
       console.log('manageAndroidTimer:', { androidTimerSupported, platform: Platform.OS, isRunning });
-      if (!androidTimerSupported || Platform.OS !== 'android') return;
+      if (!androidTimerSupported || Platform.OS !== 'android') {return;}
 
       const wasRunning = prevAndroidIsRunningRef.current;
       const currentTimeLeft = timeLeftRef.current;
@@ -500,11 +502,12 @@ const PomodoroScreen: React.FC = () => {
       }
     };
     manageAndroidTimer();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning, androidTimerSupported, mode]);
 
   // Android 타이머 완료 시 종료
   useEffect(() => {
-    if (!androidTimerSupported || Platform.OS !== 'android') return;
+    if (!androidTimerSupported || Platform.OS !== 'android') {return;}
 
     if (timeLeft === 0 && androidTimerActive.current) {
       FocusTimer.stopTimer().catch(() => {});
@@ -592,8 +595,9 @@ const PomodoroScreen: React.FC = () => {
     setPendingModeChange(null);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const toggleBlockedTab = (tab: TabName) => {
-    if (tab === 'Timer') return; // 타이머 탭은 차단할 수 없음
+    if (tab === 'Timer') {return;} // 타이머 탭은 차단할 수 없음
 
     setTempBlockedTabs(prev => {
       if (prev.includes(tab)) {
@@ -604,6 +608,7 @@ const PomodoroScreen: React.FC = () => {
     });
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const getTabLabel = (tab: TabName): string => {
     switch (tab) {
       case 'Timer': return '타이머';
@@ -616,6 +621,7 @@ const PomodoroScreen: React.FC = () => {
   };
 
   // 앱 목록 불러오기
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const loadInstalledApps = async () => {
     if (Platform.OS !== 'android') {
       // iOS에서는 Family Activity Picker 사용 필요
@@ -681,6 +687,7 @@ const PomodoroScreen: React.FC = () => {
   };
 
   // 접근성 서비스 권한 요청
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const requestAccessibilityPermission = async () => {
     Alert.alert(
       '접근성 서비스 권한 필요',
@@ -801,6 +808,7 @@ const PomodoroScreen: React.FC = () => {
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const getModeLabel = (currentMode: TimerMode): string => {
     switch (currentMode) {
       case 'FOCUS':
@@ -967,7 +975,7 @@ const PomodoroScreen: React.FC = () => {
                       styles.landscapeModeButton,
                       {
                         backgroundColor: mode === 'FOCUS' ? currentColor : (isDark ? '#252525' : '#F5F5F5'),
-                      }
+                      },
                     ]}
                     onPress={() => !isRunning && setMode('FOCUS')}
                     disabled={isRunning}>
@@ -978,7 +986,7 @@ const PomodoroScreen: React.FC = () => {
                     />
                     <Text style={[
                       styles.timerModeText,
-                      {color: mode === 'FOCUS' ? '#FFFFFF' : (isDark ? '#666666' : '#999999')}
+                      {color: mode === 'FOCUS' ? '#FFFFFF' : (isDark ? '#666666' : '#999999')},
                     ]}>
                       집중
                     </Text>
@@ -988,7 +996,7 @@ const PomodoroScreen: React.FC = () => {
                       styles.landscapeModeButton,
                       {
                         backgroundColor: mode === 'BREAK' ? '#4CAF50' : (isDark ? '#252525' : '#F5F5F5'),
-                      }
+                      },
                     ]}
                     onPress={() => !isRunning && setMode('BREAK')}
                     disabled={isRunning}>
@@ -999,7 +1007,7 @@ const PomodoroScreen: React.FC = () => {
                     />
                     <Text style={[
                       styles.timerModeText,
-                      {color: mode === 'BREAK' ? '#FFFFFF' : (isDark ? '#666666' : '#999999')}
+                      {color: mode === 'BREAK' ? '#FFFFFF' : (isDark ? '#666666' : '#999999')},
                     ]}>
                       휴식
                     </Text>
@@ -1063,7 +1071,7 @@ const PomodoroScreen: React.FC = () => {
           isLandscape && {
             paddingLeft: insets.left,
             paddingRight: insets.right,
-          }
+          },
         ]}
         activeOpacity={1}
         onPress={handleScreenPress}>
@@ -1072,7 +1080,7 @@ const PomodoroScreen: React.FC = () => {
         <View style={[
           styles.fullscreenContent,
           !isLandscape && styles.fullscreenContentPortrait,
-          isLandscape && {paddingHorizontal: 20}
+          isLandscape && {paddingHorizontal: 20},
         ]} pointerEvents="box-none">
           {/* 세로 모드 레이아웃 */}
           {!isLandscape ? (
@@ -1082,7 +1090,7 @@ const PomodoroScreen: React.FC = () => {
                 <Text
                   style={[
                     styles.currentTimeTextPortrait,
-                    {fontSize: timeFontSize}
+                    {fontSize: timeFontSize},
                   ]}
                   numberOfLines={1}
                   adjustsFontSizeToFit>
@@ -1091,7 +1099,7 @@ const PomodoroScreen: React.FC = () => {
                 <Text
                   style={[
                     styles.currentDateTextPortrait,
-                    {fontSize: dateFontSize}
+                    {fontSize: dateFontSize},
                   ]}
                   numberOfLines={1}
                   adjustsFontSizeToFit>
@@ -1116,7 +1124,7 @@ const PomodoroScreen: React.FC = () => {
                 {/* 남은 시간 텍스트 - 타이머 아래 */}
                 <Text style={[
                   styles.fullscreenTimeLeftText,
-                  {color: isDark ? '#FFFFFF' : '#1A1A1A'}
+                  {color: isDark ? '#FFFFFF' : '#1A1A1A'},
                 ]}>{formatTime(timeLeft)}</Text>
               </View>
             </>
@@ -1127,7 +1135,7 @@ const PomodoroScreen: React.FC = () => {
                 <Text
                   style={[
                     styles.currentDateText,
-                    {fontSize: dateFontSize}
+                    {fontSize: dateFontSize},
                   ]}
                   numberOfLines={1}
                   adjustsFontSizeToFit>
@@ -1136,7 +1144,7 @@ const PomodoroScreen: React.FC = () => {
                 <Text
                   style={[
                     styles.currentTimeText,
-                    {fontSize: timeFontSize}
+                    {fontSize: timeFontSize},
                   ]}
                   numberOfLines={1}
                   adjustsFontSizeToFit>
@@ -1167,7 +1175,7 @@ const PomodoroScreen: React.FC = () => {
           style={[
             styles.exitFullscreenButton,
             {top: 32, bottom: undefined},
-            isLandscape && !showControls && {opacity: 0, pointerEvents: 'none'}
+            isLandscape && !showControls && {opacity: 0, pointerEvents: 'none'},
           ]}
           onPress={() => setIsFullscreen(false)}>
           <Text style={styles.exitFullscreenText}>✕</Text>
@@ -1198,7 +1206,7 @@ const PomodoroScreen: React.FC = () => {
                   mode === 'FOCUS' && styles.timerModeButtonActive,
                   {
                     backgroundColor: mode === 'FOCUS' ? currentColor : (isDark ? '#252525' : '#F5F5F5'),
-                  }
+                  },
                 ]}
                 onPress={() => !isRunning && setMode('FOCUS')}
                 disabled={isRunning}>
@@ -1209,7 +1217,7 @@ const PomodoroScreen: React.FC = () => {
                 />
                 <Text style={[
                   styles.timerModeText,
-                  {color: mode === 'FOCUS' ? '#FFFFFF' : (isDark ? '#666666' : '#999999')}
+                  {color: mode === 'FOCUS' ? '#FFFFFF' : (isDark ? '#666666' : '#999999')},
                 ]}>
                   집중시간
                 </Text>
@@ -1220,7 +1228,7 @@ const PomodoroScreen: React.FC = () => {
                   mode === 'BREAK' && styles.timerModeButtonActive,
                   {
                     backgroundColor: mode === 'BREAK' ? '#4CAF50' : (isDark ? '#252525' : '#F5F5F5'),
-                  }
+                  },
                 ]}
                 onPress={() => !isRunning && setMode('BREAK')}
                 disabled={isRunning}>
@@ -1231,7 +1239,7 @@ const PomodoroScreen: React.FC = () => {
                 />
                 <Text style={[
                   styles.timerModeText,
-                  {color: mode === 'BREAK' ? '#FFFFFF' : (isDark ? '#666666' : '#999999')}
+                  {color: mode === 'BREAK' ? '#FFFFFF' : (isDark ? '#666666' : '#999999')},
                 ]}>
                   휴식시간
                 </Text>
@@ -1241,7 +1249,7 @@ const PomodoroScreen: React.FC = () => {
             /* 집중모드: 현재 상태 텍스트만 표시 */
             <View style={[
               styles.concentrationStatus,
-              {backgroundColor: currentColor}
+              {backgroundColor: currentColor},
             ]}>
               <Icon
                 name={mode === 'FOCUS' ? 'flame' : 'cafe'}
@@ -1597,13 +1605,13 @@ const PomodoroScreen: React.FC = () => {
                         backgroundColor: tempAppMode === 'FREE'
                           ? '#FF5252'
                           : (isDark ? '#3A3A3A' : '#EEEEEE'),
-                      }
+                      },
                     ]}
                     onPress={() => setTempAppMode('FREE')}>
                     <Text style={[
                       styles.appModeButtonText,
                       tempAppMode === 'FREE' && styles.appModeButtonTextActive,
-                      {color: tempAppMode === 'FREE' ? '#FFFFFF' : (isDark ? '#999999' : '#666666')}
+                      {color: tempAppMode === 'FREE' ? '#FFFFFF' : (isDark ? '#999999' : '#666666')},
                     ]}>
                       자유 모드
                     </Text>
@@ -1616,13 +1624,13 @@ const PomodoroScreen: React.FC = () => {
                         backgroundColor: tempAppMode === 'CONCENTRATION'
                           ? '#2196F3'
                           : (isDark ? '#3A3A3A' : '#EEEEEE'),
-                      }
+                      },
                     ]}
                     onPress={() => setTempAppMode('CONCENTRATION')}>
                     <Text style={[
                       styles.appModeButtonText,
                       tempAppMode === 'CONCENTRATION' && styles.appModeButtonTextActive,
-                      {color: tempAppMode === 'CONCENTRATION' ? '#FFFFFF' : (isDark ? '#999999' : '#666666')}
+                      {color: tempAppMode === 'CONCENTRATION' ? '#FFFFFF' : (isDark ? '#999999' : '#666666')},
                     ]}>
                       집중 모드
                     </Text>

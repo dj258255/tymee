@@ -2,6 +2,9 @@ package io.github.beom.auth.service;
 
 import io.github.beom.auth.domain.RefreshToken;
 import io.github.beom.auth.domain.TokenPair;
+import io.github.beom.auth.oauth.OAuthUserInfo;
+import io.github.beom.auth.oauth.OAuthVerifier;
+import io.github.beom.auth.oauth.OAuthVerifierFactory;
 import io.github.beom.auth.repository.RedisTokenRepository;
 import io.github.beom.auth.util.JwtUtil;
 import io.github.beom.user.domain.User;
@@ -14,10 +17,10 @@ import io.github.beom.user.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/** 인증 비즈니스 로직 서비스. 소셜 로그인, 토큰 갱신, 로그아웃 처리. */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -27,35 +30,18 @@ public class AuthService {
   private final UserOAuthRepository userOAuthRepository;
   private final JwtUtil jwtUtil;
   private final RedisTokenRepository tokenRepository;
-  private final PasswordEncoder passwordEncoder;
+  private final OAuthVerifierFactory oAuthVerifierFactory;
 
+  /** 소셜 로그인. 토큰 검증 후 신규 사용자는 자동 가입, 기존 사용자는 토큰 발급. */
   @Transactional
-  public TokenPair login(String email, String password, String deviceId) {
-    User user =
-        userRepository
-            .findByEmail(email)
-            .orElseThrow(() -> new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다"));
+  public TokenPair oAuthLogin(OAuthProvider provider, String token, String deviceId) {
+    // 1. OAuth 토큰 검증 및 사용자 정보 추출
+    OAuthVerifier verifier = oAuthVerifierFactory.getVerifier(provider);
+    OAuthUserInfo userInfo = verifier.verify(token);
 
-    if (!user.canLogin()) {
-      throw new IllegalStateException("로그인할 수 없는 계정입니다");
-    }
-
-    if (user.isOAuthUser()) {
-      throw new IllegalArgumentException("소셜 로그인 사용자입니다. 소셜 로그인을 이용해주세요");
-    }
-
-    if (!passwordEncoder.matches(password, user.getPassword())) {
-      throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다");
-    }
-
-    return generateAndSaveTokens(user, deviceId);
-  }
-
-  @Transactional
-  public TokenPair oAuthLogin(
-      OAuthProvider provider, String providerId, String email, String nickname, String deviceId) {
+    // 2. 기존 OAuth 연동 확인
     Optional<UserOAuth> existingOAuth =
-        userOAuthRepository.findByProviderAndProviderId(provider, providerId);
+        userOAuthRepository.findByProviderAndProviderId(provider, userInfo.providerId());
 
     User user;
 
@@ -70,17 +56,24 @@ public class AuthService {
               .findById(oAuth.getUserId())
               .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다"));
     } else {
-      Optional<User> existingUser = userRepository.findByEmail(email);
+      // 3. 이메일로 기존 사용자 확인 또는 신규 생성
+      Optional<User> existingUser =
+          userInfo.email() != null ? userRepository.findByEmail(userInfo.email()) : Optional.empty();
 
       if (existingUser.isPresent()) {
         user = existingUser.get();
       } else {
-        String userNickname = nickname != null ? nickname : generateNickname(email);
-        user = User.createOAuthUser(new Email(email), new Nickname(userNickname));
+        String nickname =
+            userInfo.name() != null ? userInfo.name() : generateNickname(userInfo.email());
+        user =
+            User.createOAuthUser(
+                userInfo.email() != null ? new Email(userInfo.email()) : null,
+                new Nickname(nickname));
         user = userRepository.save(user);
       }
 
-      UserOAuth newOAuth = UserOAuth.create(user.getId(), provider, providerId);
+      // 4. OAuth 연동 정보 저장
+      UserOAuth newOAuth = UserOAuth.create(user.getId(), provider, userInfo.providerId());
       userOAuthRepository.save(newOAuth);
     }
 
@@ -91,6 +84,7 @@ public class AuthService {
     return generateAndSaveTokens(user, deviceId);
   }
 
+  /** 토큰 갱신. Redis 저장된 토큰과 비교 후 새 토큰 쌍 발급. 토큰 탈취 감지 시 전체 로그아웃. */
   @Transactional
   public TokenPair refresh(String refreshToken, String deviceId) {
     JwtUtil.Claims claims = jwtUtil.parseRefreshToken(refreshToken);
@@ -123,19 +117,23 @@ public class AuthService {
     return generateAndSaveTokens(user, deviceId);
   }
 
+  /** 로그아웃. 해당 기기의 Refresh Token 삭제. */
   public void logout(Long userId, String deviceId) {
     tokenRepository.deleteRefreshToken(userId, deviceId);
   }
 
+  /** 모든 기기 로그아웃. 사용자의 모든 Refresh Token 삭제. */
   public void logoutAllDevices(Long userId) {
     tokenRepository.deleteAllRefreshTokens(userId);
   }
 
+  /** Access Token 검증. Gateway에서 호출. */
   public TokenInfo validateToken(String accessToken) {
     JwtUtil.Claims claims = jwtUtil.parseAccessToken(accessToken);
     return new TokenInfo(claims.userId(), claims.email(), claims.role());
   }
 
+  /** 토큰 쌍 생성 후 Redis에 Refresh Token 저장. */
   private TokenPair generateAndSaveTokens(User user, String deviceId) {
     TokenPair tokenPair =
         jwtUtil.generateTokenPair(user.getId(), user.getEmail().value(), user.getRole().name());

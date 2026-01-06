@@ -16,14 +16,12 @@ import {
   Image,
 } from 'react-native';
 import Icon from '@react-native-vector-icons/ionicons';
-import {useTranslation} from 'react-i18next';
 import {useThemeStore} from '../store/themeStore';
 import {useCommunityStore, FeedCategory, FeedItem, Comment, CardFrameType} from '../store/communityStore';
 import {useNavigationStore} from '../store/navigationStore';
 import {safeGetColorScheme, safeAddAppearanceListener} from '../utils/appearance';
 import FeedCard from '../components/FeedCard';
 import PostListItem from '../components/PostListItem';
-import ProfileCard from '../components/ProfileCard';
 import {sp, hp, fp, iconSize, touchSize} from '../utils/responsive';
 import {launchImageLibrary} from 'react-native-image-picker';
 
@@ -34,35 +32,6 @@ import GroupContent from '../components/GroupContent';
 // 친구 컴포넌트
 import FriendsContent from '../components/FriendsContent';
 
-// 티어별 색상 (학업 스타일)
-const getTierColor = (tier?: string) => {
-  switch (tier) {
-    // 박사 등급
-    case '명예박사':
-      return '#FFD700';
-    case '박사':
-      return '#9C27B0';
-    // 석사 등급
-    case '석사 III':
-    case '석사 II':
-    case '석사 I':
-      return '#00BCD4';
-    // 학사 등급
-    case '학사 III':
-    case '학사 II':
-    case '학사 I':
-      return '#4CAF50';
-    // 학생 등급
-    case '고등학생':
-      return '#FF9800';
-    case '중학생':
-      return '#78909C';
-    case '초등학생':
-      return '#A1887F';
-    default:
-      return '#9E9E9E';
-  }
-};
 
 // 카드 프레임별 테두리 스타일
 const getFrameBorderStyle = (frame?: CardFrameType) => {
@@ -136,27 +105,6 @@ const getFrameBorderStyle = (frame?: CardFrameType) => {
   }
 };
 
-// 레벨 테두리 색상 (프레임 기반)
-const getLevelBorderColor = (frame?: CardFrameType) => {
-  switch (frame) {
-    case 'fire':
-      return '#FF4500';
-    case 'neon':
-      return '#FF00FF';
-    case 'space':
-      return '#6B5BFF';
-    case 'diamond':
-      return '#00CED1';
-    case 'gold':
-      return '#FFD700';
-    case 'silver':
-      return '#C0C0C0';
-    case 'bronze':
-      return '#CD7F32';
-    default:
-      return '#007AFF';
-  }
-};
 
 // 티어별 스타일 (ProfileCard와 동일)
 const getTierStyle = (tier?: string) => {
@@ -223,7 +171,6 @@ const REPORT_REASONS = [
 
 
 const CommunityScreen: React.FC = () => {
-  const {t} = useTranslation();
   const [systemColorScheme, setSystemColorScheme] = useState<'light' | 'dark'>('light');
   const [refreshing, setRefreshing] = useState(false);
   const [showCommentModal, setShowCommentModal] = useState(false);
@@ -253,10 +200,9 @@ const CommunityScreen: React.FC = () => {
     if (!isCommunityMode) {
       enterCommunityMode();
     }
-  }, []);
+  }, [isCommunityMode, enterCommunityMode]);
 
   const {
-    selectedCategory,
     setCategory,
     toggleLike,
     getFilteredFeeds,
@@ -326,10 +272,10 @@ const CommunityScreen: React.FC = () => {
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-    if (minutes < 1) return '방금 전';
-    if (minutes < 60) return `${minutes}분 전`;
-    if (hours < 24) return `${hours}시간 전`;
-    if (days < 7) return `${days}일 전`;
+    if (minutes < 1) {return '방금 전';}
+    if (minutes < 60) {return `${minutes}분 전`;}
+    if (hours < 24) {return `${hours}시간 전`;}
+    if (days < 7) {return `${days}일 전`;}
     return new Date(date).toLocaleDateString('ko-KR');
   };
 
@@ -339,7 +285,7 @@ const CommunityScreen: React.FC = () => {
   };
 
   const handleSubmitComment = () => {
-    if (!selectedFeed || !commentText.trim()) return;
+    if (!selectedFeed || !commentText.trim()) {return;}
     addComment(
       selectedFeed.id,
       commentText.trim(),
@@ -380,7 +326,7 @@ const CommunityScreen: React.FC = () => {
   };
 
   const handleSubmitPost = () => {
-    if (!writeContent.trim()) return;
+    if (!writeContent.trim()) {return;}
 
     addFeed({
       category: writeCategory,
@@ -443,7 +389,7 @@ const CommunityScreen: React.FC = () => {
 
   // 신고 제출
   const handleSubmitReport = () => {
-    if (!reportTarget || !selectedReportReason) return;
+    if (!reportTarget || !selectedReportReason) {return;}
     // TODO: 실제 신고 API 호출
     console.log('Report submitted:', reportTarget, selectedReportReason);
     setShowReportModal(false);
@@ -1194,7 +1140,7 @@ const CommunityScreen: React.FC = () => {
               </TouchableOpacity>
               <TextInput
                 style={[styles.commentTextInput, {color: textColor, backgroundColor: isDark ? '#2C2C2E' : '#F5F5F5'}]}
-                placeholder={replyTo ? `@${replyTo.author.nickname}에게 답글...` : "댓글을 입력하세요"}
+                placeholder={replyTo ? `@${replyTo.author.nickname}에게 답글...` : '댓글을 입력하세요'}
                 placeholderTextColor={subtextColor}
                 value={commentText}
                 onChangeText={setCommentText}

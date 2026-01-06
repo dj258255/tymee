@@ -91,7 +91,7 @@ export const useCurrencyStore = create<CurrencyStore>()(
 
       spendPencils: (amount: number) => {
         const state = get();
-        if (state.pencils < amount) return false;
+        if (state.pencils < amount) {return false;}
         set({pencils: state.pencils - amount});
         return true;
       },
@@ -102,7 +102,7 @@ export const useCurrencyStore = create<CurrencyStore>()(
 
       spendBallpens: (amount: number) => {
         const state = get();
-        if (state.ballpens < amount) return false;
+        if (state.ballpens < amount) {return false;}
         set({ballpens: state.ballpens - amount});
         return true;
       },

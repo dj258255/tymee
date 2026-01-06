@@ -1,7 +1,6 @@
 package io.github.beom.auth.controller;
 
 import io.github.beom.auth.domain.TokenPair;
-import io.github.beom.auth.dto.LoginRequest;
 import io.github.beom.auth.dto.OAuthLoginRequest;
 import io.github.beom.auth.dto.RefreshRequest;
 import io.github.beom.auth.dto.TokenResponse;
@@ -30,31 +29,17 @@ public class AuthController {
 
   private final AuthService authService;
 
-  /** POST /auth/login - 일반 로그인 (자체 계정용, 현재 미사용) */
-  @PostMapping("/login")
-  public ApiResponse<TokenResponse> login(@Valid @RequestBody LoginRequest request) {
-    TokenPair tokenPair =
-        authService.login(request.email(), request.password(), request.deviceId());
-
-    return ApiResponse.success(TokenResponse.from(tokenPair));
-  }
-
   /**
    * POST /auth/login/{provider} - 소셜 로그인.
    *
-   * <p>provider: google, apple, kakao, naver 중 하나. 신규 사용자는 자동 가입, 탈퇴 사용자는 복구 안내 응답.
+   * <p>provider: google, apple, kakao 중 하나. idToken/accessToken을 검증하고 자체 JWT 발급.
    */
   @PostMapping("/login/{provider}")
   public ApiResponse<TokenResponse> oAuthLogin(
       @PathVariable String provider, @Valid @RequestBody OAuthLoginRequest request) {
     OAuthProvider oAuthProvider = OAuthProvider.fromCode(provider);
     TokenPair tokenPair =
-        authService.oAuthLogin(
-            oAuthProvider,
-            request.providerId(),
-            request.email(),
-            request.nickname(),
-            request.deviceId());
+        authService.oAuthLogin(oAuthProvider, request.token(), request.deviceId());
 
     return ApiResponse.success(TokenResponse.from(tokenPair));
   }

@@ -2,13 +2,16 @@ import React, {useState, useEffect} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import Icon from '@react-native-vector-icons/ionicons';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import {useWindowDimensions, InteractionManager, StyleSheet, ActivityIndicator, View} from 'react-native';
+import {InteractionManager, ActivityIndicator, View} from 'react-native';
 import {useTranslation} from 'react-i18next';
 
 // Import i18n
 import './src/i18n';
+
+// Google Sign-In 초기화
+import {configureGoogleSignIn} from './src/services/googleAuth';
+configureGoogleSignIn();
 
 // Import preserved UI screens
 import PomodoroScreen from './src/screens/PomodoroScreen';
@@ -114,7 +117,7 @@ function App(): React.JSX.Element {
   useEffect(() => {
     // 앱 시작 시 인증 상태 확인
     checkAuth();
-  }, []);
+  }, [checkAuth]);
 
   useEffect(() => {
     const task = InteractionManager.runAfterInteractions(() => {
@@ -193,7 +196,5 @@ function App(): React.JSX.Element {
     </GestureHandlerRootView>
   );
 }
-
-const styles = StyleSheet.create({});
 
 export default App;

@@ -5,6 +5,11 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+/**
+ * JWT 설정 프로퍼티.
+ *
+ * <p>application.yml의 jwt.* 설정을 바인딩한다.
+ */
 @Getter
 @Setter
 @Component

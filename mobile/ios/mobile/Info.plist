@@ -82,6 +82,14 @@
 				<string>tymee</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.527600336182-s6ln7vpk5h15d0c11kfrl7vqs4376l14</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>

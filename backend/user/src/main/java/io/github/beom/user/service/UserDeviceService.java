@@ -21,14 +21,20 @@ public class UserDeviceService {
   private final UserDeviceRepository userDeviceRepository;
 
   /**
-   * 디바이스를 등록하거나 FCM 토큰을 갱신한다.
+   * 디바이스를 등록하거나 푸시 토큰을 갱신한다.
    *
-   * <p>같은 사용자의 같은 디바이스가 이미 등록되어 있으면 FCM 토큰만 업데이트한다. 앱 재설치 등으로 FCM 토큰이 변경될 수 있기 때문.
+   * <p>같은 사용자의 같은 디바이스가 이미 등록되어 있으면 푸시 토큰만 업데이트한다. 앱 재설치 등으로 토큰이 변경될 수 있기 때문.
    */
   @Transactional
   public void registerDevice(
-      Long userId, String fcmToken, DevicePlatform platform, String deviceId) {
-    UserDevice userDevice = UserDevice.create(userId, fcmToken, platform, deviceId);
+      Long userId,
+      String deviceId,
+      DevicePlatform deviceType,
+      String pushToken,
+      String appVersion,
+      String osVersion) {
+    UserDevice userDevice =
+        UserDevice.create(userId, deviceId, deviceType, pushToken, appVersion, osVersion);
     userDeviceRepository.upsert(userDevice);
   }
 

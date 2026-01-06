@@ -1,5 +1,5 @@
 import {StyleSheet, Platform} from 'react-native';
-import {sp, hp, fp, wp, iconSize, touchSize} from '../utils/responsive';
+import {sp, hp, fp, wp, touchSize} from '../utils/responsive';
 
 export const getStyles = (isDark: boolean) =>
   StyleSheet.create({

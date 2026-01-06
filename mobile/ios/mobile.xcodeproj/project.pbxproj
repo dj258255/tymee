@@ -587,7 +587,7 @@
 					"-lc++",
 					"$(inherited)",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "app.tymee.mobile";
+				PRODUCT_BUNDLE_IDENTIFIER = app.tymee.mobile;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/mobile.app/mobile";
 			};
@@ -611,7 +611,7 @@
 					"-lc++",
 					"$(inherited)",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "app.tymee.mobile";
+				PRODUCT_BUNDLE_IDENTIFIER = app.tymee.mobile;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/mobile.app/mobile";
 			};
@@ -666,7 +666,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "app.tymee.mobile";
+				PRODUCT_BUNDLE_IDENTIFIER = app.tymee.mobile;
 				PRODUCT_NAME = mobile;
 				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/mobile/mobile-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -695,7 +695,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "app.tymee.mobile";
+				PRODUCT_BUNDLE_IDENTIFIER = app.tymee.mobile;
 				PRODUCT_NAME = mobile;
 				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/mobile/mobile-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;

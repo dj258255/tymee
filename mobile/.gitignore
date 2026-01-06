@@ -32,7 +32,11 @@ local.properties
 *.hprof
 .cxx/
 *.keystore
-!debug.keystore
+
+# Environment files (민감 정보 포함)
+.env
+.env.*
+!.env.example
 
 # node.js
 #

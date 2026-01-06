@@ -3,6 +3,7 @@ package io.github.beom.auth.domain;
 import lombok.Builder;
 import lombok.Getter;
 
+/** Access Token과 Refresh Token 쌍. 로그인/갱신 시 반환. */
 @Getter
 public class TokenPair {
 

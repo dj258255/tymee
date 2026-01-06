@@ -39,6 +39,142 @@ interface PaymentHistory {
 type FilterType = 'all' | 'pencil' | 'ballpen';
 type TransactionFilter = 'all' | 'earn' | 'spend' | 'purchase';
 
+// 샘플 데이터 - 실제로는 store나 API에서 가져올 것
+const HISTORY_DATA: PaymentHistory[] = [
+  {
+    id: '1',
+    type: 'purchase',
+    currency: 'ballpen',
+    amount: 100,
+    title: '볼펜 100개 구매',
+    description: '인앱 결제',
+    source: 'App Store',
+    date: '2025-01-15 14:30',
+    status: 'completed',
+  },
+  {
+    id: '2',
+    type: 'spend',
+    currency: 'ballpen',
+    amount: -30,
+    title: '라벤더 타이머 테마',
+    description: '아이템 상점에서 구매',
+    source: '아이템 상점',
+    date: '2025-01-15 12:20',
+    status: 'completed',
+  },
+  {
+    id: '3',
+    type: 'earn',
+    currency: 'pencil',
+    amount: 50,
+    title: '일일 출석 보상',
+    description: '7일 연속 출석 보너스',
+    source: '출석 체크',
+    date: '2025-01-15 09:00',
+    status: 'completed',
+  },
+  {
+    id: '4',
+    type: 'earn',
+    currency: 'pencil',
+    amount: 200,
+    title: '뽀모도로 완료 보상',
+    description: '오늘 8개 뽀모도로 완료',
+    source: '뽀모도로 타이머',
+    date: '2025-01-14 22:00',
+    status: 'completed',
+  },
+  {
+    id: '5',
+    type: 'spend',
+    currency: 'pencil',
+    amount: -2000,
+    title: '오션 타이머 테마',
+    description: '아이템 상점에서 구매',
+    source: '아이템 상점',
+    date: '2025-01-14 18:45',
+    status: 'completed',
+  },
+  {
+    id: '6',
+    type: 'spend',
+    currency: 'pencil',
+    amount: -3000,
+    title: '골드 프레임',
+    description: '프로필 카드 테두리',
+    source: '아이템 상점',
+    date: '2025-01-14 15:30',
+    status: 'completed',
+  },
+  {
+    id: '7',
+    type: 'earn',
+    currency: 'pencil',
+    amount: 100,
+    title: '레벨업 보상',
+    description: '레벨 15 달성!',
+    source: '레벨업',
+    date: '2025-01-14 12:00',
+    status: 'completed',
+  },
+  {
+    id: '8',
+    type: 'purchase',
+    currency: 'pencil',
+    amount: 1000,
+    title: '연필 1,000개 구매',
+    description: '인앱 결제',
+    source: 'App Store',
+    date: '2025-01-13 16:20',
+    status: 'completed',
+  },
+  {
+    id: '9',
+    type: 'earn',
+    currency: 'pencil',
+    amount: 30,
+    title: '친구 초대 보상',
+    description: '친구 1명 초대 완료',
+    source: '친구 초대',
+    date: '2025-01-13 10:15',
+    status: 'completed',
+  },
+  {
+    id: '10',
+    type: 'spend',
+    currency: 'ballpen',
+    amount: -50,
+    title: '우주 프레임',
+    description: '프로필 카드 테두리',
+    source: '아이템 상점',
+    date: '2025-01-12 20:30',
+    status: 'completed',
+  },
+  {
+    id: '11',
+    type: 'earn',
+    currency: 'pencil',
+    amount: 500,
+    title: '주간 미션 완료',
+    description: '이번 주 공부 목표 달성',
+    source: '주간 미션',
+    date: '2025-01-12 23:59',
+    status: 'completed',
+  },
+  {
+    id: '12',
+    type: 'earn',
+    currency: 'ballpen',
+    amount: 10,
+    title: '첫 구매 보너스',
+    description: '첫 인앱 결제 감사 선물',
+    source: '이벤트',
+    date: '2025-01-12 14:00',
+    status: 'completed',
+  },
+];
+
 const PaymentHistoryScreen: React.FC<PaymentHistoryScreenProps> = ({onBack, navigation}) => {
   const handleBack = () => {
     if (onBack) {
@@ -74,145 +210,9 @@ const PaymentHistoryScreen: React.FC<PaymentHistoryScreenProps> = ({onBack, navi
       ? systemColorScheme === 'dark'
       : themeMode === 'dark';
 
-  // 샘플 데이터 - 실제로는 store나 API에서 가져올 것
-  const history: PaymentHistory[] = [
-    {
-      id: '1',
-      type: 'purchase',
-      currency: 'ballpen',
-      amount: 100,
-      title: '볼펜 100개 구매',
-      description: '인앱 결제',
-      source: 'App Store',
-      date: '2025-01-15 14:30',
-      status: 'completed',
-    },
-    {
-      id: '2',
-      type: 'spend',
-      currency: 'ballpen',
-      amount: -30,
-      title: '라벤더 타이머 테마',
-      description: '아이템 상점에서 구매',
-      source: '아이템 상점',
-      date: '2025-01-15 12:20',
-      status: 'completed',
-    },
-    {
-      id: '3',
-      type: 'earn',
-      currency: 'pencil',
-      amount: 50,
-      title: '일일 출석 보상',
-      description: '7일 연속 출석 보너스',
-      source: '출석 체크',
-      date: '2025-01-15 09:00',
-      status: 'completed',
-    },
-    {
-      id: '4',
-      type: 'earn',
-      currency: 'pencil',
-      amount: 200,
-      title: '뽀모도로 완료 보상',
-      description: '오늘 8개 뽀모도로 완료',
-      source: '뽀모도로 타이머',
-      date: '2025-01-14 22:00',
-      status: 'completed',
-    },
-    {
-      id: '5',
-      type: 'spend',
-      currency: 'pencil',
-      amount: -2000,
-      title: '오션 타이머 테마',
-      description: '아이템 상점에서 구매',
-      source: '아이템 상점',
-      date: '2025-01-14 18:45',
-      status: 'completed',
-    },
-    {
-      id: '6',
-      type: 'spend',
-      currency: 'pencil',
-      amount: -3000,
-      title: '골드 프레임',
-      description: '프로필 카드 테두리',
-      source: '아이템 상점',
-      date: '2025-01-14 15:30',
-      status: 'completed',
-    },
-    {
-      id: '7',
-      type: 'earn',
-      currency: 'pencil',
-      amount: 100,
-      title: '레벨업 보상',
-      description: '레벨 15 달성!',
-      source: '레벨업',
-      date: '2025-01-14 12:00',
-      status: 'completed',
-    },
-    {
-      id: '8',
-      type: 'purchase',
-      currency: 'pencil',
-      amount: 1000,
-      title: '연필 1,000개 구매',
-      description: '인앱 결제',
-      source: 'App Store',
-      date: '2025-01-13 16:20',
-      status: 'completed',
-    },
-    {
-      id: '9',
-      type: 'earn',
-      currency: 'pencil',
-      amount: 30,
-      title: '친구 초대 보상',
-      description: '친구 1명 초대 완료',
-      source: '친구 초대',
-      date: '2025-01-13 10:15',
-      status: 'completed',
-    },
-    {
-      id: '10',
-      type: 'spend',
-      currency: 'ballpen',
-      amount: -50,
-      title: '우주 프레임',
-      description: '프로필 카드 테두리',
-      source: '아이템 상점',
-      date: '2025-01-12 20:30',
-      status: 'completed',
-    },
-    {
-      id: '11',
-      type: 'earn',
-      currency: 'pencil',
-      amount: 500,
-      title: '주간 미션 완료',
-      description: '이번 주 공부 목표 달성',
-      source: '주간 미션',
-      date: '2025-01-12 23:59',
-      status: 'completed',
-    },
-    {
-      id: '12',
-      type: 'earn',
-      currency: 'ballpen',
-      amount: 10,
-      title: '첫 구매 보너스',
-      description: '첫 인앱 결제 감사 선물',
-      source: '이벤트',
-      date: '2025-01-12 14:00',
-      status: 'completed',
-    },
-  ];
-
   // 필터링된 내역
   const filteredHistory = useMemo(() => {
-    return history.filter(item => {
+    return HISTORY_DATA.filter(item => {
       // 화폐 필터
       if (currencyFilter !== 'all' && item.currency !== currencyFilter) {
         return false;
@@ -228,7 +228,7 @@ const PaymentHistoryScreen: React.FC<PaymentHistoryScreenProps> = ({onBack, navi
   // 요약 계산
   const summary = useMemo(() => {
     const now = new Date();
-    const thisMonth = history.filter(item => {
+    const thisMonth = HISTORY_DATA.filter(item => {
       const itemDate = new Date(item.date.replace(' ', 'T'));
       return itemDate.getMonth() === now.getMonth() &&
              itemDate.getFullYear() === now.getFullYear();

@@ -85,13 +85,13 @@ interface TaskManagerProps {
 const TaskManager: React.FC<TaskManagerProps> = ({
   isDark,
   tasks,
-  subjects,
+  subjects: _subjects,
   onTaskToggle,
   onTaskAdd,
   onTaskDelete,
   onTaskUpdate,
   onTaskReorder,
-  onSubjectAdd,
+  onSubjectAdd: _onSubjectAdd,
   theme,
   allTasks = [],
   selectedDate = new Date(),
@@ -138,7 +138,6 @@ const TaskManager: React.FC<TaskManagerProps> = ({
   const taskMarginBottom = theme?.task.item.marginBottom || 8;
   const taskBorderWidth = theme?.task.item.borderWidth || 1;
   const taskHasShadow = theme?.task.item.shadow || false;
-  const badgeBorderRadius = theme?.task.badge.borderRadius || 10;
   const modalBorderRadius = theme?.modal.borderRadius || 16;
   const buttonBorderRadius = theme?.button.borderRadius || 8;
   const inputBorderRadius = theme?.input.borderRadius || 8;
@@ -199,15 +198,12 @@ const TaskManager: React.FC<TaskManagerProps> = ({
 
   // 총 예상 시간
   const totalEstimated = tasks.reduce((sum, t) => sum + t.estimatedMinutes, 0);
-  const totalCompleted = tasks
-    .filter(t => t.completed)
-    .reduce((sum, t) => sum + t.estimatedMinutes, 0);
 
   // 시간 포맷
   const formatMinutes = (mins: number) => {
     const h = Math.floor(mins / 60);
     const m = mins % 60;
-    if (h > 0) return `${h}시간 ${m > 0 ? `${m}분` : ''}`;
+    if (h > 0) {return `${h}시간 ${m > 0 ? `${m}분` : ''}`;}
     return `${m}분`;
   };
 
@@ -224,7 +220,7 @@ const TaskManager: React.FC<TaskManagerProps> = ({
 
   // 태스크 추가
   const handleAddTask = () => {
-    if (!newTaskTitle.trim() || !onTaskAdd) return;
+    if (!newTaskTitle.trim() || !onTaskAdd) {return;}
 
     onTaskAdd({
       title: newTaskTitle.trim(),
@@ -267,7 +263,7 @@ const TaskManager: React.FC<TaskManagerProps> = ({
 
   // 태스크 수정 완료
   const handleEditTask = () => {
-    if (!editingTask || !editTaskTitle.trim() || !onTaskUpdate) return;
+    if (!editingTask || !editTaskTitle.trim() || !onTaskUpdate) {return;}
 
     onTaskUpdate(editingTask.id, {
       title: editTaskTitle.trim(),
@@ -505,7 +501,7 @@ const TaskManager: React.FC<TaskManagerProps> = ({
             backgroundColor: progressBg,
             borderRadius: theme?.progressBar.borderRadius || 3,
             height: theme?.progressBar.height || 6,
-          }
+          },
         ]}>
           <View
             style={[

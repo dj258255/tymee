@@ -39,14 +39,14 @@ public class UserDeviceRepository {
     jpaRepository.deleteAllByUserId(userId);
   }
 
-  /** FCM 토큰을 업데이트한다. 기존 디바이스가 있으면 토큰만 갱신. */
+  /** 푸시 토큰을 업데이트한다. 기존 디바이스가 있으면 토큰만 갱신. */
   public UserDevice upsert(UserDevice userDevice) {
     Optional<UserDeviceEntity> existing =
         jpaRepository.findByUserIdAndDeviceId(userDevice.getUserId(), userDevice.getDeviceId());
 
     if (existing.isPresent()) {
       UserDeviceEntity entity = existing.get();
-      entity.updateFcmToken(userDevice.getFcmToken());
+      entity.updatePushToken(userDevice.getPushToken());
       return jpaRepository.save(entity).toDomain();
     }
 

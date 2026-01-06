@@ -27,7 +27,7 @@ public class UserBlockService {
    * <p>자기 자신 차단, 존재하지 않는 사용자 차단, 중복 차단을 방지한다.
    */
   @Transactional
-  public void blockUser(Long blockerId, Long blockedId) {
+  public void blockUser(Long blockerId, Long blockedId, String reason) {
     if (blockerId.equals(blockedId)) {
       throw new IllegalArgumentException("자기 자신을 차단할 수 없습니다");
     }
@@ -40,7 +40,7 @@ public class UserBlockService {
       throw new IllegalStateException("이미 차단한 사용자입니다");
     }
 
-    UserBlock userBlock = UserBlock.create(blockerId, blockedId);
+    UserBlock userBlock = UserBlock.create(blockerId, blockedId, reason);
     userBlockRepository.save(userBlock);
   }
 

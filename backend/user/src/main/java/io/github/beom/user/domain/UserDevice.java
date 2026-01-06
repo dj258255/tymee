@@ -16,9 +16,13 @@ public class UserDevice {
 
   private Long id;
   private Long userId;
-  private String fcmToken;
-  private DevicePlatform platform;
   private String deviceId;
+  private DevicePlatform deviceType;
+  private String pushToken;
+  private String appVersion;
+  private String osVersion;
+  private Boolean isActive;
+  private LocalDateTime lastUsedAt;
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;
 
@@ -26,30 +30,45 @@ public class UserDevice {
    * 디바이스를 등록한다.
    *
    * @param userId 사용자 ID
-   * @param fcmToken FCM 토큰
-   * @param platform 플랫폼 (IOS, ANDROID)
-   * @param deviceId 디바이스 고유 ID (UUID 등)
+   * @param deviceId 디바이스 고유 ID
+   * @param deviceType 플랫폼 (IOS, ANDROID)
+   * @param pushToken FCM/APNs 토큰
+   * @param appVersion 앱 버전
+   * @param osVersion OS 버전
    */
   public static UserDevice create(
-      Long userId, String fcmToken, DevicePlatform platform, String deviceId) {
+      Long userId,
+      String deviceId,
+      DevicePlatform deviceType,
+      String pushToken,
+      String appVersion,
+      String osVersion) {
     return UserDevice.builder()
         .userId(userId)
-        .fcmToken(fcmToken)
-        .platform(platform)
         .deviceId(deviceId)
+        .deviceType(deviceType)
+        .pushToken(pushToken)
+        .appVersion(appVersion)
+        .osVersion(osVersion)
+        .isActive(true)
+        .lastUsedAt(LocalDateTime.now())
         .createdAt(LocalDateTime.now())
         .updatedAt(LocalDateTime.now())
         .build();
   }
 
-  /** FCM 토큰을 갱신한다. 앱 재설치 등으로 토큰이 변경될 수 있음. */
-  public UserDevice updateFcmToken(String newFcmToken) {
+  /** 푸시 토큰을 갱신한다. 앱 재설치 등으로 토큰이 변경될 수 있음. */
+  public UserDevice updatePushToken(String newPushToken) {
     return UserDevice.builder()
         .id(this.id)
         .userId(this.userId)
-        .fcmToken(newFcmToken)
-        .platform(this.platform)
         .deviceId(this.deviceId)
+        .deviceType(this.deviceType)
+        .pushToken(newPushToken)
+        .appVersion(this.appVersion)
+        .osVersion(this.osVersion)
+        .isActive(this.isActive)
+        .lastUsedAt(LocalDateTime.now())
         .createdAt(this.createdAt)
         .updatedAt(LocalDateTime.now())
         .build();

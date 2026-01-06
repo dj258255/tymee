@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, Text, StyleSheet, TouchableOpacity, Image, ViewStyle} from 'react-native';
+import {View, Text, StyleSheet, TouchableOpacity, Image} from 'react-native';
 import Icon from '@react-native-vector-icons/ionicons';
 import {FeedItem} from '../store/communityStore';
 import {sp, hp, fp, iconSize} from '../utils/responsive';
@@ -30,22 +30,6 @@ const getTierStyle = (tier?: string) => {
   return {color: '#9E9E9E', bgColor: '#F5F5F5', icon: 'ribbon'};
 };
 
-// 티어별 테두리 스타일 (카드용)
-const getTierBorderStyle = (tier?: string): ViewStyle => {
-  const tierStyle = getTierStyle(tier);
-  if (tier && tier !== '') {
-    return {
-      borderWidth: 2,
-      borderColor: tierStyle.color,
-      shadowColor: tierStyle.color,
-      shadowOpacity: 0.3,
-      shadowRadius: 6,
-      shadowOffset: {width: 0, height: 2},
-      elevation: 4,
-    };
-  }
-  return {};
-};
 
 interface FeedCardProps {
   feed: FeedItem;
@@ -76,10 +60,10 @@ const FeedCard: React.FC<FeedCardProps> = ({
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-    if (minutes < 1) return '방금 전';
-    if (minutes < 60) return `${minutes}분 전`;
-    if (hours < 24) return `${hours}시간 전`;
-    if (days < 7) return `${days}일 전`;
+    if (minutes < 1) {return '방금 전';}
+    if (minutes < 60) {return `${minutes}분 전`;}
+    if (hours < 24) {return `${hours}시간 전`;}
+    if (days < 7) {return `${days}일 전`;}
     return new Date(date).toLocaleDateString('ko-KR');
   };
 
@@ -87,7 +71,7 @@ const FeedCard: React.FC<FeedCardProps> = ({
   const formatStudyTime = (minutes: number) => {
     const h = Math.floor(minutes / 60);
     const m = minutes % 60;
-    if (h > 0) return `${h}시간 ${m > 0 ? `${m}분` : ''}`;
+    if (h > 0) {return `${h}시간 ${m > 0 ? `${m}분` : ''}`;}
     return `${m}분`;
   };
 

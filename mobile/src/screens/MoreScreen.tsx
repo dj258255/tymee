@@ -15,8 +15,8 @@ import {useNavigation} from '@react-navigation/native';
 import {useThemeStore, ThemeMode} from '../store/themeStore';
 import {useStudyRecordStore} from '../store/studyRecordStore';
 import {usePomodoroStore} from '../store/pomodoroStore';
-import {getStudyRecordTheme, StudyRecordThemeType, studyRecordThemes} from '../themes/studyRecordThemes';
-import {PomodoroThemeType, pomodoroThemes, pomodoroThemeList, timerColorPalette, getTimerColor} from '../themes/pomodoroThemes';
+import {StudyRecordThemeType, studyRecordThemes} from '../themes/studyRecordThemes';
+import {PomodoroThemeType, timerColorPalette, getTimerColor} from '../themes/pomodoroThemes';
 import {safeGetColorScheme, safeAddAppearanceListener} from '../utils/appearance';
 import ProfileScreen from './ProfileScreen';
 import ProfileCard from '../components/ProfileCard';
@@ -43,7 +43,7 @@ const MoreScreen: React.FC = () => {
   const [showLanguageModal, setShowLanguageModal] = useState(false);
 
   // 미리보기용 state
-  const [previewTimerTheme, setPreviewTimerTheme] = useState<PomodoroThemeType | null>(null);
+  const [_previewTimerTheme, _setPreviewTimerTheme] = useState<PomodoroThemeType | null>(null);
   const [previewStudyTheme, setPreviewStudyTheme] = useState<StudyRecordThemeType | null>(null);
 
   // 개별 색상 선택용 state
@@ -815,7 +815,7 @@ const MoreScreen: React.FC = () => {
                 const previewKey = previewStudyTheme || studyRecordTheme;
                 const previewThemeData = studyRecordThemes[previewKey];
 
-                if (!previewThemeData) return null;
+                if (!previewThemeData) {return null;}
 
                 const previewBg = isDark ? previewThemeData.background.dark : previewThemeData.background.light;
                 const previewCardBg = isDark ? previewThemeData.card.dark : previewThemeData.card.light;

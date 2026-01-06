@@ -9,11 +9,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
-  Dimensions,
   SafeAreaView,
   StatusBar,
   Modal,
+  Dimensions,
 } from 'react-native';
+
+const {width: SCREEN_WIDTH} = Dimensions.get('window');
 import Icon from '@react-native-vector-icons/ionicons';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {useThemeStore} from '../store/themeStore';
@@ -21,7 +23,6 @@ import {useFriendStore, Friend, ChatMessage} from '../store/friendStore';
 import {safeGetColorScheme, safeAddAppearanceListener} from '../utils/appearance';
 import {sp, hp, fp, iconSize} from '../utils/responsive';
 
-const {width: SCREEN_WIDTH} = Dimensions.get('window');
 
 // 스팀 스타일 색상
 const STEAM_COLORS = {
@@ -239,7 +240,7 @@ const FriendChatScreen: React.FC = () => {
             <View style={[
               styles.headerAvatar,
               {backgroundColor: '#4a6785'},
-              friend.tier && {borderWidth: 2, borderColor: getTierColor(friend.tier)}
+              friend.tier && {borderWidth: 2, borderColor: getTierColor(friend.tier)},
             ]}>
               <Icon name="person" size={iconSize(20)} color="#c7d5e0" />
             </View>

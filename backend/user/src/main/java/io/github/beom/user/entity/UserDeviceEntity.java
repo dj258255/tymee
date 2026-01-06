@@ -45,38 +45,58 @@ public class UserDeviceEntity {
   @Column(name = "user_id", nullable = false)
   private Long userId;
 
-  @Column(name = "fcm_token", nullable = false)
-  private String fcmToken;
-
-  @Column(name = "platform", nullable = false, length = 10)
-  @Convert(converter = DevicePlatformConverter.class)
-  private DevicePlatform platform;
-
   @Column(name = "device_id", nullable = false)
   private String deviceId;
 
+  @Column(name = "device_type", nullable = false, length = 20)
+  @Convert(converter = DevicePlatformConverter.class)
+  private DevicePlatform deviceType;
+
+  @Column(name = "push_token", length = 500)
+  private String pushToken;
+
+  @Column(name = "app_version", length = 20)
+  private String appVersion;
+
+  @Column(name = "os_version", length = 20)
+  private String osVersion;
+
+  @Column(name = "is_active")
+  private Boolean isActive;
+
+  @Column(name = "last_used_at")
+  private LocalDateTime lastUsedAt;
+
   @CreationTimestamp
-  @Column(name = "created_at", nullable = false, updatable = false)
+  @Column(name = "created_at", updatable = false)
   private LocalDateTime createdAt;
 
   @UpdateTimestamp
-  @Column(name = "updated_at", nullable = false)
+  @Column(name = "updated_at")
   private LocalDateTime updatedAt;
 
   @Builder
   public UserDeviceEntity(
       Long id,
       Long userId,
-      String fcmToken,
-      DevicePlatform platform,
       String deviceId,
+      DevicePlatform deviceType,
+      String pushToken,
+      String appVersion,
+      String osVersion,
+      Boolean isActive,
+      LocalDateTime lastUsedAt,
       LocalDateTime createdAt,
       LocalDateTime updatedAt) {
     this.id = id;
     this.userId = userId;
-    this.fcmToken = fcmToken;
-    this.platform = platform;
     this.deviceId = deviceId;
+    this.deviceType = deviceType;
+    this.pushToken = pushToken;
+    this.appVersion = appVersion;
+    this.osVersion = osVersion;
+    this.isActive = isActive;
+    this.lastUsedAt = lastUsedAt;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
   }
@@ -86,9 +106,13 @@ public class UserDeviceEntity {
     return UserDeviceEntity.builder()
         .id(userDevice.getId())
         .userId(userDevice.getUserId())
-        .fcmToken(userDevice.getFcmToken())
-        .platform(userDevice.getPlatform())
         .deviceId(userDevice.getDeviceId())
+        .deviceType(userDevice.getDeviceType())
+        .pushToken(userDevice.getPushToken())
+        .appVersion(userDevice.getAppVersion())
+        .osVersion(userDevice.getOsVersion())
+        .isActive(userDevice.getIsActive())
+        .lastUsedAt(userDevice.getLastUsedAt())
         .createdAt(userDevice.getCreatedAt())
         .updatedAt(userDevice.getUpdatedAt())
         .build();
@@ -99,16 +123,21 @@ public class UserDeviceEntity {
     return UserDevice.builder()
         .id(id)
         .userId(userId)
-        .fcmToken(fcmToken)
-        .platform(platform)
         .deviceId(deviceId)
+        .deviceType(deviceType)
+        .pushToken(pushToken)
+        .appVersion(appVersion)
+        .osVersion(osVersion)
+        .isActive(isActive)
+        .lastUsedAt(lastUsedAt)
         .createdAt(createdAt)
         .updatedAt(updatedAt)
         .build();
   }
 
-  /** FCM 토큰을 업데이트한다. */
-  public void updateFcmToken(String fcmToken) {
-    this.fcmToken = fcmToken;
+  /** 푸시 토큰을 업데이트한다. */
+  public void updatePushToken(String pushToken) {
+    this.pushToken = pushToken;
+    this.lastUsedAt = LocalDateTime.now();
   }
 }

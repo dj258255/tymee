@@ -15,6 +15,9 @@ import Icon from '@react-native-vector-icons/ionicons';
 import Svg, {Path} from 'react-native-svg';
 import {useThemeStore} from '../store/themeStore';
 import {safeGetColorScheme, safeAddAppearanceListener} from '../utils/appearance';
+import {signInWithGoogle} from '../services/googleAuth';
+import {signInWithApple, isAppleAuthSupported} from '../services/appleAuth';
+import {signInWithKakao} from '../services/kakaoAuth';
 
 // 카카오 아이콘 컴포넌트
 const KakaoIcon = ({size = 20}: {size?: number}) => (
@@ -61,19 +64,41 @@ const LoginScreen: React.FC<LoginScreenProps> = ({onLogin}) => {
     setIsLoading(true);
     setLoadingProvider(provider);
     try {
-      // TODO: 실제 소셜 로그인 구현
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      let token: string | null = null;
+      let userName: string = '';
+      let userEmail: string = '';
 
-      const providerNames = {
-        kakao: '카카오',
-        apple: 'Apple',
-        google: 'Google',
-      };
+      if (provider === 'google') {
+        const result = await signInWithGoogle();
+        if (result) {
+          token = result.idToken;
+          userName = result.user?.user.name ?? 'Google 사용자';
+          userEmail = result.user?.user.email ?? '';
+        }
+      } else if (provider === 'apple') {
+        const result = await signInWithApple();
+        if (result) {
+          token = result.idToken;
+          userName = result.user.name ?? 'Apple 사용자';
+          userEmail = result.user.email ?? '';
+        }
+      } else if (provider === 'kakao') {
+        const result = await signInWithKakao();
+        if (result) {
+          token = result.accessToken;
+          userName = result.user.nickname ?? '카카오 사용자';
+          userEmail = result.user.email ?? '';
+        }
+      }
 
-      onLogin({
-        email: `${provider}@example.com`,
-        name: `${providerNames[provider]} 사용자`,
-      });
+      if (token) {
+        // TODO: 백엔드로 토큰 전송하여 검증 후 자체 JWT 발급받기
+        // const response = await api.post(`/auth/login/${provider}`, { token, deviceId });
+        onLogin({
+          email: userEmail,
+          name: userName,
+        });
+      }
     } catch (error) {
       Alert.alert('로그인 실패', '다시 시도해주세요.');
     } finally {
@@ -121,8 +146,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({onLogin}) => {
             )}
           </TouchableOpacity>
 
-          {/* Apple 로그인 */}
-          {Platform.OS === 'ios' && (
+          {/* Apple 로그인 (iOS만, iOS 13+) */}
+          {Platform.OS === 'ios' && isAppleAuthSupported() && (
             <TouchableOpacity
               style={[styles.socialButton, styles.appleButton]}
               onPress={() => handleSocialLogin('apple')}
@@ -174,10 +199,10 @@ const getStyles = (isDark: boolean) =>
       backgroundColor: isDark ? '#121212' : '#FFFFFF',
     },
     headerSection: {
-      flex: 1,
       alignItems: 'center',
-      justifyContent: 'center',
       paddingHorizontal: 24,
+      paddingTop: 60,
+      marginBottom: 40,
     },
     logoContainer: {
       width: 120,
@@ -204,7 +229,6 @@ const getStyles = (isDark: boolean) =>
     },
     bottomSection: {
       paddingHorizontal: 24,
-      paddingBottom: 50,
     },
     loginGuide: {
       fontSize: 14,

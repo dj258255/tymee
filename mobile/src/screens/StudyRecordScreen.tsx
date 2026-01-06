@@ -55,7 +55,7 @@ interface CalendarTask {
 }
 
 const StudyRecordScreen: React.FC = () => {
-  const {t} = useTranslation();
+  const {t: _t} = useTranslation();
   const [systemColorScheme, setSystemColorScheme] = useState<'light' | 'dark'>('light');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedTab, setSelectedTab] = useState<TabType>('plan');
@@ -114,7 +114,7 @@ const StudyRecordScreen: React.FC = () => {
   const [selectingDateType, setSelectingDateType] = useState<'start' | 'end'>('start');
 
   // D-day 캘린더 모달
-  const [showDdayCalendar, setShowDdayCalendar] = useState(false);
+  const [_showDdayCalendar, _setShowDdayCalendar] = useState(false);
   const [ddayCalendarMonth, setDdayCalendarMonth] = useState(new Date());
   const [ddayStep, setDdayStep] = useState<'form' | 'calendar'>('form');
 
@@ -137,10 +137,10 @@ const StudyRecordScreen: React.FC = () => {
     subjects,
     timeBlocks,
     tasks,
-    sessions,
+    sessions: _sessions,
     dday,
-    streak,
-    bestStreak,
+    streak: _streak,
+    bestStreak: _bestStreak,
     dailyGoalMinutes,
     weeklyGoalMinutes,
     selectedTheme,
@@ -160,7 +160,7 @@ const StudyRecordScreen: React.FC = () => {
     getMonthStats,
     getStatsForDate,
     getTotalStats,
-    setDday,
+    setDday: _setDday,
     getDdayRemaining,
     // D-day 목록 관련
     ddays,
@@ -170,7 +170,7 @@ const StudyRecordScreen: React.FC = () => {
     setPrimaryDday,
     getAllDdays,
     // 목표 관련
-    goals,
+    goals: _goals,
     addGoal,
     updateGoal,
     toggleGoal,
@@ -190,14 +190,14 @@ const StudyRecordScreen: React.FC = () => {
     saveAsTemplate,
     loadTemplate,
     deleteTemplate,
-    renameTemplate,
+    renameTemplate: _renameTemplate,
     // 요일별 시간표 관련
     weeklyTimetable,
     weeklyTimetableEnabled,
     setWeeklyTimetableEnabled,
-    saveCurrentAsWeeklyTimetable,
-    applyWeeklyTimetable,
-    clearWeeklyTimetableForDay,
+    saveCurrentAsWeeklyTimetable: _saveCurrentAsWeeklyTimetable,
+    applyWeeklyTimetable: _applyWeeklyTimetable,
+    clearWeeklyTimetableForDay: _clearWeeklyTimetableForDay,
     // 요일별 템플릿 매핑
     weeklyTemplateMapping,
     setWeeklyTemplateMapping,
@@ -278,10 +278,10 @@ const StudyRecordScreen: React.FC = () => {
   const selectedBlocks = getBlocksForDate(selectedDateStr);
   const selectedTasks = getTasksForDate(selectedDateStr);
   const selectedStats = getStatsForDate(selectedDateStr);
-  const todayStats = getTodayStats();
+  const _todayStats = getTodayStats();
   const weekStats = getWeekStats();
-  const monthStats = getMonthStats();
-  const totalStats = getTotalStats();
+  const _monthStats = getMonthStats();
+  const _totalStats = getTotalStats();
 
   // 집중세션 기반 통계 계산
   const focusSessionStats = useMemo(() => {
@@ -437,7 +437,7 @@ const StudyRecordScreen: React.FC = () => {
   };
 
   // 진행률 계산
-  const weekProgress = Math.min((weekStats.totalMinutes / weeklyGoalMinutes) * 100, 100);
+  const _weekProgress = Math.min((weekStats.totalMinutes / weeklyGoalMinutes) * 100, 100);
 
   // D-day 저장 (추가 또는 수정)
   const handleSaveDday = () => {
@@ -469,7 +469,7 @@ const StudyRecordScreen: React.FC = () => {
 
   // D-day 삭제
   const handleDeleteDday = () => {
-    if (!editingDdayId) return;
+    if (!editingDdayId) {return;}
 
     Alert.alert(
       'D-day 삭제',
@@ -579,7 +579,7 @@ const StudyRecordScreen: React.FC = () => {
   };
 
   const isSameDay = (date1: Date | null, date2: Date | null) => {
-    if (!date1 || !date2) return false;
+    if (!date1 || !date2) {return false;}
     return (
       date1.getFullYear() === date2.getFullYear() &&
       date1.getMonth() === date2.getMonth() &&
@@ -596,7 +596,7 @@ const StudyRecordScreen: React.FC = () => {
   };
 
   // ============ 테마 색상 변수 ============
-  const themeBg = isDark ? theme.background.dark : theme.background.light;
+  const _themeBg = isDark ? theme.background.dark : theme.background.light;
   const cardBg = isDark ? theme.card.dark : theme.card.light;
   const textColor = isDark ? theme.text.primary.dark : theme.text.primary.light;
   const subtextColor = isDark ? theme.text.secondary.dark : theme.text.secondary.light;
@@ -620,6 +620,7 @@ const StudyRecordScreen: React.FC = () => {
   const daysInMonth = getDaysInMonth(calendarMonth);
 
   // 시간 포맷 (HH:MM)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const formatTimeHHMM = (date: Date) => {
     const hours = date.getHours();
     const minutes = date.getMinutes();
@@ -655,7 +656,7 @@ const StudyRecordScreen: React.FC = () => {
         <NotebookCard
           theme={theme}
           isDark={isDark}
-          title={isToday ? "오늘의 다짐" : `${selectedDate.getMonth() + 1}/${selectedDate.getDate()} 다짐`}
+          title={isToday ? '오늘의 다짐' : `${selectedDate.getMonth() + 1}/${selectedDate.getDate()} 다짐`}
           tapeColor="#FFE4B5">
           {isEditingComment ? (
             <View style={styles.editContainer}>
@@ -734,7 +735,7 @@ const StudyRecordScreen: React.FC = () => {
         <NotebookCard
           theme={theme}
           isDark={isDark}
-          title={isToday ? "오늘의 메모" : `${selectedDate.getMonth() + 1}/${selectedDate.getDate()} 메모`}
+          title={isToday ? '오늘의 메모' : `${selectedDate.getMonth() + 1}/${selectedDate.getDate()} 메모`}
           tapeColor="#DDA0DD">
           {isEditingMemo ? (
             <View style={styles.editContainer}>
@@ -812,7 +813,7 @@ const StudyRecordScreen: React.FC = () => {
                 </View>
                 <Text style={[
                   styles.ddayItemRemaining,
-                  {color: ddayItem.remaining <= 7 ? '#FF3B30' : ddayItem.remaining <= 30 ? '#FF9500' : accentColor}
+                  {color: ddayItem.remaining <= 7 ? '#FF3B30' : ddayItem.remaining <= 30 ? '#FF9500' : accentColor},
                 ]}>
                   {ddayItem.remaining === 0 ? 'D-Day' : ddayItem.remaining > 0 ? `D-${ddayItem.remaining}` : `D+${Math.abs(ddayItem.remaining)}`}
                 </Text>
@@ -1270,7 +1271,7 @@ const StudyRecordScreen: React.FC = () => {
                             if (currentSegment && currentSegment.subjectId === block.subjectId) {
                               currentSegment.endMin = minute + 10;
                             } else {
-                              if (currentSegment) segments.push(currentSegment);
+                              if (currentSegment) {segments.push(currentSegment);}
                               currentSegment = {startMin: minute, endMin: minute + 10, subjectId: block.subjectId};
                             }
                           } else {
@@ -1280,7 +1281,7 @@ const StudyRecordScreen: React.FC = () => {
                             }
                           }
                         });
-                        if (currentSegment) segments.push(currentSegment);
+                        if (currentSegment) {segments.push(currentSegment);}
 
                         const hasBlocks = segments.length > 0;
 
@@ -1419,7 +1420,7 @@ const StudyRecordScreen: React.FC = () => {
     }, 0);
 
     // 완료된 세션 수
-    const completedFocusSessions = focusSessions.filter(s => s.completed).length;
+    const _completedFocusSessions = focusSessions.filter(s => s.completed).length;
 
     // 시간 포맷 (00:00 형식)
     const formatSessionTime = (date: Date) => {
@@ -1476,11 +1477,11 @@ const StudyRecordScreen: React.FC = () => {
             </View>
             <View style={[
               styles.progressBar,
-              {backgroundColor: progressBg, borderRadius: theme.progressBar.borderRadius, height: theme.progressBar.height, marginTop: hp(12)}
+              {backgroundColor: progressBg, borderRadius: theme.progressBar.borderRadius, height: theme.progressBar.height, marginTop: hp(12)},
             ]}>
               <View style={[
                 styles.progressFill,
-                {width: `${focusProgress}%`, backgroundColor: focusProgress >= 100 ? successColor : accentColor, borderRadius: theme.progressBar.borderRadius}
+                {width: `${focusProgress}%`, backgroundColor: focusProgress >= 100 ? successColor : accentColor, borderRadius: theme.progressBar.borderRadius},
               ]} />
             </View>
             {focusProgress >= 100 && (
@@ -1662,7 +1663,7 @@ const StudyRecordScreen: React.FC = () => {
     const subjectMinutes = selectedStats.subjectMinutes;
     const totalSubjectMinutes = Object.values(subjectMinutes).reduce((sum, m) => sum + m, 0);
     // 오늘의 목표 진행률 계산
-    const todayProgress = Math.min((selectedStats.totalMinutes / dailyGoalMinutes) * 100, 100);
+    const _todayProgress = Math.min((selectedStats.totalMinutes / dailyGoalMinutes) * 100, 100);
 
     return (
       <ScrollView
@@ -1674,7 +1675,7 @@ const StudyRecordScreen: React.FC = () => {
         <NotebookCard
           theme={theme}
           isDark={isDark}
-          title={isToday ? "오늘의 공부" : `${selectedDate.getMonth() + 1}/${selectedDate.getDate()} 공부`}
+          title={isToday ? '오늘의 공부' : `${selectedDate.getMonth() + 1}/${selectedDate.getDate()} 공부`}
           tapeColor="#B0E0E6"
           rightAction={
             <TouchableOpacity
@@ -1709,7 +1710,7 @@ const StudyRecordScreen: React.FC = () => {
             {
               backgroundColor: isDark ? '#1E3A5F' : '#E8F4FD',
               borderColor: accentColor + '40',
-            }
+            },
           ]}
           onPress={() => setSelectedTab('report')}>
           <View style={styles.reportShortcutContent}>
@@ -1790,7 +1791,7 @@ const StudyRecordScreen: React.FC = () => {
           const completedTasks = dailyTasks.filter(t => t.completed);
           const hasAnyContent = dailyComment || dailyMemo || dailyTasks.length > 0;
 
-          if (!hasAnyContent) return null;
+          if (!hasAnyContent) {return null;}
 
           // 포스트잇 스타일 여부 (노트북 테마만)
           const isPostItStyle = theme.task.item.postItStyle || false;
@@ -1809,7 +1810,7 @@ const StudyRecordScreen: React.FC = () => {
           const postItShadow = isPostItStyle ? getPostItShadow(isDark) : {};
 
           return (
-            <NotebookCard theme={theme} isDark={isDark} title={isToday ? "오늘의 기록" : `${selectedDate.getMonth() + 1}/${selectedDate.getDate()} 기록`} tapeColor="#E6E6FA">
+            <NotebookCard theme={theme} isDark={isDark} title={isToday ? '오늘의 기록' : `${selectedDate.getMonth() + 1}/${selectedDate.getDate()} 기록`} tapeColor="#E6E6FA">
               {/* 오늘의 다짐 */}
               {dailyComment && (
                 <View style={[
@@ -1839,7 +1840,7 @@ const StudyRecordScreen: React.FC = () => {
                       shadowRadius: 8,
                       elevation: 3,
                     } : {}),
-                  }
+                  },
                 ]}>
                   <View style={styles.statsDailyHeader}>
                     <Icon name="heart" size={iconSize(16)} color={errorColor} />
@@ -1880,7 +1881,7 @@ const StudyRecordScreen: React.FC = () => {
                       shadowRadius: 8,
                       elevation: 3,
                     } : {}),
-                  }
+                  },
                 ]}>
                   <View style={styles.statsDailyHeader}>
                     <Icon name="checkbox" size={iconSize(16)} color={successColor} />
@@ -1899,7 +1900,7 @@ const StudyRecordScreen: React.FC = () => {
                             width: `${(completedTasks.length / dailyTasks.length) * 100}%`,
                             backgroundColor: completedTasks.length === dailyTasks.length ? successColor : accentColor,
                             borderRadius: theme.progressBar.borderRadius,
-                          }
+                          },
                         ]} />
                       </View>
                       <Text style={[styles.taskCompletionText, {color: subtextColor}]}>
@@ -1914,7 +1915,7 @@ const StudyRecordScreen: React.FC = () => {
                       return (
                         <View key={task.id} style={styles.statsDailyTaskItem}>
                           <Icon
-                            name={task.completed ? "checkmark-circle" : "ellipse-outline"}
+                            name={task.completed ? 'checkmark-circle' : 'ellipse-outline'}
                             size={iconSize(16)}
                             color={task.completed ? successColor : subtextColor}
                           />
@@ -1983,7 +1984,7 @@ const StudyRecordScreen: React.FC = () => {
                       shadowRadius: 8,
                       elevation: 3,
                     } : {}),
-                  }
+                  },
                 ]}>
                   <View style={styles.statsDailyHeader}>
                     <Icon name="document-text" size={iconSize(16)} color={accentColor} />
@@ -2183,7 +2184,7 @@ const StudyRecordScreen: React.FC = () => {
                   borderRadius: theme.task.badge.borderRadius,
                   borderWidth: 1,
                   borderColor: warningColor + '30',
-                }
+                },
               ]}
               onPress={() => {
                 // ddays에서 primary D-day 찾기
@@ -2203,13 +2204,13 @@ const StudyRecordScreen: React.FC = () => {
                 <>
                   <Text style={[
                     styles.ddayTitle,
-                    {color: theme.task.item.postItStyle ? (isDark ? '#D4A84A' : '#8B7355') : warningColor}
+                    {color: theme.task.item.postItStyle ? (isDark ? '#D4A84A' : '#8B7355') : warningColor},
                   ]}>
                     {dday.title}
                   </Text>
                   <Text style={[
                     styles.ddayCount,
-                    {color: theme.task.item.postItStyle ? (isDark ? '#E8C060' : '#5C4A3D') : warningColor}
+                    {color: theme.task.item.postItStyle ? (isDark ? '#E8C060' : '#5C4A3D') : warningColor},
                   ]}>
                     D{ddayRemaining > 0 ? `-${ddayRemaining}` : ddayRemaining === 0 ? '-Day' : `+${Math.abs(ddayRemaining)}`}
                   </Text>
@@ -2217,7 +2218,7 @@ const StudyRecordScreen: React.FC = () => {
               ) : (
                 <Text style={[
                   styles.ddayPlaceholder,
-                  {color: theme.task.item.postItStyle ? (isDark ? '#8B7355' : '#8B7355') : subtextColor}
+                  {color: theme.task.item.postItStyle ? (isDark ? '#8B7355' : '#8B7355') : subtextColor},
                 ]}>
                   + D-day
                 </Text>
@@ -3108,7 +3109,7 @@ const StudyRecordScreen: React.FC = () => {
                           }
                         }}>
                         <Icon
-                          name={isTemplateModalForWeekly ? "save-outline" : "download-outline"}
+                          name={isTemplateModalForWeekly ? 'save-outline' : 'download-outline'}
                           size={iconSize(20)}
                           color={accentColor}
                         />
@@ -3313,12 +3314,12 @@ const StudyRecordScreen: React.FC = () => {
                           {
                             backgroundColor: tempStartHour === h ? accentColor : accentColor + '15',
                             borderColor: accentColor,
-                          }
+                          },
                         ]}
                         onPress={() => setTempStartHour(h)}>
                         <Text style={[
                           styles.goalQuickOptionText,
-                          {color: tempStartHour === h ? '#FFFFFF' : accentColor}
+                          {color: tempStartHour === h ? '#FFFFFF' : accentColor},
                         ]}>
                           {h}시
                         </Text>
@@ -3388,12 +3389,12 @@ const StudyRecordScreen: React.FC = () => {
                       {
                         backgroundColor: tempGoalHours === String(h) ? accentColor : accentColor + '15',
                         borderColor: accentColor,
-                      }
+                      },
                     ]}
                     onPress={() => setTempGoalHours(String(h))}>
                     <Text style={[
                       styles.goalQuickOptionText,
-                      {color: tempGoalHours === String(h) ? '#FFFFFF' : accentColor}
+                      {color: tempGoalHours === String(h) ? '#FFFFFF' : accentColor},
                     ]}>
                       {h}시간
                     </Text>

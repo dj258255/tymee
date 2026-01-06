@@ -23,7 +23,8 @@ const TimeTable: React.FC<TimeTableProps> = ({
   startHour = 6,
   endHour = 24,
 }) => {
-  const hours = Array.from({length: endHour - startHour}, (_, i) => startHour + i);
+  const endHourValue = endHour;
+  const hours = Array.from({length: endHourValue - startHour}, (_, i) => startHour + i);
   const cellHeight = 40; // 1시간당 높이
   const minuteHeight = cellHeight / 60; // 1분당 높이
 
@@ -37,14 +38,6 @@ const TimeTable: React.FC<TimeTableProps> = ({
       top: startOffset,
       height: Math.max(height, 4), // 최소 높이 4px
     };
-  };
-
-  // 시간 포맷팅
-  const formatHour = (hour: number) => {
-    if (hour === 0 || hour === 24) return '자정';
-    if (hour === 12) return '정오';
-    if (hour < 12) return `오전 ${hour}시`;
-    return `오후 ${hour - 12}시`;
   };
 
   return (
@@ -117,7 +110,7 @@ const TimeTable: React.FC<TimeTableProps> = ({
               const currentHour = now.getHours();
               const currentMinute = now.getMinutes();
 
-              if (currentHour >= startHour && currentHour < endHour) {
+              if (currentHour >= startHour && currentHour < endHourValue) {
                 const position = (currentHour - startHour) * cellHeight + currentMinute * minuteHeight;
                 return (
                   <View style={[styles.currentTimeIndicator, {top: position}]}>

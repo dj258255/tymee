@@ -1,4 +1,4 @@
-package com.mobile
+package app.tymee.mobile
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
@@ -31,7 +31,7 @@ class AppBlockerService : AccessibilityService() {
             // 시스템 앱이나 자기 자신은 체크하지 않음
             if (packageName.startsWith("com.android") ||
                 packageName.startsWith("android") ||
-                packageName == "com.mobile") {
+                packageName == "app.tymee.mobile") {
                 return
             }
 

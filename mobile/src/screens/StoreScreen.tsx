@@ -8,7 +8,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Modal,
-  Dimensions,
   Alert,
 } from 'react-native';
 import {useTranslation} from 'react-i18next';
@@ -22,7 +21,6 @@ import {sp, hp, fp, iconSize} from '../utils/responsive';
 import ProfileCard from '../components/ProfileCard';
 import Svg, {Circle, Path} from 'react-native-svg';
 
-const {width: SCREEN_WIDTH} = Dimensions.get('window');
 
 interface StoreItem {
   id: string;
@@ -38,7 +36,7 @@ interface StoreItem {
 }
 
 const StoreScreen: React.FC = () => {
-  const {t} = useTranslation();
+  const {t: _t} = useTranslation();
   const navigation = useNavigation();
   const [systemColorScheme, setSystemColorScheme] = useState<'light' | 'dark'>('light');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -223,7 +221,7 @@ const StoreScreen: React.FC = () => {
   };
 
   const handlePurchase = () => {
-    if (!selectedItem) return;
+    if (!selectedItem) {return;}
 
     const price = selectedItem.pencilPrice || selectedItem.ballpenPrice || 0;
     const isPencil = !!selectedItem.pencilPrice;
@@ -261,7 +259,7 @@ const StoreScreen: React.FC = () => {
 
   // 미리보기 렌더링
   const renderPreview = () => {
-    if (!selectedItem) return null;
+    if (!selectedItem) {return null;}
 
     const cardBg = isDark ? '#1E1E1E' : '#FFFFFF';
 

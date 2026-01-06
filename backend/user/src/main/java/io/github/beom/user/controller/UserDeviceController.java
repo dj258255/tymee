@@ -25,12 +25,17 @@ public class UserDeviceController {
 
   private final UserDeviceService userDeviceService;
 
-  /** POST /users/{userId}/devices - FCM 토큰 등록 */
+  /** POST /users/{userId}/devices - 디바이스 등록 */
   @PostMapping
   public ApiResponse<Void> registerDevice(
       @PathVariable Long userId, @Valid @RequestBody RegisterDeviceRequest request) {
     userDeviceService.registerDevice(
-        userId, request.fcmToken(), request.platform(), request.deviceId());
+        userId,
+        request.deviceId(),
+        request.deviceType(),
+        request.pushToken(),
+        request.appVersion(),
+        request.osVersion());
     return ApiResponse.success(null);
   }
 

@@ -1,6 +1,6 @@
 # 모바일 CI/CD 통합 워크플로우
 # 브랜치 전략:
-#   - develop/staging/master 푸시 → Lint + Debug 빌드 (CI)
+#   - develop/staging 푸시 → Lint + TypeScript 체크
 #   - master 푸시 → 내부 테스트 트랙 배포 (Internal/TestFlight)
 #   - v* 태그 → 프로덕션 스토어 배포
 name: Mobile
@@ -68,103 +68,6 @@ jobs:
         run: npx tsc --noEmit
 
   # ===========================================
-  # Android Debug 빌드 (CI)
-  # ===========================================
-  build-android-debug:
-    name: Android Debug 빌드
-    needs: lint
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/') || github.event_name == 'pull_request'
-
-    defaults:
-      run:
-        working-directory: mobile
-
-    steps:
-      - name: 코드 체크아웃
-        uses: actions/checkout@v4
-
-      - name: Node.js 설정
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: mobile/package-lock.json
-
-      - name: JDK 17 설정
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - name: Gradle 설정
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: 의존성 설치
-        run: npm ci
-
-      - name: Gradlew 실행 권한 부여
-        run: chmod +x android/gradlew
-
-      - name: Android Debug APK 빌드
-        uses: nick-fields/retry@v3
-        with:
-          timeout_minutes: 30
-          max_attempts: 3
-          retry_wait_seconds: 60
-          command: cd mobile/android && ./gradlew assembleDebug --no-daemon
-
-      - name: APK 아티팩트 업로드
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-debug-apk
-          path: mobile/android/app/build/outputs/apk/debug/*.apk
-          retention-days: 7
-
-  # ===========================================
-  # iOS Debug 빌드 (CI)
-  # ===========================================
-  build-ios-debug:
-    name: iOS Debug 빌드
-    needs: lint
-    runs-on: macos-latest
-    if: github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/') || github.event_name == 'pull_request'
-
-    defaults:
-      run:
-        working-directory: mobile
-
-    steps:
-      - name: 코드 체크아웃
-        uses: actions/checkout@v4
-
-      - name: Node.js 설정
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: mobile/package-lock.json
-
-      - name: 의존성 설치
-        run: npm ci
-
-      - name: CocoaPods 설치
-        run: |
-          cd ios
-          pod install
-
-      - name: iOS Debug 빌드
-        run: |
-          cd ios
-          xcodebuild -workspace mobile.xcworkspace \
-            -scheme mobile \
-            -configuration Debug \
-            -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 16' \
-            build \
-            CODE_SIGNING_ALLOWED=NO
-
-  # ===========================================
   # Android 내부 테스트 배포 (master 푸시)
   # ===========================================
   deploy-android-internal:
@@ -196,8 +99,15 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Gradle 설정
-        uses: gradle/actions/setup-gradle@v4
+      - name: Ruby 설정
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+          working-directory: mobile
+
+      - name: Fastlane 설치
+        run: gem install fastlane
 
       - name: 의존성 설치
         run: npm ci
@@ -205,28 +115,14 @@ jobs:
       - name: .env.production 생성
         run: echo "${{ secrets.MOBILE_ENV_PROD }}" > .env.production
 
+      - name: Google Play JSON 키 생성
+        run: echo '${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}' > fastlane/google-play-key.json
+
       - name: 키스토어 복원
-        run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/tymee-release.keystore
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/tymee-release.keystore
 
-      - name: Gradlew 실행 권한 부여
-        run: chmod +x android/gradlew
-
-      - name: Release AAB 빌드
-        run: |
-          cd android
-          ./gradlew bundleRelease --no-daemon
-        env:
-          ENVFILE: .env.production
-
-      - name: Play Store 내부 테스트 트랙 배포
-        uses: r0adkll/upload-google-play@v1
-        with:
-          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
-          packageName: app.tymee.mobile
-          releaseFiles: mobile/android/app/build/outputs/bundle/release/*.aab
-          track: internal
-          status: completed
+      - name: Fastlane 배포
+        run: fastlane android beta
 
   # ===========================================
   # iOS 내부 테스트 배포 (master 푸시 → TestFlight)
@@ -254,16 +150,27 @@ jobs:
           cache: 'npm'
           cache-dependency-path: mobile/package-lock.json
 
+      - name: Ruby 설정
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+          working-directory: mobile
+
+      - name: Fastlane 설치
+        run: gem install fastlane
+
       - name: 의존성 설치
         run: npm ci
 
       - name: .env.production 생성
         run: echo "${{ secrets.MOBILE_ENV_PROD }}" > .env.production
 
+      - name: App Store Connect API 키 생성
+        run: echo '${{ secrets.APP_STORE_CONNECT_API_KEY }}' > fastlane/AuthKey.p8
+
       - name: CocoaPods 설치
-        run: |
-          cd ios
-          pod install
+        run: cd ios && pod install
 
       - name: Apple 인증서 설치
         uses: apple-actions/import-codesign-certs@v2
@@ -276,56 +183,8 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           echo "${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/distribution.mobileprovision
 
-      - name: iOS 아카이브 빌드
-        run: |
-          cd ios
-          xcodebuild -workspace mobile.xcworkspace \
-            -scheme mobile \
-            -configuration Release \
-            -archivePath $RUNNER_TEMP/mobile.xcarchive \
-            archive \
-            CODE_SIGN_IDENTITY="${{ secrets.IOS_CODE_SIGN_IDENTITY }}" \
-            PROVISIONING_PROFILE_SPECIFIER="${{ secrets.IOS_PROVISIONING_PROFILE_NAME }}" \
-            DEVELOPMENT_TEAM="${{ secrets.IOS_TEAM_ID }}"
-
-      - name: ExportOptions.plist 생성
-        run: |
-          cat > $RUNNER_TEMP/ExportOptions.plist << EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>app-store</string>
-              <key>teamID</key>
-              <string>${{ secrets.IOS_TEAM_ID }}</string>
-              <key>uploadSymbols</key>
-              <true/>
-              <key>compileBitcode</key>
-              <false/>
-              <key>provisioningProfiles</key>
-              <dict>
-                  <key>app.tymee.mobile</key>
-                  <string>${{ secrets.IOS_PROVISIONING_PROFILE_NAME }}</string>
-              </dict>
-          </dict>
-          </plist>
-          EOF
-
-      - name: IPA 익스포트
-        run: |
-          xcodebuild -exportArchive \
-            -archivePath $RUNNER_TEMP/mobile.xcarchive \
-            -exportPath $RUNNER_TEMP/export \
-            -exportOptionsPlist $RUNNER_TEMP/ExportOptions.plist
-
-      - name: TestFlight 업로드
-        run: |
-          xcrun altool --upload-app \
-            --type ios \
-            --file $RUNNER_TEMP/export/*.ipa \
-            --username "${{ secrets.APPLE_ID }}" \
-            --password "${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}"
+      - name: Fastlane 배포
+        run: fastlane ios beta
 
   # ===========================================
   # Android 프로덕션 배포 (v* 태그)
@@ -359,8 +218,15 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Gradle 설정
-        uses: gradle/actions/setup-gradle@v4
+      - name: Ruby 설정
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+          working-directory: mobile
+
+      - name: Fastlane 설치
+        run: gem install fastlane
 
       - name: 의존성 설치
         run: npm ci
@@ -368,28 +234,14 @@ jobs:
       - name: .env.production 생성
         run: echo "${{ secrets.MOBILE_ENV_PROD }}" > .env.production
 
+      - name: Google Play JSON 키 생성
+        run: echo '${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}' > fastlane/google-play-key.json
+
       - name: 키스토어 복원
-        run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/tymee-release.keystore
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/tymee-release.keystore
 
-      - name: Gradlew 실행 권한 부여
-        run: chmod +x android/gradlew
-
-      - name: Release AAB 빌드
-        run: |
-          cd android
-          ./gradlew bundleRelease --no-daemon
-        env:
-          ENVFILE: .env.production
-
-      - name: Play Store 프로덕션 배포
-        uses: r0adkll/upload-google-play@v1
-        with:
-          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
-          packageName: app.tymee.mobile
-          releaseFiles: mobile/android/app/build/outputs/bundle/release/*.aab
-          track: production
-          status: completed
+      - name: Fastlane 배포
+        run: fastlane android release
 
   # ===========================================
   # iOS 프로덕션 배포 (v* 태그)
@@ -417,16 +269,27 @@ jobs:
           cache: 'npm'
           cache-dependency-path: mobile/package-lock.json
 
+      - name: Ruby 설정
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+          working-directory: mobile
+
+      - name: Fastlane 설치
+        run: gem install fastlane
+
       - name: 의존성 설치
         run: npm ci
 
       - name: .env.production 생성
         run: echo "${{ secrets.MOBILE_ENV_PROD }}" > .env.production
 
+      - name: App Store Connect API 키 생성
+        run: echo '${{ secrets.APP_STORE_CONNECT_API_KEY }}' > fastlane/AuthKey.p8
+
       - name: CocoaPods 설치
-        run: |
-          cd ios
-          pod install
+        run: cd ios && pod install
 
       - name: Apple 인증서 설치
         uses: apple-actions/import-codesign-certs@v2
@@ -439,53 +302,5 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           echo "${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/distribution.mobileprovision
 
-      - name: iOS 아카이브 빌드
-        run: |
-          cd ios
-          xcodebuild -workspace mobile.xcworkspace \
-            -scheme mobile \
-            -configuration Release \
-            -archivePath $RUNNER_TEMP/mobile.xcarchive \
-            archive \
-            CODE_SIGN_IDENTITY="${{ secrets.IOS_CODE_SIGN_IDENTITY }}" \
-            PROVISIONING_PROFILE_SPECIFIER="${{ secrets.IOS_PROVISIONING_PROFILE_NAME }}" \
-            DEVELOPMENT_TEAM="${{ secrets.IOS_TEAM_ID }}"
-
-      - name: ExportOptions.plist 생성
-        run: |
-          cat > $RUNNER_TEMP/ExportOptions.plist << EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>app-store</string>
-              <key>teamID</key>
-              <string>${{ secrets.IOS_TEAM_ID }}</string>
-              <key>uploadSymbols</key>
-              <true/>
-              <key>compileBitcode</key>
-              <false/>
-              <key>provisioningProfiles</key>
-              <dict>
-                  <key>app.tymee.mobile</key>
-                  <string>${{ secrets.IOS_PROVISIONING_PROFILE_NAME }}</string>
-              </dict>
-          </dict>
-          </plist>
-          EOF
-
-      - name: IPA 익스포트
-        run: |
-          xcodebuild -exportArchive \
-            -archivePath $RUNNER_TEMP/mobile.xcarchive \
-            -exportPath $RUNNER_TEMP/export \
-            -exportOptionsPlist $RUNNER_TEMP/ExportOptions.plist
-
-      - name: App Store 업로드
-        run: |
-          xcrun altool --upload-app \
-            --type ios \
-            --file $RUNNER_TEMP/export/*.ipa \
-            --username "${{ secrets.APPLE_ID }}" \
-            --password "${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}"
+      - name: Fastlane 배포
+        run: fastlane ios release

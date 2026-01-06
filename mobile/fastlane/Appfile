@@ -1,0 +1,9 @@
+# iOS
+app_identifier("app.tymee.mobile")
+apple_id(ENV["APPLE_ID"])
+team_id(ENV["APPLE_TEAM_ID"])
+itc_team_id(ENV["ITC_TEAM_ID"])
+
+# Android
+json_key_file(ENV["GOOGLE_PLAY_JSON_KEY_PATH"])
+package_name("app.tymee.mobile")

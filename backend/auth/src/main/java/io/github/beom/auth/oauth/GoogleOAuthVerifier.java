@@ -37,12 +37,11 @@ public class GoogleOAuthVerifier implements OAuthVerifier {
 
       GoogleIdToken.Payload payload = googleIdToken.getPayload();
 
-      return new OAuthUserInfo(
-          OAuthProvider.GOOGLE,
-          payload.getSubject(),
-          payload.getEmail(),
-          (String) payload.get("name"),
-          (String) payload.get("picture"));
+      String email = payload.getEmail();
+      String name = payload.get("name") != null ? (String) payload.get("name") : null;
+      String picture = payload.get("picture") != null ? (String) payload.get("picture") : null;
+
+      return new OAuthUserInfo(OAuthProvider.GOOGLE, payload.getSubject(), email, name, picture);
     } catch (Exception e) {
       throw new RuntimeException("Google token verification failed", e);
     }

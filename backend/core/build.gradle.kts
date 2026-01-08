@@ -1,4 +1,5 @@
 plugins {
+    `java-library`
     alias(libs.plugins.spring.dependency.management)
 }
 
@@ -18,8 +19,8 @@ dependencies {
     // Spring Web (for GlobalExceptionHandler)
     implementation(libs.spring.boot.starter.web)
 
-    // Spring Security (for exception handling)
-    compileOnly(libs.spring.boot.starter.security)
+    // Spring Security (for exception handling, @AuthenticationPrincipal)
+    implementation(libs.spring.boot.starter.security)
 
     // Database
     runtimeOnly(libs.mysql)
@@ -30,6 +31,9 @@ dependencies {
 
     // Redis
     implementation(libs.spring.boot.starter.data.redis)
+
+    // Swagger Annotations (API 문서화) - api로 선언하여 의존 모듈에서 사용 가능
+    api(libs.swagger.annotations)
 }
 
 dependencyManagement {

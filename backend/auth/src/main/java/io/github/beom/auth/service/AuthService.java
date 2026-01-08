@@ -10,7 +10,6 @@ import io.github.beom.auth.util.JwtUtil;
 import io.github.beom.user.domain.User;
 import io.github.beom.user.domain.UserOAuth;
 import io.github.beom.user.domain.vo.Email;
-import io.github.beom.user.domain.vo.Nickname;
 import io.github.beom.user.domain.vo.OAuthProvider;
 import io.github.beom.user.repository.UserOAuthRepository;
 import io.github.beom.user.repository.UserRepository;
@@ -55,6 +54,12 @@ public class AuthService {
           userRepository
               .findById(oAuth.getUserId())
               .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다"));
+
+      // 탈퇴한 사용자가 재로그인 시 계정 복구
+      if (user.isDeleted()) {
+        user.activate();
+        user = userRepository.save(user);
+      }
     } else {
       // 3. 이메일로 기존 사용자 확인 또는 신규 생성
       Optional<User> existingUser =
@@ -64,13 +69,13 @@ public class AuthService {
 
       if (existingUser.isPresent()) {
         user = existingUser.get();
+        // 탈퇴한 사용자가 재로그인 시 계정 복구
+        if (user.isDeleted()) {
+          user.activate();
+          user = userRepository.save(user);
+        }
       } else {
-        String nickname =
-            userInfo.name() != null ? userInfo.name() : generateNickname(userInfo.email());
-        user =
-            User.createOAuthUser(
-                userInfo.email() != null ? new Email(userInfo.email()) : null,
-                new Nickname(nickname));
+        user = User.createOAuthUser(userInfo.email() != null ? new Email(userInfo.email()) : null);
         user = userRepository.save(user);
       }
 
@@ -82,6 +87,10 @@ public class AuthService {
     if (!user.canLogin()) {
       throw new IllegalStateException("로그인할 수 없는 계정입니다");
     }
+
+    // 로그인 시간 갱신
+    user.updateLastLogin();
+    userRepository.save(user);
 
     return generateAndSaveTokens(user, deviceId);
   }
@@ -119,6 +128,30 @@ public class AuthService {
     return generateAndSaveTokens(user, deviceId);
   }
 
+  /** 개발용 테스트 로그인. OAuth 검증 없이 바로 토큰 발급. */
+  @Transactional
+  public TokenPair devLogin(String email, String deviceId) {
+    User user =
+        userRepository
+            .findByEmail(email)
+            .orElseGet(
+                () -> {
+                  User newUser = User.createOAuthUser(new Email(email));
+                  return userRepository.save(newUser);
+                });
+
+    // 탈퇴한 사용자 복구
+    if (user.isDeleted()) {
+      user.activate();
+    }
+
+    // 로그인 시간 갱신
+    user.updateLastLogin();
+    userRepository.save(user);
+
+    return generateAndSaveTokens(user, deviceId);
+  }
+
   /** 로그아웃. 해당 기기의 Refresh Token 삭제. */
   public void logout(Long userId, String deviceId) {
     tokenRepository.deleteRefreshToken(userId, deviceId);
@@ -137,8 +170,8 @@ public class AuthService {
 
   /** 토큰 쌍 생성 후 Redis에 Refresh Token 저장. */
   private TokenPair generateAndSaveTokens(User user, String deviceId) {
-    TokenPair tokenPair =
-        jwtUtil.generateTokenPair(user.getId(), user.getEmail().value(), user.getRole().name());
+    String email = user.getEmail() != null ? user.getEmail().value() : null;
+    TokenPair tokenPair = jwtUtil.generateTokenPair(user.getId(), email, user.getRole().name());
 
     RefreshToken refreshToken =
         RefreshToken.create(
@@ -150,13 +183,6 @@ public class AuthService {
     tokenRepository.saveRefreshToken(refreshToken);
 
     return tokenPair;
-  }
-
-  private String generateNickname(String email) {
-    if (email == null || !email.contains("@")) {
-      return "user_" + System.currentTimeMillis();
-    }
-    return email.split("@")[0];
   }
 
   public record TokenInfo(Long userId, String email, String role) {}

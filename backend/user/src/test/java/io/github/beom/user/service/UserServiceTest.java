@@ -1,0 +1,308 @@
+package io.github.beom.user.service;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
+
+import io.github.beom.core.exception.BusinessException;
+import io.github.beom.core.exception.EntityNotFoundException;
+import io.github.beom.user.domain.User;
+import io.github.beom.user.domain.vo.Email;
+import io.github.beom.user.domain.vo.Nickname;
+import io.github.beom.user.domain.vo.UserStatus;
+import io.github.beom.user.repository.UserRepository;
+import java.time.LocalDateTime;
+import java.util.Optional;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+@ExtendWith(MockitoExtension.class)
+class UserServiceTest {
+
+  @Mock private UserRepository userRepository;
+
+  @InjectMocks private UserService userService;
+
+  @Nested
+  @DisplayName("사용자 조회")
+  class GetUser {
+
+    @Test
+    @DisplayName("성공: ID로 활성 사용자 조회")
+    void getById_success() {
+      // given
+      var user =
+          User.builder()
+              .id(1L)
+              .email(new Email("test@gmail.com"))
+              .nickname(new Nickname("testuser"))
+              .build();
+
+      given(userRepository.findActiveById(1L)).willReturn(Optional.of(user));
+
+      // when
+      var result = userService.getById(1L);
+
+      // then
+      assertThat(result.getId()).isEqualTo(1L);
+      assertThat(result.getEmail().value()).isEqualTo("test@gmail.com");
+    }
+
+    @Test
+    @DisplayName("실패: 존재하지 않는 사용자")
+    void getById_notFound() {
+      // given
+      given(userRepository.findActiveById(999L)).willReturn(Optional.empty());
+
+      // when & then
+      assertThatThrownBy(() -> userService.getById(999L))
+          .isInstanceOf(EntityNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("실패: 탈퇴한 사용자 조회 불가")
+    void getById_withdrawnUser_notFound() {
+      // given
+      given(userRepository.findActiveById(1L)).willReturn(Optional.empty());
+
+      // when & then
+      assertThatThrownBy(() -> userService.getById(1L)).isInstanceOf(EntityNotFoundException.class);
+    }
+  }
+
+  @Nested
+  @DisplayName("프로필 수정")
+  class UpdateProfile {
+
+    @Test
+    @DisplayName("성공: 닉네임과 자기소개 수정")
+    void updateProfile_success() {
+      // given
+      var user =
+          User.builder()
+              .id(1L)
+              .email(new Email("test@gmail.com"))
+              .nickname(new Nickname("oldnick"))
+              .build();
+
+      given(userRepository.findActiveById(1L)).willReturn(Optional.of(user));
+      given(userRepository.existsByNickname("newnick")).willReturn(false);
+      given(userRepository.save(any(User.class)))
+          .willAnswer(invocation -> invocation.getArgument(0));
+
+      // when
+      var result = userService.updateProfile(1L, "newnick", "Hello!");
+
+      // then
+      assertThat(result.getNickname().value()).isEqualTo("newnick");
+      assertThat(result.getBio()).isEqualTo("Hello!");
+    }
+
+    @Test
+    @DisplayName("성공: 닉네임 동일하면 중복 검사 안함")
+    void updateProfile_sameNickname_noDuplicateCheck() {
+      // given
+      var user =
+          User.builder()
+              .id(1L)
+              .email(new Email("test@gmail.com"))
+              .nickname(new Nickname("samenick"))
+              .build();
+
+      given(userRepository.findActiveById(1L)).willReturn(Optional.of(user));
+      given(userRepository.save(any(User.class)))
+          .willAnswer(invocation -> invocation.getArgument(0));
+
+      // when
+      var result = userService.updateProfile(1L, "samenick", "Updated bio");
+
+      // then
+      assertThat(result.getBio()).isEqualTo("Updated bio");
+    }
+
+    @Test
+    @DisplayName("실패: 닉네임 중복")
+    void updateProfile_duplicateNickname_fails() {
+      // given
+      var user =
+          User.builder()
+              .id(1L)
+              .email(new Email("test@gmail.com"))
+              .nickname(new Nickname("oldnick"))
+              .build();
+
+      given(userRepository.findActiveById(1L)).willReturn(Optional.of(user));
+      given(userRepository.existsByNickname("takennick")).willReturn(true);
+
+      // when & then
+      assertThatThrownBy(() -> userService.updateProfile(1L, "takennick", "bio"))
+          .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    @DisplayName("실패: 닉네임 2자 미만")
+    void updateProfile_nicknameTooShort_fails() {
+      // given
+      var user =
+          User.builder()
+              .id(1L)
+              .email(new Email("test@gmail.com"))
+              .nickname(new Nickname("oldnick"))
+              .build();
+
+      given(userRepository.findActiveById(1L)).willReturn(Optional.of(user));
+      given(userRepository.existsByNickname("a")).willReturn(false);
+
+      // when & then
+      assertThatThrownBy(() -> userService.updateProfile(1L, "a", "bio"))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("2자 이상");
+    }
+
+    @Test
+    @DisplayName("실패: 닉네임 50자 초과")
+    void updateProfile_nicknameTooLong_fails() {
+      // given
+      var user =
+          User.builder()
+              .id(1L)
+              .email(new Email("test@gmail.com"))
+              .nickname(new Nickname("oldnick"))
+              .build();
+      var longNickname = "a".repeat(51);
+
+      given(userRepository.findActiveById(1L)).willReturn(Optional.of(user));
+      given(userRepository.existsByNickname(longNickname)).willReturn(false);
+
+      // when & then
+      assertThatThrownBy(() -> userService.updateProfile(1L, longNickname, "bio"))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("50자 이하");
+    }
+  }
+
+  @Nested
+  @DisplayName("닉네임 중복 확인")
+  class CheckNickname {
+
+    @Test
+    @DisplayName("성공: 사용 가능한 닉네임")
+    void existsByNickname_available() {
+      // given
+      given(userRepository.existsByNickname("availablenick")).willReturn(false);
+
+      // when
+      var result = userService.existsByNickname("availablenick");
+
+      // then
+      assertThat(result).isFalse();
+    }
+
+    @Test
+    @DisplayName("성공: 이미 사용 중인 닉네임")
+    void existsByNickname_taken() {
+      // given
+      given(userRepository.existsByNickname("takennick")).willReturn(true);
+
+      // when
+      var result = userService.existsByNickname("takennick");
+
+      // then
+      assertThat(result).isTrue();
+    }
+  }
+
+  @Nested
+  @DisplayName("회원 탈퇴")
+  class Withdraw {
+
+    @Test
+    @DisplayName("성공: 소프트 삭제")
+    void withdrawUser_success() {
+      // given
+      var user =
+          User.builder()
+              .id(1L)
+              .email(new Email("test@gmail.com"))
+              .nickname(new Nickname("testuser"))
+              .status(UserStatus.ACTIVE)
+              .build();
+
+      given(userRepository.findActiveById(1L)).willReturn(Optional.of(user));
+      given(userRepository.save(any(User.class)))
+          .willAnswer(invocation -> invocation.getArgument(0));
+
+      // when
+      userService.withdrawUser(1L);
+
+      // then
+      verify(userRepository).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("실패: 존재하지 않는 사용자")
+    void withdrawUser_notFound() {
+      // given
+      given(userRepository.findActiveById(999L)).willReturn(Optional.empty());
+
+      // when & then
+      assertThatThrownBy(() -> userService.withdrawUser(999L))
+          .isInstanceOf(EntityNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("실패: 이미 탈퇴한 사용자")
+    void withdrawUser_alreadyWithdrawn() {
+      // given
+      var withdrawnUser =
+          User.builder()
+              .id(1L)
+              .email(new Email("test@gmail.com"))
+              .nickname(new Nickname("testuser"))
+              .status(UserStatus.WITHDRAWN)
+              .deletedAt(LocalDateTime.now().minusDays(1))
+              .build();
+
+      given(userRepository.findActiveById(1L)).willReturn(Optional.of(withdrawnUser));
+
+      // when & then
+      assertThatThrownBy(() -> userService.withdrawUser(1L))
+          .isInstanceOf(IllegalStateException.class)
+          .hasMessage("이미 탈퇴한 사용자입니다");
+    }
+  }
+
+  @Nested
+  @DisplayName("공부 시간 추가")
+  class AddStudyMinutes {
+
+    @Test
+    @DisplayName("성공: 공부 시간 추가 및 티어 갱신")
+    void addStudyMinutes_success() {
+      // given
+      var user =
+          User.builder()
+              .id(1L)
+              .email(new Email("test@gmail.com"))
+              .nickname(new Nickname("testuser"))
+              .build();
+
+      given(userRepository.findActiveById(1L)).willReturn(Optional.of(user));
+      given(userRepository.save(any(User.class)))
+          .willAnswer(invocation -> invocation.getArgument(0));
+
+      // when
+      userService.addStudyMinutes(1L, 60);
+
+      // then
+      verify(userRepository).save(any(User.class));
+    }
+  }
+}

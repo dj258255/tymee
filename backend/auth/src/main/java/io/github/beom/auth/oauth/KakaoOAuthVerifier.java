@@ -49,13 +49,21 @@ public class KakaoOAuthVerifier implements OAuthVerifier {
       JsonNode root = objectMapper.readTree(response.body());
       String id = root.get("id").asText();
 
-      JsonNode kakaoAccount = root.get("kakao_account");
-      String email = kakaoAccount.has("email") ? kakaoAccount.get("email").asText() : null;
+      String email = null;
+      String nickname = null;
+      String profileImage = null;
 
-      JsonNode profile = kakaoAccount.get("profile");
-      String nickname = profile.has("nickname") ? profile.get("nickname").asText() : null;
-      String profileImage =
-          profile.has("profile_image_url") ? profile.get("profile_image_url").asText() : null;
+      JsonNode kakaoAccount = root.get("kakao_account");
+      if (kakaoAccount != null && !kakaoAccount.isNull()) {
+        email = kakaoAccount.has("email") ? kakaoAccount.get("email").asText() : null;
+
+        JsonNode profile = kakaoAccount.get("profile");
+        if (profile != null && !profile.isNull()) {
+          nickname = profile.has("nickname") ? profile.get("nickname").asText() : null;
+          profileImage =
+              profile.has("profile_image_url") ? profile.get("profile_image_url").asText() : null;
+        }
+      }
 
       return new OAuthUserInfo(OAuthProvider.KAKAO, id, email, nickname, profileImage);
     } catch (Exception e) {

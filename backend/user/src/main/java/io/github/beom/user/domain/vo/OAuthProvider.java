@@ -9,8 +9,7 @@ import lombok.RequiredArgsConstructor;
 public enum OAuthProvider implements CodedEnum {
   GOOGLE("google"),
   APPLE("apple"),
-  KAKAO("kakao"),
-  NAVER("naver");
+  KAKAO("kakao");
 
   private final String code;
 

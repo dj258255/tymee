@@ -15,7 +15,7 @@ public record UserProfileResponse(
   public static UserProfileResponse from(User user) {
     return UserProfileResponse.builder()
         .id(user.getId())
-        .nickname(user.getNickname().value())
+        .nickname(user.getDisplayName())
         .profileImageId(user.getProfileImageId())
         .bio(user.getBio())
         .level(user.getLevel())

@@ -149,6 +149,7 @@ subprojects {
     tasks.withType<JavaCompile> {
         options.compilerArgs.addAll(
             listOf(
+                "-parameters", // 메서드 파라미터 이름 보존 (Spring, Swagger에서 필요)
                 "--add-opens",
                 "jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED",
                 "--add-opens",

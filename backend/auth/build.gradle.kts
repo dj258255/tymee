@@ -34,6 +34,11 @@ dependencies {
 
     // Jackson (for Kakao/Apple OAuth)
     implementation("com.fasterxml.jackson.core:jackson-databind")
+
+    // Test
+    testImplementation(libs.spring.boot.starter.test)
+    testImplementation(libs.h2)
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 dependencyManagement {

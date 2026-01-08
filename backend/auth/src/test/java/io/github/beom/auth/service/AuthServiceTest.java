@@ -88,7 +88,7 @@ class AuthServiceTest {
       // then
       assertThat(result.getAccessToken()).isEqualTo(ACCESS_TOKEN);
       assertThat(result.getRefreshToken()).isEqualTo(REFRESH_TOKEN);
-      verify(userRepository).save(any(User.class));
+      verify(userRepository, org.mockito.Mockito.times(2)).save(any(User.class)); // 신규 생성 + lastLogin 갱신
       verify(userOAuthRepository).save(any(UserOAuth.class));
       verify(tokenRepository).saveRefreshToken(any(RefreshToken.class));
     }
@@ -114,6 +114,8 @@ class AuthServiceTest {
       given(userOAuthRepository.findByProviderAndProviderId(OAuthProvider.GOOGLE, "google-123"))
           .willReturn(Optional.of(existingOAuth));
       given(userRepository.findById(1L)).willReturn(Optional.of(existingUser));
+      given(userRepository.save(any(User.class)))
+          .willAnswer(invocation -> invocation.getArgument(0));
       given(jwtUtil.generateTokenPair(eq(1L), any(), any())).willReturn(expectedTokenPair);
       given(jwtUtil.getRefreshTokenExpirationSeconds()).willReturn(604800L);
 
@@ -122,7 +124,7 @@ class AuthServiceTest {
 
       // then
       assertThat(result.getAccessToken()).isEqualTo(ACCESS_TOKEN);
-      verify(userRepository, never()).save(any(User.class));
+      verify(userRepository).save(any(User.class)); // lastLogin 갱신
       verify(userOAuthRepository, never()).save(any(UserOAuth.class));
     }
 
@@ -159,7 +161,7 @@ class AuthServiceTest {
 
       // then
       assertThat(result.getAccessToken()).isEqualTo(ACCESS_TOKEN);
-      verify(userRepository).save(any(User.class));
+      verify(userRepository, org.mockito.Mockito.times(2)).save(any(User.class)); // activate + lastLogin 갱신
     }
 
     @Test
@@ -241,7 +243,7 @@ class AuthServiceTest {
 
       // then
       assertThat(result).isNotNull();
-      verify(userRepository).save(any(User.class));
+      verify(userRepository, org.mockito.Mockito.times(2)).save(any(User.class)); // 신규 생성 + lastLogin 갱신
     }
   }
 

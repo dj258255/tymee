@@ -2,6 +2,7 @@ package io.github.beom.user.repository;
 
 import io.github.beom.user.domain.User;
 import io.github.beom.user.entity.UserEntity;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -44,5 +45,9 @@ public class UserRepository {
     UserEntity entity = UserEntity.from(user);
     UserEntity savedEntity = userJpaRepository.save(entity);
     return savedEntity.toDomain();
+  }
+
+  public List<User> searchByNickname(String keyword) {
+    return userJpaRepository.searchByNickname(keyword).stream().map(UserEntity::toDomain).toList();
   }
 }

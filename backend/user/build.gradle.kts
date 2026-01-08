@@ -24,6 +24,12 @@ dependencies {
 
     // Spring Transaction
     implementation(libs.spring.tx)
+
+    // Test
+    testImplementation(libs.spring.boot.starter.test)
+    testImplementation("org.springframework.boot:spring-boot-data-jpa-test")
+    testImplementation(libs.h2)
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 dependencyManagement {

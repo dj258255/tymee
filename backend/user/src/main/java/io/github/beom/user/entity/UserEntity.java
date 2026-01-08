@@ -39,8 +39,6 @@ public class UserEntity {
   @Column(nullable = false, unique = true)
   private String email;
 
-  @Column private String password;
-
   @Column(nullable = false, length = 50)
   private String nickname;
 
@@ -109,7 +107,6 @@ public class UserEntity {
     return UserEntity.builder()
         .id(user.getId())
         .email(user.getEmail().value())
-        .password(user.getPassword())
         .nickname(user.getNickname().value())
         .profileImageId(user.getProfileImageId())
         .bio(user.getBio())
@@ -130,7 +127,6 @@ public class UserEntity {
     return User.builder()
         .id(this.id)
         .email(new Email(this.email))
-        .password(this.password)
         .nickname(new Nickname(this.nickname))
         .profileImageId(this.profileImageId)
         .bio(this.bio)

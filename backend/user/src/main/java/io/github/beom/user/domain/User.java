@@ -15,7 +15,6 @@ public class User {
 
   private final Long id;
   private final Email email;
-  private String password;
   private Nickname nickname;
   private Long profileImageId;
   private String bio;
@@ -34,7 +33,6 @@ public class User {
   private User(
       Long id,
       Email email,
-      String password,
       Nickname nickname,
       Long profileImageId,
       String bio,
@@ -50,7 +48,6 @@ public class User {
       LocalDateTime deletedAt) {
     this.id = id;
     this.email = email;
-    this.password = password;
     this.nickname = nickname;
     this.profileImageId = profileImageId;
     this.bio = bio;
@@ -66,12 +63,28 @@ public class User {
     this.deletedAt = deletedAt;
   }
 
-  public static User create(Email email, String password, Nickname nickname) {
-    return User.builder().email(email).password(password).nickname(nickname).build();
+  /** OAuth 사용자 생성. 닉네임은 user_timestamp로 자동 생성. */
+  public static User createOAuthUser(Email email) {
+    String defaultNickname = "user_" + System.currentTimeMillis();
+    return User.builder().email(email).nickname(new Nickname(defaultNickname)).build();
   }
 
-  public static User createOAuthUser(Email email, Nickname nickname) {
-    return User.builder().email(email).password(null).nickname(nickname).build();
+  /** 표시용 이름. 닉네임이 있으면 닉네임, 없으면 이메일 로컬파트. */
+  public String getDisplayName() {
+    if (nickname != null && !nickname.isEmpty()) {
+      return nickname.value();
+    }
+    if (email != null) {
+      String emailValue = email.value();
+      int atIndex = emailValue.indexOf('@');
+      return atIndex > 0 ? emailValue.substring(0, atIndex) : emailValue;
+    }
+    return "사용자";
+  }
+
+  /** 닉네임 설정 여부. */
+  public boolean hasNickname() {
+    return nickname != null && !nickname.isEmpty();
   }
 
   public void updateProfile(Nickname nickname, String bio) {
@@ -112,6 +125,7 @@ public class User {
 
   public void activate() {
     this.status = UserStatus.ACTIVE;
+    this.deletedAt = null; // 탈퇴 복구 시 deletedAt 초기화
     this.updatedAt = LocalDateTime.now();
   }
 
@@ -127,24 +141,12 @@ public class User {
     this.updatedAt = LocalDateTime.now();
   }
 
-  public void changePassword(String newPassword) {
-    if (isOAuthUser()) {
-      throw new IllegalStateException("OAuth 사용자는 비밀번호를 변경할 수 없습니다");
-    }
-    this.password = newPassword;
-    this.updatedAt = LocalDateTime.now();
-  }
-
   public boolean isActive() {
     return this.status.isActive();
   }
 
-  public boolean isOAuthUser() {
-    return this.password == null;
-  }
-
   public boolean isDeleted() {
-    return this.deletedAt != null;
+    return this.deletedAt != null || this.status == UserStatus.WITHDRAWN;
   }
 
   public boolean canLogin() {

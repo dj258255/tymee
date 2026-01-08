@@ -4,7 +4,6 @@ import io.github.beom.core.exception.BusinessException;
 import io.github.beom.core.exception.EntityNotFoundException;
 import io.github.beom.core.exception.ErrorCode;
 import io.github.beom.user.domain.User;
-import io.github.beom.user.domain.vo.Email;
 import io.github.beom.user.domain.vo.Nickname;
 import io.github.beom.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -46,34 +45,17 @@ public class UserService {
     return userRepository.existsByNickname(nickname);
   }
 
-  /** 소셜 로그인 신규 사용자 생성. */
-  @Transactional
-  public User createOAuthUser(String email, String nickname) {
-    validateDuplicateEmail(email);
-    validateDuplicateNickname(nickname);
-
-    User user = User.createOAuthUser(new Email(email), new Nickname(nickname));
-    return userRepository.save(user);
-  }
-
   /** 프로필 수정. 닉네임 변경 시 중복 검증한다. */
   @Transactional
   public User updateProfile(Long userId, String nickname, String bio) {
     User user = getById(userId);
 
+    // 닉네임이 변경되는 경우에만 중복 검사
     if (!user.getNickname().value().equals(nickname)) {
       validateDuplicateNickname(nickname);
     }
 
     user.updateProfile(new Nickname(nickname), bio);
-    return userRepository.save(user);
-  }
-
-  /** 프로필 이미지 변경. */
-  @Transactional
-  public User updateProfileImage(Long userId, Long profileImageId) {
-    User user = getById(userId);
-    user.updateProfileImage(profileImageId);
     return userRepository.save(user);
   }
 
@@ -99,12 +81,6 @@ public class UserService {
     User user = getById(userId);
     user.withdraw();
     userRepository.save(user);
-  }
-
-  private void validateDuplicateEmail(String email) {
-    if (userRepository.existsByEmail(email)) {
-      throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
-    }
   }
 
   private void validateDuplicateNickname(String nickname) {

@@ -88,7 +88,8 @@ class AuthServiceTest {
       // then
       assertThat(result.getAccessToken()).isEqualTo(ACCESS_TOKEN);
       assertThat(result.getRefreshToken()).isEqualTo(REFRESH_TOKEN);
-      verify(userRepository, org.mockito.Mockito.times(2)).save(any(User.class)); // 신규 생성 + lastLogin 갱신
+      verify(userRepository, org.mockito.Mockito.times(2))
+          .save(any(User.class)); // 신규 생성 + lastLogin 갱신
       verify(userOAuthRepository).save(any(UserOAuth.class));
       verify(tokenRepository).saveRefreshToken(any(RefreshToken.class));
     }
@@ -161,7 +162,8 @@ class AuthServiceTest {
 
       // then
       assertThat(result.getAccessToken()).isEqualTo(ACCESS_TOKEN);
-      verify(userRepository, org.mockito.Mockito.times(2)).save(any(User.class)); // activate + lastLogin 갱신
+      verify(userRepository, org.mockito.Mockito.times(2))
+          .save(any(User.class)); // activate + lastLogin 갱신
     }
 
     @Test
@@ -243,7 +245,8 @@ class AuthServiceTest {
 
       // then
       assertThat(result).isNotNull();
-      verify(userRepository, org.mockito.Mockito.times(2)).save(any(User.class)); // 신규 생성 + lastLogin 갱신
+      verify(userRepository, org.mockito.Mockito.times(2))
+          .save(any(User.class)); // 신규 생성 + lastLogin 갱신
     }
   }
 

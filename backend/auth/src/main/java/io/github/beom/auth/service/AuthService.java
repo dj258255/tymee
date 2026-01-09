@@ -14,6 +14,7 @@ import io.github.beom.user.domain.vo.Nickname;
 import io.github.beom.user.domain.vo.OAuthProvider;
 import io.github.beom.user.repository.UserOAuthRepository;
 import io.github.beom.user.repository.UserRepository;
+import io.github.beom.user.service.UserSettingsService;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ public class AuthService {
 
   private final UserRepository userRepository;
   private final UserOAuthRepository userOAuthRepository;
+  private final UserSettingsService userSettingsService;
   private final JwtUtil jwtUtil;
   private final RedisTokenRepository tokenRepository;
   private final OAuthVerifierFactory oAuthVerifierFactory;
@@ -164,14 +166,18 @@ public class AuthService {
 
   private static final int MAX_NICKNAME_RETRY = 10;
 
-  /** 중복되지 않는 닉네임으로 신규 사용자 생성. */
+  /** 중복되지 않는 닉네임으로 신규 사용자 생성. 기본 설정도 함께 생성. */
   private User createNewUserWithUniqueNickname(String email) {
     Nickname uniqueNickname = generateUniqueNickname();
     Email userEmail = email != null ? new Email(email) : null;
 
     User newUser = User.builder().email(userEmail).nickname(uniqueNickname).build();
+    User savedUser = userRepository.save(newUser);
 
-    return userRepository.save(newUser);
+    // 신규 사용자의 기본 설정 생성
+    userSettingsService.createDefaultSettings(savedUser.getId());
+
+    return savedUser;
   }
 
   /** 중복되지 않는 랜덤 닉네임 생성. 최대 10회 재시도. */

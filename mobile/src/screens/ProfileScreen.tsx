@@ -59,19 +59,19 @@ const TIER_DATA = [
   {name: '초등학생', icon: 'pencil', color: '#A1887F', minRP: 0, desc: '여정이 시작되는 단계입니다'},
 ];
 
-// 백엔드 tier 코드를 한글 이름으로 변환
+// 백엔드 tier 코드를 한글 이름으로 변환 (백엔드는 대문자로 저장)
 const TIER_CODE_MAP: Record<string, string> = {
-  elementary: '초등학생',
-  middle: '중학생',
-  high: '고등학생',
-  bachelor_1: '학사 I',
-  bachelor_2: '학사 II',
-  bachelor_3: '학사 III',
-  master_1: '석사 I',
-  master_2: '석사 II',
-  master_3: '석사 III',
-  doctor: '박사',
-  doctor_emeritus: '명예박사',
+  ELEMENTARY: '초등학생',
+  MIDDLE: '중학생',
+  HIGH: '고등학생',
+  BACHELOR_1: '학사 I',
+  BACHELOR_2: '학사 II',
+  BACHELOR_3: '학사 III',
+  MASTER_1: '석사 I',
+  MASTER_2: '석사 II',
+  MASTER_3: '석사 III',
+  DOCTOR: '박사',
+  DOCTOR_EMERITUS: '명예박사',
 };
 
 const getTierDisplayName = (tierCode: string | null | undefined): string => {

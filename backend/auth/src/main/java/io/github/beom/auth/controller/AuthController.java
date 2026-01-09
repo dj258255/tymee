@@ -71,7 +71,7 @@ public class AuthController {
   public ApiResponse<TokenResponse> oAuthLogin(
       @Parameter(description = "OAuth 제공자", example = "google") @PathVariable String provider,
       @Valid @RequestBody OAuthLoginRequest request) {
-    OAuthProvider oAuthProvider = OAuthProvider.fromCode(provider);
+    OAuthProvider oAuthProvider = OAuthProvider.valueOf(provider.toUpperCase());
     TokenPair tokenPair =
         authService.oAuthLogin(oAuthProvider, request.token(), request.deviceId());
 

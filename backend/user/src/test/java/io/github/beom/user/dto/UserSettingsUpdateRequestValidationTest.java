@@ -69,8 +69,7 @@ class UserSettingsUpdateRequestValidationTest {
       var request = createRequest("INVALID", null, null, null, null, null, null);
       Set<ConstraintViolation<UserSettingsUpdateRequest>> violations = validator.validate(request);
       assertThat(violations).hasSize(1);
-      assertThat(violations.iterator().next().getMessage())
-          .contains("LIGHT", "DARK", "SYSTEM");
+      assertThat(violations.iterator().next().getMessage()).contains("LIGHT", "DARK", "SYSTEM");
     }
 
     @Test
@@ -120,8 +119,7 @@ class UserSettingsUpdateRequestValidationTest {
       var request = createRequest(null, "FR", null, null, null, null, null);
       Set<ConstraintViolation<UserSettingsUpdateRequest>> violations = validator.validate(request);
       assertThat(violations).hasSize(1);
-      assertThat(violations.iterator().next().getMessage())
-          .contains("KO", "JA", "EN");
+      assertThat(violations.iterator().next().getMessage()).contains("KO", "JA", "EN");
     }
 
     @Test
@@ -366,20 +364,7 @@ class UserSettingsUpdateRequestValidationTest {
           new UserSettingsUpdateRequest(
               "INVALID", // 잘못된 themeMode
               "FR", // 잘못된 language
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
+              null, null, null, null, null, null, null, null, null, null, null, null, null, null,
               -1, // 잘못된 plannerStartHour
               -1, // 잘못된 dailyGoalMinutes
               -1, // 잘못된 weeklyGoalMinutes
@@ -393,23 +378,8 @@ class UserSettingsUpdateRequestValidationTest {
     void allNumericFieldsExceedingRejected() {
       var request =
           new UserSettingsUpdateRequest(
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              61, // 초과
-              null,
-              null,
-              null,
-              24, // 초과
+              null, null, null, null, null, null, null, null, null, null, null, null, 61, // 초과
+              null, null, null, 24, // 초과
               1441, // 초과
               10081, // 초과
               null);
@@ -427,8 +397,26 @@ class UserSettingsUpdateRequestValidationTest {
     void midnightIsValid() {
       var request =
           new UserSettingsUpdateRequest(
-              null, null, null, null, null, null, null, null, null, null, LocalTime.of(0, 0), null,
-              null, null, null, null, null, null, null, null);
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              LocalTime.of(0, 0),
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null);
       assertThat(validator.validate(request)).isEmpty();
     }
 
@@ -437,8 +425,26 @@ class UserSettingsUpdateRequestValidationTest {
     void endOfDayIsValid() {
       var request =
           new UserSettingsUpdateRequest(
-              null, null, null, null, null, null, null, null, null, null, LocalTime.of(23, 59),
-              null, null, null, null, null, null, null, null, null);
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              LocalTime.of(23, 59),
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null);
       assertThat(validator.validate(request)).isEmpty();
     }
 
@@ -447,8 +453,26 @@ class UserSettingsUpdateRequestValidationTest {
     void noonIsValid() {
       var request =
           new UserSettingsUpdateRequest(
-              null, null, null, null, null, null, null, null, null, null, LocalTime.of(12, 0), null,
-              null, null, null, null, null, null, null, null);
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              LocalTime.of(12, 0),
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null);
       assertThat(validator.validate(request)).isEmpty();
     }
 
@@ -457,8 +481,26 @@ class UserSettingsUpdateRequestValidationTest {
     void withSecondsIsValid() {
       var request =
           new UserSettingsUpdateRequest(
-              null, null, null, null, null, null, null, null, null, null, LocalTime.of(8, 30, 45),
-              null, null, null, null, null, null, null, null, null);
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              LocalTime.of(8, 30, 45),
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null);
       assertThat(validator.validate(request)).isEmpty();
     }
   }

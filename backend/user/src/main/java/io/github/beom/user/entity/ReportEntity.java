@@ -4,12 +4,10 @@ import io.github.beom.user.domain.Report;
 import io.github.beom.user.domain.vo.ReportReason;
 import io.github.beom.user.domain.vo.ReportStatus;
 import io.github.beom.user.domain.vo.ReportType;
-import io.github.beom.user.entity.converter.ReportReasonConverter;
-import io.github.beom.user.entity.converter.ReportStatusConverter;
-import io.github.beom.user.entity.converter.ReportTypeConverter;
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -46,22 +44,22 @@ public class ReportEntity {
   @Column(name = "reporter_id", nullable = false)
   private Long reporterId;
 
+  @Enumerated(EnumType.STRING)
   @Column(name = "target_type", nullable = false, length = 20)
-  @Convert(converter = ReportTypeConverter.class)
   private ReportType targetType;
 
   @Column(name = "target_id", nullable = false)
   private Long targetId;
 
+  @Enumerated(EnumType.STRING)
   @Column(name = "reason", nullable = false, length = 30)
-  @Convert(converter = ReportReasonConverter.class)
   private ReportReason reason;
 
   @Column(name = "description", length = 500)
   private String description;
 
+  @Enumerated(EnumType.STRING)
   @Column(name = "status", nullable = false, length = 20)
-  @Convert(converter = ReportStatusConverter.class)
   private ReportStatus status;
 
   @CreationTimestamp

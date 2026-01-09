@@ -25,6 +25,11 @@ dependencies {
     // Spring Transaction
     implementation(libs.spring.tx)
 
+    // MapStruct
+    implementation(libs.mapstruct)
+    annotationProcessor(libs.mapstruct.processor)
+    annotationProcessor(libs.lombok)
+
     // Test
     testImplementation(libs.spring.boot.starter.test)
     testImplementation("org.springframework.boot:spring-boot-data-jpa-test")

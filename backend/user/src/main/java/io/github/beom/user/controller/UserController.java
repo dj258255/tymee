@@ -7,6 +7,7 @@ import io.github.beom.user.domain.User;
 import io.github.beom.user.dto.UpdateProfileRequest;
 import io.github.beom.user.dto.UserProfileResponse;
 import io.github.beom.user.dto.UserResponse;
+import io.github.beom.user.mapper.UserMapper;
 import io.github.beom.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -32,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
   private final UserService userService;
+  private final UserMapper userMapper;
 
   /** GET /users/{id} - 내 정보 조회 (전체 필드). 본인만 조회 가능. */
   @Operation(summary = "내 정보 조회", description = "본인의 전체 정보를 조회합니다. 인증 필요, 본인만 조회 가능.")
@@ -42,7 +44,7 @@ public class UserController {
       @Parameter(description = "사용자 ID", example = "1") @PathVariable Long id) {
     validateOwner(currentUser, id);
     User user = userService.getById(id);
-    return ApiResponse.success(UserResponse.from(user));
+    return ApiResponse.success(userMapper.toResponse(user));
   }
 
   /** GET /users/{id}/profile - 타인 프로필 조회 (공개 필드만) */
@@ -51,7 +53,7 @@ public class UserController {
   public ApiResponse<UserProfileResponse> getUserProfile(
       @Parameter(description = "사용자 ID", example = "1") @PathVariable Long id) {
     User user = userService.getById(id);
-    return ApiResponse.success(UserProfileResponse.from(user));
+    return ApiResponse.success(userMapper.toProfileResponse(user));
   }
 
   /** PATCH /users/{id} - 프로필 수정. 본인만 수정 가능. */
@@ -64,7 +66,7 @@ public class UserController {
       @Valid @RequestBody UpdateProfileRequest request) {
     validateOwner(currentUser, id);
     User updated = userService.updateProfile(id, request.nickname(), request.bio());
-    return ApiResponse.success(UserResponse.from(updated));
+    return ApiResponse.success(userMapper.toResponse(updated));
   }
 
   /** DELETE /users/{id} - 회원 탈퇴 (소프트 삭제). 본인만 탈퇴 가능. */

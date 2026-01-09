@@ -37,64 +37,67 @@ public class AuthService {
   /** 소셜 로그인. 토큰 검증 후 신규 사용자는 자동 가입, 기존 사용자는 토큰 발급. */
   @Transactional
   public TokenPair oAuthLogin(OAuthProvider provider, String token, String deviceId) {
-    // 1. OAuth 토큰 검증 및 사용자 정보 추출
     OAuthVerifier verifier = oAuthVerifierFactory.getVerifier(provider);
     OAuthUserInfo userInfo = verifier.verify(token);
 
-    // 2. 기존 OAuth 연동 확인
     Optional<UserOAuth> existingOAuth =
         userOAuthRepository.findByProviderAndProviderId(provider, userInfo.providerId());
 
-    User user;
+    User user =
+        existingOAuth.isPresent()
+            ? findUserByOAuth(existingOAuth.get())
+            : findOrCreateUserByEmail(userInfo, provider);
 
-    if (existingOAuth.isPresent()) {
-      UserOAuth oAuth = existingOAuth.get();
-      if (oAuth.isUnlinked()) {
-        throw new IllegalStateException("연동 해제된 계정입니다. 다시 연동해주세요");
-      }
+    validateAndUpdateLogin(user);
+    return generateAndSaveTokens(user, deviceId);
+  }
 
-      user =
-          userRepository
-              .findById(oAuth.getUserId())
-              .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다"));
-
-      // 탈퇴한 사용자가 재로그인 시 계정 복구
-      if (user.isDeleted()) {
-        user.activate();
-        user = userRepository.save(user);
-      }
-    } else {
-      // 3. 이메일로 기존 사용자 확인 또는 신규 생성
-      Optional<User> existingUser =
-          userInfo.email() != null
-              ? userRepository.findByEmail(userInfo.email())
-              : Optional.empty();
-
-      if (existingUser.isPresent()) {
-        user = existingUser.get();
-        // 탈퇴한 사용자가 재로그인 시 계정 복구
-        if (user.isDeleted()) {
-          user.activate();
-          user = userRepository.save(user);
-        }
-      } else {
-        user = createNewUserWithUniqueNickname(userInfo.email());
-      }
-
-      // 4. OAuth 연동 정보 저장
-      UserOAuth newOAuth = UserOAuth.create(user.getId(), provider, userInfo.providerId());
-      userOAuthRepository.save(newOAuth);
+  /** 기존 OAuth 연동으로 사용자 조회. */
+  private User findUserByOAuth(UserOAuth oAuth) {
+    if (oAuth.isUnlinked()) {
+      throw new IllegalStateException("연동 해제된 계정입니다. 다시 연동해주세요");
     }
 
+    User user =
+        userRepository
+            .findById(oAuth.getUserId())
+            .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다"));
+
+    return reactivateIfDeleted(user);
+  }
+
+  /** 이메일로 기존 사용자 조회 또는 신규 생성 후 OAuth 연동. */
+  private User findOrCreateUserByEmail(OAuthUserInfo userInfo, OAuthProvider provider) {
+    Optional<User> existingUser =
+        userInfo.email() != null
+            ? userRepository.findByEmail(userInfo.email())
+            : Optional.empty();
+
+    User user =
+        existingUser.map(this::reactivateIfDeleted).orElseGet(() -> createNewUser(userInfo.email()));
+
+    UserOAuth newOAuth = UserOAuth.create(user.getId(), provider, userInfo.providerId());
+    userOAuthRepository.save(newOAuth);
+
+    return user;
+  }
+
+  /** 탈퇴한 사용자 계정 복구. */
+  private User reactivateIfDeleted(User user) {
+    if (user.isDeleted()) {
+      user.activate();
+      return userRepository.save(user);
+    }
+    return user;
+  }
+
+  /** 로그인 가능 여부 확인 및 로그인 시간 갱신. */
+  private void validateAndUpdateLogin(User user) {
     if (!user.canLogin()) {
       throw new IllegalStateException("로그인할 수 없는 계정입니다");
     }
-
-    // 로그인 시간 갱신
     user.updateLastLogin();
     userRepository.save(user);
-
-    return generateAndSaveTokens(user, deviceId);
   }
 
   /** 토큰 갱신. Redis 저장된 토큰과 비교 후 새 토큰 쌍 발급. 토큰 탈취 감지 시 전체 로그아웃. */
@@ -134,7 +137,7 @@ public class AuthService {
   @Transactional
   public TokenPair devLogin(String email, String deviceId) {
     User user =
-        userRepository.findByEmail(email).orElseGet(() -> createNewUserWithUniqueNickname(email));
+        userRepository.findByEmail(email).orElseGet(() -> createNewUser(email));
 
     // 탈퇴한 사용자 복구
     if (user.isDeleted()) {
@@ -167,7 +170,7 @@ public class AuthService {
   private static final int MAX_NICKNAME_RETRY = 10;
 
   /** 중복되지 않는 닉네임으로 신규 사용자 생성. 기본 설정도 함께 생성. */
-  private User createNewUserWithUniqueNickname(String email) {
+  private User createNewUser(String email) {
     Nickname uniqueNickname = generateUniqueNickname();
     Email userEmail = email != null ? new Email(email) : null;
 

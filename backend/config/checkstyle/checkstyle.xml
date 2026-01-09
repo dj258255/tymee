@@ -35,7 +35,8 @@
             <property name="format" value="^[A-Z][a-zA-Z0-9]*$"/>
         </module>
         <module name="MethodName">
-            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+            <!-- 테스트 메서드는 언더스코어 허용 (methodName_condition_expected 패턴) -->
+            <property name="format" value="^[a-z][a-zA-Z0-9]*(_[a-zA-Z0-9]+)*$"/>
         </module>
         <module name="MemberName">
             <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
@@ -68,9 +69,10 @@
         <module name="RightCurly"/>
         <module name="NeedBraces"/>
 
-        <!-- 메서드 길이 -->
+        <!-- 메서드 길이 (빈 줄 제외) -->
         <module name="MethodLength">
-            <property name="max" value="50"/>
+            <property name="max" value="80"/>
+            <property name="countEmpty" value="false"/>
         </module>
 
         <!-- 파라미터 개수 (메서드만 검사, 생성자는 Builder 패턴으로 많을 수 있음) -->

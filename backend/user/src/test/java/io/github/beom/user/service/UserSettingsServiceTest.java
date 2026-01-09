@@ -3,7 +3,6 @@ package io.github.beom.user.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import io.github.beom.user.domain.UserSettings;
@@ -13,7 +12,6 @@ import io.github.beom.user.dto.UserSettingsUpdateRequest;
 import io.github.beom.user.mapper.UserSettingsMapper;
 import io.github.beom.user.repository.UserSettingsRepository;
 import java.time.LocalTime;
-import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -554,9 +552,8 @@ class UserSettingsServiceTest {
     @DisplayName("성공: 신규 사용자 기본 설정 생성")
     void defaultSettingsCreatedForNewUser() {
       // given
-      given(userSettingsRepository.existsByUserId(1L)).willReturn(false);
-      given(userSettingsRepository.save(any(UserSettings.class)))
-          .willAnswer(inv -> inv.getArgument(0));
+      var defaultSettings = UserSettings.createDefault(1L);
+      given(userSettingsRepository.findOrCreateByUserId(1L)).willReturn(defaultSettings);
 
       // when
       var result = userSettingsService.createDefaultSettings(1L);
@@ -566,7 +563,7 @@ class UserSettingsServiceTest {
       assertThat(result.getThemeMode()).isEqualTo(ThemeMode.SYSTEM);
       assertThat(result.getLanguage()).isEqualTo(Language.KO);
       assertThat(result.isPushEnabled()).isTrue();
-      verify(userSettingsRepository).save(any(UserSettings.class));
+      verify(userSettingsRepository).findOrCreateByUserId(1L);
     }
 
     @Test
@@ -574,15 +571,14 @@ class UserSettingsServiceTest {
     void existingSettingsReturnedIfAlreadyExists() {
       // given
       var existingSettings = UserSettings.createDefault(1L);
-      given(userSettingsRepository.existsByUserId(1L)).willReturn(true);
-      given(userSettingsRepository.findByUserId(1L)).willReturn(Optional.of(existingSettings));
+      given(userSettingsRepository.findOrCreateByUserId(1L)).willReturn(existingSettings);
 
       // when
       var result = userSettingsService.createDefaultSettings(1L);
 
       // then
       assertThat(result.getUserId()).isEqualTo(1L);
-      verify(userSettingsRepository, never()).save(any(UserSettings.class));
+      verify(userSettingsRepository).findOrCreateByUserId(1L);
     }
   }
 }

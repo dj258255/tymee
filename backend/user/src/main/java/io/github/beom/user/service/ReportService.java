@@ -1,5 +1,6 @@
 package io.github.beom.user.service;
 
+import io.github.beom.core.exception.BusinessException;
 import io.github.beom.core.exception.EntityNotFoundException;
 import io.github.beom.core.exception.ErrorCode;
 import io.github.beom.user.domain.Report;
@@ -39,7 +40,7 @@ public class ReportService {
 
     // 자기 자신 신고 방지 (사용자 신고의 경우)
     if (targetType == ReportType.USER && reporterId.equals(targetId)) {
-      throw new IllegalArgumentException("자기 자신을 신고할 수 없습니다");
+      throw new BusinessException(ErrorCode.SELF_REPORT_NOT_ALLOWED);
     }
 
     // 사용자 신고의 경우 대상 존재 여부 확인
@@ -50,7 +51,7 @@ public class ReportService {
     // 중복 신고 방지
     if (reportRepository.existsByReporterIdAndTargetTypeAndTargetId(
         reporterId, targetType, targetId)) {
-      throw new IllegalStateException("이미 신고한 대상입니다");
+      throw new BusinessException(ErrorCode.ALREADY_REPORTED);
     }
 
     Report report = Report.create(reporterId, targetType, targetId, reason, description);

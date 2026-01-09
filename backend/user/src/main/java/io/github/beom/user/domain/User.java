@@ -63,10 +63,9 @@ public class User {
     this.deletedAt = deletedAt;
   }
 
-  /** OAuth 사용자 생성. 닉네임은 user_timestamp로 자동 생성. */
+  /** OAuth 사용자 생성. 닉네임은 랜덤 생성 (형용사+명사+숫자). */
   public static User createOAuthUser(Email email) {
-    String defaultNickname = "user_" + System.currentTimeMillis();
-    return User.builder().email(email).nickname(new Nickname(defaultNickname)).build();
+    return User.builder().email(email).nickname(Nickname.generateRandom()).build();
   }
 
   /** 표시용 이름. 닉네임이 있으면 닉네임, 없으면 이메일 로컬파트. */

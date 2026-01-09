@@ -4,9 +4,9 @@ spring:
   profiles:
     active: ${SPRING_PROFILES_ACTIVE}
 
-  # Flyway 공통 설정
+  # Flyway 공통 설정 (기본 비활성화, prod/staging에서만 활성화)
   flyway:
-    enabled: true
+    enabled: false
     locations: classpath:db/migration
     baseline-on-migrate: true
     baseline-version: 0
@@ -138,6 +138,9 @@ spring:
     activate:
       on-profile: staging
 
+  flyway:
+    enabled: true
+
   datasource:
     url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}?useSSL=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     username: ${MYSQL_USER}
@@ -173,6 +176,9 @@ spring:
   config:
     activate:
       on-profile: prod
+
+  flyway:
+    enabled: true
 
   datasource:
     url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}?useSSL=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8

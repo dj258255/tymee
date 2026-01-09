@@ -24,3 +24,19 @@ logging:
     root: WARN
     io.github.beom: DEBUG
     org.hibernate.SQL: DEBUG
+
+# JWT 테스트 설정
+jwt:
+  secret: test-secret-key-for-unit-testing-purposes-only-32chars
+  access-token-expiration: 3600000
+  refresh-token-expiration: 604800000
+  issuer: tymee-test
+
+# R2 테스트 설정 (더미 값)
+cloudflare:
+  r2:
+    account-id: test-account-id
+    access-key-id: test-access-key
+    secret-access-key: test-secret-key
+    bucket-name: test-bucket
+    public-url: https://test-cdn.example.com

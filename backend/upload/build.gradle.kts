@@ -20,6 +20,14 @@ dependencies {
 
     // Spring Transaction
     implementation(libs.spring.tx)
+
+    // AWS SDK for R2
+    implementation(platform(libs.aws.bom))
+    implementation(libs.aws.s3)
+    implementation("software.amazon.awssdk:s3-transfer-manager")
+
+    // Image Processing
+    implementation(libs.thumbnailator)
 }
 
 dependencyManagement {

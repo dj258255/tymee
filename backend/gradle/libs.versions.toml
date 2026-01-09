@@ -19,6 +19,12 @@ google-api-client = "2.7.2"
 # Validation
 jakarta-validation = "3.1.0"
 
+# AWS SDK (Cloudflare R2 compatible)
+aws-sdk = "2.29.51"
+
+# Image Processing
+thumbnailator = "0.4.20"
+
 # Utilities
 commons-lang3 = "3.17.0"
 lombok = "1.18.36"
@@ -89,6 +95,13 @@ junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
 mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito" }
+
+# AWS SDK for R2
+aws-bom = { module = "software.amazon.awssdk:bom", version.ref = "aws-sdk" }
+aws-s3 = { module = "software.amazon.awssdk:s3" }
+
+# Image Processing
+thumbnailator = { module = "net.coobird:thumbnailator", version.ref = "thumbnailator" }
 
 # Code Quality
 spotbugs-annotations = { module = "com.github.spotbugs:spotbugs-annotations", version.ref = "spotbugs-annotations" }

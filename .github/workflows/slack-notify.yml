@@ -21,6 +21,21 @@ on:
         description: '워크플로우 이름 (Backend, Mobile, Infrastructure)'
         required: true
         type: string
+      docker_image:
+        description: 'Docker 이미지 태그'
+        required: false
+        type: string
+        default: ''
+      app_url:
+        description: '애플리케이션 URL'
+        required: false
+        type: string
+        default: ''
+      duration:
+        description: '소요 시간'
+        required: false
+        type: string
+        default: ''
     secrets:
       SLACK_WEBHOOK_URL:
         required: true
@@ -31,65 +46,253 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 빌드 알림 전송
-        if: inputs.type == 'build'
+      - name: 빌드 성공 알림
+        if: inputs.type == 'build' && inputs.status == 'success'
         uses: slackapi/slack-github-action@v2.0.0
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
           payload: |
             {
-              "blocks": [
+              "attachments": [
                 {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "${{ inputs.status == 'success' && format('*{0} Build Passed*', inputs.workflow_name) || format('*{0} Build Failed*', inputs.workflow_name) }}"
-                  }
-                },
-                {
-                  "type": "context",
-                  "elements": [
+                  "color": "#36a64f",
+                  "blocks": [
                     {
-                      "type": "mrkdwn",
-                      "text": "${{ github.event_name == 'pull_request' && format('*PR:* <{0}|#{1}> {2}', github.event.pull_request.html_url, github.event.pull_request.number, github.event.pull_request.title) || format('*Branch:* `{0}`', github.ref_name) }}"
-                    }
-                  ]
-                },
-                {
-                  "type": "context",
-                  "elements": [
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "*${{ inputs.workflow_name }} Build #${{ github.run_number }}*\n`SUCCESS`"
+                      }
+                    },
                     {
-                      "type": "mrkdwn",
-                      "text": "*Author:* ${{ github.actor }}  |  *Commit:* `${{ github.sha }}`"
+                      "type": "divider"
+                    },
+                    {
+                      "type": "section",
+                      "fields": [
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Branch*\n`${{ github.head_ref || github.ref_name }}`"
+                        },
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Commit*\n<${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|`${{ github.sha }}`>"
+                        },
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Author*\n${{ github.actor }}"
+                        },
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Workflow*\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "context",
+                      "elements": [
+                        {
+                          "type": "mrkdwn",
+                          "text": "${{ github.event_name == 'pull_request' && format('<{0}|PR #{1}> {2}', github.event.pull_request.html_url, github.event.pull_request.number, github.event.pull_request.title) || format('Push to `{0}`', github.ref_name) }}"
+                        }
+                      ]
                     }
                   ]
                 }
               ]
             }
 
-      - name: 배포 알림 전송
-        if: inputs.type == 'deploy'
+      - name: 빌드 실패 알림
+        if: inputs.type == 'build' && inputs.status == 'failure'
         uses: slackapi/slack-github-action@v2.0.0
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
           payload: |
             {
-              "blocks": [
+              "attachments": [
                 {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "${{ inputs.status == 'success' && format('*{0} {1} Deploy Completed*', inputs.workflow_name, inputs.environment) || format('*{0} {1} Deploy Failed*', inputs.workflow_name, inputs.environment) }}"
-                  }
-                },
-                {
-                  "type": "context",
-                  "elements": [
+                  "color": "#dc3545",
+                  "blocks": [
                     {
-                      "type": "mrkdwn",
-                      "text": "*Commit:* `${{ github.sha }}`  |  *Author:* ${{ github.actor }}"
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "*${{ inputs.workflow_name }} Build #${{ github.run_number }}*\n`FAILED`"
+                      }
+                    },
+                    {
+                      "type": "divider"
+                    },
+                    {
+                      "type": "section",
+                      "fields": [
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Branch*\n`${{ github.head_ref || github.ref_name }}`"
+                        },
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Commit*\n<${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|`${{ github.sha }}`>"
+                        },
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Author*\n${{ github.actor }}"
+                        },
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Workflow*\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Logs>"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "context",
+                      "elements": [
+                        {
+                          "type": "mrkdwn",
+                          "text": "${{ github.event_name == 'pull_request' && format('<{0}|PR #{1}> {2}', github.event.pull_request.html_url, github.event.pull_request.number, github.event.pull_request.title) || format('Push to `{0}`', github.ref_name) }}"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+
+      - name: 배포 성공 알림
+        if: inputs.type == 'deploy' && inputs.status == 'success'
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "attachments": [
+                {
+                  "color": "#36a64f",
+                  "blocks": [
+                    {
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "*${{ inputs.workflow_name }} ${{ inputs.environment }} Deploy #${{ github.run_number }}*\n`SUCCESS`"
+                      }
+                    },
+                    {
+                      "type": "divider"
+                    },
+                    {
+                      "type": "section",
+                      "fields": [
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Environment*\n`${{ inputs.environment }}`"
+                        },
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Commit*\n<${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|`${{ github.sha }}`>"
+                        },
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Author*\n${{ github.actor }}"
+                        },
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Workflow*\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "section",
+                      "fields": [
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Docker Image*\n`${{ inputs.docker_image || 'N/A' }}`"
+                        },
+                        {
+                          "type": "mrkdwn",
+                          "text": "*App URL*\n${{ inputs.app_url && format('<{0}|{0}>', inputs.app_url) || 'N/A' }}"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "actions",
+                      "elements": [
+                        {
+                          "type": "button",
+                          "text": {
+                            "type": "plain_text",
+                            "text": "View Application"
+                          },
+                          "url": "${{ inputs.app_url || github.server_url }}"
+                        },
+                        {
+                          "type": "button",
+                          "text": {
+                            "type": "plain_text",
+                            "text": "Swagger UI"
+                          },
+                          "url": "${{ inputs.app_url && format('{0}/swagger-ui.html', inputs.app_url) || github.server_url }}"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+
+      - name: 배포 실패 알림
+        if: inputs.type == 'deploy' && inputs.status == 'failure'
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "attachments": [
+                {
+                  "color": "#dc3545",
+                  "blocks": [
+                    {
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "*${{ inputs.workflow_name }} ${{ inputs.environment }} Deploy #${{ github.run_number }}*\n`FAILED`"
+                      }
+                    },
+                    {
+                      "type": "divider"
+                    },
+                    {
+                      "type": "section",
+                      "fields": [
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Environment*\n`${{ inputs.environment }}`"
+                        },
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Commit*\n<${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|`${{ github.sha }}`>"
+                        },
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Author*\n${{ github.actor }}"
+                        },
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Workflow*\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Logs>"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "context",
+                      "elements": [
+                        {
+                          "type": "mrkdwn",
+                          "text": "Deploy failed. Please check the workflow logs for details."
+                        }
+                      ]
                     }
                   ]
                 }

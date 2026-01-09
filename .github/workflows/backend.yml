@@ -286,6 +286,8 @@ jobs:
       type: deploy
       environment: Staging
       workflow_name: Backend
+      docker_image: ghcr.io/${{ github.repository }}/tymee-backend:staging
+      app_url: https://staging-api.studywithtymee.com
     secrets:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
@@ -299,5 +301,7 @@ jobs:
       type: deploy
       environment: Production
       workflow_name: Backend
+      docker_image: ghcr.io/${{ github.repository }}/tymee-backend:latest
+      app_url: https://api.studywithtymee.com
     secrets:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

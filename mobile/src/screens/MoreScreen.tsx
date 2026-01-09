@@ -13,6 +13,7 @@ import Icon from '@react-native-vector-icons/ionicons';
 import {useTranslation} from 'react-i18next';
 import {useNavigation} from '@react-navigation/native';
 import {useThemeStore, ThemeMode} from '../store/themeStore';
+import {useAuthStore} from '../store/authStore';
 import {useStudyRecordStore} from '../store/studyRecordStore';
 import {usePomodoroStore} from '../store/pomodoroStore';
 import {StudyRecordThemeType, studyRecordThemes} from '../themes/studyRecordThemes';
@@ -67,9 +68,40 @@ const MoreScreen: React.FC = () => {
   }, []);
 
   const {themeMode, setThemeMode} = useThemeStore();
+  const {user} = useAuthStore();
   const {selectedTheme: studyRecordTheme, setTheme: setStudyRecordTheme} = useStudyRecordStore();
   const {settings: pomodoroSettings, updateSettings: updatePomodoroSettings} = usePomodoroStore();
   const {language, setLanguage} = useLanguageStore();
+
+  // 백엔드 tier 코드를 한글 이름으로 변환
+  const TIER_CODE_MAP: Record<string, string> = {
+    elementary: '초등학생',
+    middle: '중학생',
+    high: '고등학생',
+    bachelor_1: '학사 I',
+    bachelor_2: '학사 II',
+    bachelor_3: '학사 III',
+    master_1: '석사 I',
+    master_2: '석사 II',
+    master_3: '석사 III',
+    doctor: '박사',
+    doctor_emeritus: '명예박사',
+  };
+
+  const getTierDisplayName = (tierCode?: string | null): string => {
+    if (!tierCode) return '초등학생';
+    return TIER_CODE_MAP[tierCode.toLowerCase()] || tierCode;
+  };
+
+  // ProfileCard에 전달할 사용자 데이터
+  const profileCardUser = user ? {
+    nickname: user.nickname || '타이미유저',
+    level: user.level || 1,
+    tier: getTierDisplayName(user.tier),
+    bio: user.bio || undefined,
+    profileImageUrl: undefined, // TODO: 프로필 이미지 URL
+    cardFrame: 'default' as const,
+  } : undefined;
 
   const isDark =
     themeMode === 'system'
@@ -113,6 +145,7 @@ const MoreScreen: React.FC = () => {
           <ProfileCard
             isDark={isDark}
             size="small"
+            user={profileCardUser}
             onPress={() => setShowProfileModal(true)}
           />
         </View>

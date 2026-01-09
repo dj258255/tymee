@@ -18,14 +18,15 @@ class UserTest {
   class CreateOAuthUser {
 
     @Test
-    @DisplayName("성공: 이메일로 생성 시 닉네임 자동 생성")
+    @DisplayName("성공: 이메일로 생성 시 랜덤 닉네임 자동 생성")
     void createWithEmail_generatesNickname() {
       // when
       var user = User.createOAuthUser(new Email("test@gmail.com"));
 
       // then
       assertThat(user.getEmail().value()).isEqualTo("test@gmail.com");
-      assertThat(user.getNickname().value()).startsWith("user_");
+      assertThat(user.getNickname().value()).isNotBlank();
+      assertThat(user.getNickname().byteLength()).isLessThanOrEqualTo(30);
       assertThat(user.getStatus()).isEqualTo(UserStatus.ACTIVE);
       assertThat(user.canLogin()).isTrue();
     }
@@ -38,7 +39,8 @@ class UserTest {
 
       // then
       assertThat(user.getEmail()).isNull();
-      assertThat(user.getNickname().value()).startsWith("user_");
+      assertThat(user.getNickname().value()).isNotBlank();
+      assertThat(user.getNickname().byteLength()).isLessThanOrEqualTo(30);
     }
   }
 
@@ -53,11 +55,11 @@ class UserTest {
       var user =
           User.builder()
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("mycoolnick"))
+              .nickname(new Nickname("mynick"))
               .build();
 
       // when & then
-      assertThat(user.getDisplayName()).isEqualTo("mycoolnick");
+      assertThat(user.getDisplayName()).isEqualTo("mynick");
     }
 
     @Test
@@ -93,7 +95,7 @@ class UserTest {
           User.builder()
               .id(1L)
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("testuser"))
+              .nickname(new Nickname("tester"))
               .status(UserStatus.ACTIVE)
               .build();
 
@@ -115,7 +117,7 @@ class UserTest {
           User.builder()
               .id(1L)
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("testuser"))
+              .nickname(new Nickname("tester"))
               .status(UserStatus.WITHDRAWN)
               .deletedAt(LocalDateTime.now())
               .build();
@@ -139,7 +141,7 @@ class UserTest {
           User.builder()
               .id(1L)
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("testuser"))
+              .nickname(new Nickname("tester"))
               .status(UserStatus.WITHDRAWN)
               .deletedAt(LocalDateTime.now().minusDays(1))
               .build();
@@ -162,7 +164,7 @@ class UserTest {
           User.builder()
               .id(1L)
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("testuser"))
+              .nickname(new Nickname("tester"))
               .status(UserStatus.SUSPENDED)
               .build();
 
@@ -187,7 +189,7 @@ class UserTest {
           User.builder()
               .id(1L)
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("testuser"))
+              .nickname(new Nickname("tester"))
               .status(UserStatus.ACTIVE)
               .build();
 
@@ -207,7 +209,7 @@ class UserTest {
           User.builder()
               .id(1L)
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("testuser"))
+              .nickname(new Nickname("tester"))
               .status(UserStatus.ACTIVE)
               .build();
 
@@ -232,15 +234,15 @@ class UserTest {
           User.builder()
               .id(1L)
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("oldnick"))
+              .nickname(new Nickname("oldnk"))
               .bio("old bio")
               .build();
 
       // when
-      user.updateProfile(new Nickname("newnick"), "new bio");
+      user.updateProfile(new Nickname("newnk"), "new bio");
 
       // then
-      assertThat(user.getNickname().value()).isEqualTo("newnick");
+      assertThat(user.getNickname().value()).isEqualTo("newnk");
       assertThat(user.getBio()).isEqualTo("new bio");
       assertThat(user.getUpdatedAt()).isNotNull();
     }
@@ -258,7 +260,7 @@ class UserTest {
           User.builder()
               .id(1L)
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("testuser"))
+              .nickname(new Nickname("tester"))
               .build();
 
       // when
@@ -276,7 +278,7 @@ class UserTest {
           User.builder()
               .id(1L)
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("testuser"))
+              .nickname(new Nickname("tester"))
               .build();
 
       // when
@@ -298,7 +300,7 @@ class UserTest {
       var user =
           User.builder()
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("testuser"))
+              .nickname(new Nickname("tester"))
               .status(UserStatus.ACTIVE)
               .build();
 
@@ -311,7 +313,7 @@ class UserTest {
       var user =
           User.builder()
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("testuser"))
+              .nickname(new Nickname("tester"))
               .status(UserStatus.SUSPENDED)
               .build();
 
@@ -324,7 +326,7 @@ class UserTest {
       var user =
           User.builder()
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("testuser"))
+              .nickname(new Nickname("tester"))
               .status(UserStatus.BANNED)
               .build();
 
@@ -337,7 +339,7 @@ class UserTest {
       var user =
           User.builder()
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("testuser"))
+              .nickname(new Nickname("tester"))
               .status(UserStatus.WITHDRAWN)
               .deletedAt(LocalDateTime.now())
               .build();

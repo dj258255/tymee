@@ -42,7 +42,7 @@ class UserServiceTest {
           User.builder()
               .id(1L)
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("testuser"))
+              .nickname(new Nickname("tester"))
               .build();
 
       given(userRepository.findActiveById(1L)).willReturn(Optional.of(user));
@@ -89,19 +89,19 @@ class UserServiceTest {
           User.builder()
               .id(1L)
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("oldnick"))
+              .nickname(new Nickname("oldnk"))
               .build();
 
       given(userRepository.findActiveById(1L)).willReturn(Optional.of(user));
-      given(userRepository.existsByNickname("newnick")).willReturn(false);
+      given(userRepository.existsByNickname("newnk")).willReturn(false);
       given(userRepository.save(any(User.class)))
           .willAnswer(invocation -> invocation.getArgument(0));
 
       // when
-      var result = userService.updateProfile(1L, "newnick", "Hello!");
+      var result = userService.updateProfile(1L, "newnk", "Hello!");
 
       // then
-      assertThat(result.getNickname().value()).isEqualTo("newnick");
+      assertThat(result.getNickname().value()).isEqualTo("newnk");
       assertThat(result.getBio()).isEqualTo("Hello!");
     }
 
@@ -113,7 +113,7 @@ class UserServiceTest {
           User.builder()
               .id(1L)
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("samenick"))
+              .nickname(new Nickname("samenk"))
               .build();
 
       given(userRepository.findActiveById(1L)).willReturn(Optional.of(user));
@@ -135,48 +135,49 @@ class UserServiceTest {
           User.builder()
               .id(1L)
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("oldnick"))
+              .nickname(new Nickname("oldnk"))
               .build();
 
       given(userRepository.findActiveById(1L)).willReturn(Optional.of(user));
-      given(userRepository.existsByNickname("takennick")).willReturn(true);
+      given(userRepository.existsByNickname("takenn")).willReturn(true);
 
       // when & then
-      assertThatThrownBy(() -> userService.updateProfile(1L, "takennick", "bio"))
+      assertThatThrownBy(() -> userService.updateProfile(1L, "takenn", "bio"))
           .isInstanceOf(BusinessException.class);
     }
 
     @Test
-    @DisplayName("실패: 닉네임 2자 미만")
-    void updateProfile_nicknameTooShort_fails() {
+    @DisplayName("실패: 닉네임 빈 문자열")
+    void updateProfile_nicknameEmpty_fails() {
       // given
       var user =
           User.builder()
               .id(1L)
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("oldnick"))
+              .nickname(new Nickname("oldnk"))
               .build();
 
       given(userRepository.findActiveById(1L)).willReturn(Optional.of(user));
-      given(userRepository.existsByNickname("a")).willReturn(false);
+      given(userRepository.existsByNickname("")).willReturn(false);
 
       // when & then
-      assertThatThrownBy(() -> userService.updateProfile(1L, "a", "bio"))
+      assertThatThrownBy(() -> userService.updateProfile(1L, "", "bio"))
           .isInstanceOf(IllegalArgumentException.class)
-          .hasMessageContaining("2자 이상");
+          .hasMessageContaining("바이트");
     }
 
     @Test
-    @DisplayName("실패: 닉네임 50자 초과")
+    @DisplayName("실패: 닉네임 30바이트 초과 (한글 11자)")
     void updateProfile_nicknameTooLong_fails() {
       // given
       var user =
           User.builder()
               .id(1L)
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("oldnick"))
+              .nickname(new Nickname("oldnk"))
               .build();
-      var longNickname = "a".repeat(51);
+      // 한글 11자 = 33바이트 (30바이트 초과)
+      var longNickname = "가나다라마바사아자차카";
 
       given(userRepository.findActiveById(1L)).willReturn(Optional.of(user));
       given(userRepository.existsByNickname(longNickname)).willReturn(false);
@@ -184,7 +185,7 @@ class UserServiceTest {
       // when & then
       assertThatThrownBy(() -> userService.updateProfile(1L, longNickname, "bio"))
           .isInstanceOf(IllegalArgumentException.class)
-          .hasMessageContaining("50자 이하");
+          .hasMessageContaining("바이트");
     }
   }
 
@@ -196,10 +197,10 @@ class UserServiceTest {
     @DisplayName("성공: 사용 가능한 닉네임")
     void existsByNickname_available() {
       // given
-      given(userRepository.existsByNickname("availablenick")).willReturn(false);
+      given(userRepository.existsByNickname("avail")).willReturn(false);
 
       // when
-      var result = userService.existsByNickname("availablenick");
+      var result = userService.existsByNickname("avail");
 
       // then
       assertThat(result).isFalse();
@@ -209,10 +210,10 @@ class UserServiceTest {
     @DisplayName("성공: 이미 사용 중인 닉네임")
     void existsByNickname_taken() {
       // given
-      given(userRepository.existsByNickname("takennick")).willReturn(true);
+      given(userRepository.existsByNickname("takenn")).willReturn(true);
 
       // when
-      var result = userService.existsByNickname("takennick");
+      var result = userService.existsByNickname("takenn");
 
       // then
       assertThat(result).isTrue();
@@ -231,7 +232,7 @@ class UserServiceTest {
           User.builder()
               .id(1L)
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("testuser"))
+              .nickname(new Nickname("tester"))
               .status(UserStatus.ACTIVE)
               .build();
 
@@ -265,7 +266,7 @@ class UserServiceTest {
           User.builder()
               .id(1L)
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("testuser"))
+              .nickname(new Nickname("tester"))
               .status(UserStatus.WITHDRAWN)
               .deletedAt(LocalDateTime.now().minusDays(1))
               .build();
@@ -291,7 +292,7 @@ class UserServiceTest {
           User.builder()
               .id(1L)
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("testuser"))
+              .nickname(new Nickname("tester"))
               .build();
 
       given(userRepository.findActiveById(1L)).willReturn(Optional.of(user));

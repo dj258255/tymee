@@ -172,6 +172,10 @@ jobs:
       - name: CocoaPods 설치
         run: cd ios && pod install
 
+      - name: HTTP 차단 설정 (배포용)
+        run: |
+          /usr/libexec/PlistBuddy -c "Set :NSAppTransportSecurity:NSAllowsArbitraryLoads false" ios/mobile/Info.plist
+
       - name: Apple 인증서 설치
         uses: apple-actions/import-codesign-certs@v2
         with:
@@ -290,6 +294,10 @@ jobs:
 
       - name: CocoaPods 설치
         run: cd ios && pod install
+
+      - name: HTTP 차단 설정 (배포용)
+        run: |
+          /usr/libexec/PlistBuddy -c "Set :NSAppTransportSecurity:NSAllowsArbitraryLoads false" ios/mobile/Info.plist
 
       - name: Apple 인증서 설치
         uses: apple-actions/import-codesign-certs@v2

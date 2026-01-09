@@ -132,9 +132,7 @@ public class AuthService {
   @Transactional
   public TokenPair devLogin(String email, String deviceId) {
     User user =
-        userRepository
-            .findByEmail(email)
-            .orElseGet(() -> createNewUserWithUniqueNickname(email));
+        userRepository.findByEmail(email).orElseGet(() -> createNewUserWithUniqueNickname(email));
 
     // 탈퇴한 사용자 복구
     if (user.isDeleted()) {
@@ -171,8 +169,7 @@ public class AuthService {
     Nickname uniqueNickname = generateUniqueNickname();
     Email userEmail = email != null ? new Email(email) : null;
 
-    User newUser =
-        User.builder().email(userEmail).nickname(uniqueNickname).build();
+    User newUser = User.builder().email(userEmail).nickname(uniqueNickname).build();
 
     return userRepository.save(newUser);
   }

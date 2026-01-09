@@ -2,8 +2,8 @@ package io.github.beom.user.controller;
 
 import io.github.beom.core.security.CurrentUser;
 import io.github.beom.core.security.UserPrincipal;
-import io.github.beom.user.domain.User;
 import io.github.beom.core.web.ApiResponse;
+import io.github.beom.user.domain.User;
 import io.github.beom.user.dto.UpdateProfileRequest;
 import io.github.beom.user.dto.UserProfileResponse;
 import io.github.beom.user.dto.UserResponse;

@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {Platform} from 'react-native';
 import Config from 'react-native-config';
 
 // API Base URL (.env의 API_URL 사용)

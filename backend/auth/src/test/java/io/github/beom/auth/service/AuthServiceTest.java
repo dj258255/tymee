@@ -102,7 +102,7 @@ class AuthServiceTest {
           User.builder()
               .id(1L)
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("testuser"))
+              .nickname(new Nickname("tester"))
               .build();
       var existingOAuth = UserOAuth.create(1L, OAuthProvider.GOOGLE, "google-123");
       var userInfo =
@@ -137,7 +137,7 @@ class AuthServiceTest {
           User.builder()
               .id(1L)
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("testuser"))
+              .nickname(new Nickname("tester"))
               .status(UserStatus.WITHDRAWN)
               .deletedAt(LocalDateTime.now().minusDays(1))
               .build();
@@ -174,7 +174,7 @@ class AuthServiceTest {
           User.builder()
               .id(1L)
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("testuser"))
+              .nickname(new Nickname("tester"))
               .status(UserStatus.BANNED)
               .build();
       var existingOAuth = UserOAuth.create(1L, OAuthProvider.GOOGLE, "google-123");
@@ -262,7 +262,7 @@ class AuthServiceTest {
           User.builder()
               .id(1L)
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("testuser"))
+              .nickname(new Nickname("tester"))
               .build();
       var storedToken =
           RefreshToken.create(REFRESH_TOKEN, 1L, DEVICE_ID, LocalDateTime.now().plusDays(7));
@@ -352,7 +352,7 @@ class AuthServiceTest {
           User.builder()
               .id(1L)
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("testuser"))
+              .nickname(new Nickname("tester"))
               .status(UserStatus.BANNED)
               .build();
       var storedToken =

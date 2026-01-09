@@ -32,7 +32,7 @@
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
-		<false/>
+		<true/>
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
@@ -105,5 +105,7 @@
 		<string>kakaolink</string>
 		<string>kakaoplus</string>
 	</array>
+	<key>KAKAO_APP_KEY</key>
+	<string>cafb7f73221792c9f634ebca900b2fee</string>
 </dict>
 </plist>

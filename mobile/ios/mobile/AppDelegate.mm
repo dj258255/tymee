@@ -1,8 +1,10 @@
 #import "AppDelegate.h"
 
 #import <React/RCTBundleURLProvider.h>
+#import <React/RCTLinkingManager.h>
 #import <ActivityKit/ActivityKit.h>
 #import "mobile-Swift.h"
+#import <RNKakaoLogins.h>
 
 @implementation AppDelegate
 
@@ -46,6 +48,20 @@
 - (UIInterfaceOrientationMask)application:(UIApplication *)application supportedInterfaceOrientationsForWindow:(UIWindow *)window
 {
   return UIInterfaceOrientationMaskAll;
+}
+
+// 카카오/구글 등 OAuth URL 핸들링
+- (BOOL)application:(UIApplication *)application
+            openURL:(NSURL *)url
+            options:(NSDictionary<UIApplicationOpenURLOptionsKey,id> *)options
+{
+  // 카카오 로그인 URL 처리
+  if ([RNKakaoLogins isKakaoTalkLoginUrl:url]) {
+    return [RNKakaoLogins handleOpenUrl:url];
+  }
+
+  // 기타 딥링크 처리 (Google 등)
+  return [RCTLinkingManager application:application openURL:url options:options];
 }
 
 @end

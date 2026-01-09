@@ -41,7 +41,7 @@ class UserRepositoryTest {
       var user =
           User.builder()
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("testuser"))
+              .nickname(new Nickname("tester"))
               .build();
 
       // when
@@ -50,7 +50,7 @@ class UserRepositoryTest {
       // then
       assertThat(saved.getId()).isNotNull();
       assertThat(saved.getEmail().value()).isEqualTo("test@gmail.com");
-      assertThat(saved.getNickname().value()).isEqualTo("testuser");
+      assertThat(saved.getNickname().value()).isEqualTo("tester");
     }
   }
 
@@ -65,7 +65,7 @@ class UserRepositoryTest {
       var user =
           User.builder()
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("testuser"))
+              .nickname(new Nickname("tester"))
               .build();
       var saved = userRepository.save(user);
 
@@ -84,7 +84,7 @@ class UserRepositoryTest {
       var user =
           User.builder()
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("testuser"))
+              .nickname(new Nickname("tester"))
               .build();
       userRepository.save(user);
 
@@ -93,7 +93,7 @@ class UserRepositoryTest {
 
       // then
       assertThat(found).isPresent();
-      assertThat(found.get().getNickname().value()).isEqualTo("testuser");
+      assertThat(found.get().getNickname().value()).isEqualTo("tester");
     }
 
     @Test
@@ -148,7 +148,7 @@ class UserRepositoryTest {
       var user =
           User.builder()
               .email(new Email("exists@gmail.com"))
-              .nickname(new Nickname("existuser"))
+              .nickname(new Nickname("exist"))
               .build();
       userRepository.save(user);
 
@@ -164,13 +164,13 @@ class UserRepositoryTest {
       var user =
           User.builder()
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("uniquenick"))
+              .nickname(new Nickname("unique"))
               .build();
       userRepository.save(user);
 
       // when & then
-      assertThat(userRepository.existsByNickname("uniquenick")).isTrue();
-      assertThat(userRepository.existsByNickname("othernick")).isFalse();
+      assertThat(userRepository.existsByNickname("unique")).isTrue();
+      assertThat(userRepository.existsByNickname("other")).isFalse();
     }
   }
 
@@ -185,7 +185,7 @@ class UserRepositoryTest {
       var user =
           User.builder()
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("testuser"))
+              .nickname(new Nickname("tester"))
               .build();
       var saved = userRepository.save(user);
 
@@ -210,7 +210,7 @@ class UserRepositoryTest {
       var user =
           User.builder()
               .email(new Email("test@gmail.com"))
-              .nickname(new Nickname("testuser"))
+              .nickname(new Nickname("tester"))
               .build();
       var saved = userRepository.save(user);
 

@@ -10,6 +10,7 @@ import io.github.beom.auth.util.JwtUtil;
 import io.github.beom.user.domain.User;
 import io.github.beom.user.domain.UserOAuth;
 import io.github.beom.user.domain.vo.Email;
+import io.github.beom.user.domain.vo.Nickname;
 import io.github.beom.user.domain.vo.OAuthProvider;
 import io.github.beom.user.repository.UserOAuthRepository;
 import io.github.beom.user.repository.UserRepository;
@@ -75,8 +76,7 @@ public class AuthService {
           user = userRepository.save(user);
         }
       } else {
-        user = User.createOAuthUser(userInfo.email() != null ? new Email(userInfo.email()) : null);
-        user = userRepository.save(user);
+        user = createNewUserWithUniqueNickname(userInfo.email());
       }
 
       // 4. OAuth 연동 정보 저장
@@ -132,13 +132,7 @@ public class AuthService {
   @Transactional
   public TokenPair devLogin(String email, String deviceId) {
     User user =
-        userRepository
-            .findByEmail(email)
-            .orElseGet(
-                () -> {
-                  User newUser = User.createOAuthUser(new Email(email));
-                  return userRepository.save(newUser);
-                });
+        userRepository.findByEmail(email).orElseGet(() -> createNewUserWithUniqueNickname(email));
 
     // 탈퇴한 사용자 복구
     if (user.isDeleted()) {
@@ -166,6 +160,31 @@ public class AuthService {
   public TokenInfo validateToken(String accessToken) {
     JwtUtil.Claims claims = jwtUtil.parseAccessToken(accessToken);
     return new TokenInfo(claims.userId(), claims.email(), claims.role());
+  }
+
+  private static final int MAX_NICKNAME_RETRY = 10;
+
+  /** 중복되지 않는 닉네임으로 신규 사용자 생성. */
+  private User createNewUserWithUniqueNickname(String email) {
+    Nickname uniqueNickname = generateUniqueNickname();
+    Email userEmail = email != null ? new Email(email) : null;
+
+    User newUser = User.builder().email(userEmail).nickname(uniqueNickname).build();
+
+    return userRepository.save(newUser);
+  }
+
+  /** 중복되지 않는 랜덤 닉네임 생성. 최대 10회 재시도. */
+  private Nickname generateUniqueNickname() {
+    for (int i = 0; i < MAX_NICKNAME_RETRY; i++) {
+      Nickname candidate = Nickname.generateRandom();
+      if (!userRepository.existsByNickname(candidate.value())) {
+        return candidate;
+      }
+    }
+    // 10회 시도 후에도 중복이면 타임스탬프 기반 닉네임 사용
+    String fallback = "user" + System.currentTimeMillis();
+    return new Nickname(fallback);
   }
 
   /** 토큰 쌍 생성 후 Redis에 Refresh Token 저장. */

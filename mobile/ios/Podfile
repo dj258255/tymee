@@ -47,5 +47,18 @@ target 'mobile' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # react-native-config: 환경별 .env 파일 설정
+    installer.pods_project.targets.each do |target|
+      if target.name == 'react-native-config'
+        target.build_configurations.each do |config|
+          if config.name == 'Debug'
+            config.build_settings['ENVFILE'] = '$(PODS_ROOT)/../../.env'
+          else
+            config.build_settings['ENVFILE'] = '$(PODS_ROOT)/../../.env.production'
+          end
+        end
+      end
+    end
   end
 end

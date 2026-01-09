@@ -69,12 +69,12 @@ public class AuthService {
   /** 이메일로 기존 사용자 조회 또는 신규 생성 후 OAuth 연동. */
   private User findOrCreateUserByEmail(OAuthUserInfo userInfo, OAuthProvider provider) {
     Optional<User> existingUser =
-        userInfo.email() != null
-            ? userRepository.findByEmail(userInfo.email())
-            : Optional.empty();
+        userInfo.email() != null ? userRepository.findByEmail(userInfo.email()) : Optional.empty();
 
     User user =
-        existingUser.map(this::reactivateIfDeleted).orElseGet(() -> createNewUser(userInfo.email()));
+        existingUser
+            .map(this::reactivateIfDeleted)
+            .orElseGet(() -> createNewUser(userInfo.email()));
 
     UserOAuth newOAuth = UserOAuth.create(user.getId(), provider, userInfo.providerId());
     userOAuthRepository.save(newOAuth);
@@ -136,8 +136,7 @@ public class AuthService {
   /** 개발용 테스트 로그인. OAuth 검증 없이 바로 토큰 발급. */
   @Transactional
   public TokenPair devLogin(String email, String deviceId) {
-    User user =
-        userRepository.findByEmail(email).orElseGet(() -> createNewUser(email));
+    User user = userRepository.findByEmail(email).orElseGet(() -> createNewUser(email));
 
     // 탈퇴한 사용자 복구
     if (user.isDeleted()) {

@@ -1,0 +1,97 @@
+# 재사용 가능한 Slack 알림 워크플로우
+name: Slack Notify
+
+on:
+  workflow_call:
+    inputs:
+      status:
+        description: '빌드/배포 결과 (success, failure, cancelled)'
+        required: true
+        type: string
+      type:
+        description: '알림 타입 (build, deploy)'
+        required: true
+        type: string
+      environment:
+        description: '환경 (staging, production, internal 등)'
+        required: false
+        type: string
+        default: ''
+      workflow_name:
+        description: '워크플로우 이름 (Backend, Mobile, Infrastructure)'
+        required: true
+        type: string
+    secrets:
+      SLACK_WEBHOOK_URL:
+        required: true
+
+jobs:
+  notify:
+    name: Slack 알림
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 빌드 알림 전송
+        if: inputs.type == 'build'
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "${{ inputs.status == 'success' && format('*{0} Build Passed*', inputs.workflow_name) || format('*{0} Build Failed*', inputs.workflow_name) }}"
+                  }
+                },
+                {
+                  "type": "context",
+                  "elements": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "${{ github.event_name == 'pull_request' && format('*PR:* <{0}|#{1}> {2}', github.event.pull_request.html_url, github.event.pull_request.number, github.event.pull_request.title) || format('*Branch:* `{0}`', github.ref_name) }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "context",
+                  "elements": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Author:* ${{ github.actor }}  |  *Commit:* `${{ github.sha }}`"
+                    }
+                  ]
+                }
+              ]
+            }
+
+      - name: 배포 알림 전송
+        if: inputs.type == 'deploy'
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "${{ inputs.status == 'success' && format('*{0} {1} Deploy Completed*', inputs.workflow_name, inputs.environment) || format('*{0} {1} Deploy Failed*', inputs.workflow_name, inputs.environment) }}"
+                  }
+                },
+                {
+                  "type": "context",
+                  "elements": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Commit:* `${{ github.sha }}`  |  *Author:* ${{ github.actor }}"
+                    }
+                  ]
+                }
+              ]
+            }

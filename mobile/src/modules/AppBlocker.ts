@@ -1,6 +1,9 @@
 import { NativeModules, NativeEventEmitter, Platform } from 'react-native';
 
-const { AppBlocker } = NativeModules;
+// iOS: AppBlockerSwift (Swift 모듈), Android: AppBlocker (Java 모듈)
+const AppBlocker = Platform.OS === 'ios'
+  ? NativeModules.AppBlockerSwift
+  : NativeModules.AppBlocker;
 
 interface AppBlockerInterface {
   // iOS & Android 공통
@@ -70,6 +73,10 @@ class AppBlockerModule implements AppBlockerInterface {
   async blockApps(bundleIdentifiers: string[]): Promise<{ success: boolean; message: string }> {
     if (!AppBlocker) {
       throw new Error('AppBlocker module not available');
+    }
+    if (Platform.OS === 'ios') {
+      // iOS는 FamilyControls를 통해 모든 앱 차단 (개별 앱 선택은 FamilyActivityPicker 필요)
+      return await AppBlocker.blockAllApps();
     }
     return await AppBlocker.blockApps(bundleIdentifiers);
   }

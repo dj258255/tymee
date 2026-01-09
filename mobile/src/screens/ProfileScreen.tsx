@@ -10,13 +10,36 @@ import {
   SafeAreaView,
   Modal,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from '@react-native-vector-icons/ionicons';
 import {useTranslation} from 'react-i18next';
 import {useThemeStore} from '../store/themeStore';
+import {useAuthStore} from '../store/authStore';
+import {checkNickname} from '../services/authService';
 import {safeGetColorScheme, safeAddAppearanceListener} from '../utils/appearance';
-import ProfileCard, {CARD_FRAMES, CardFrameType, defaultUser, AVATAR_FRAME_DATA} from '../components/ProfileCard';
+import ProfileCard, {CARD_FRAMES, CardFrameType, AVATAR_FRAME_DATA} from '../components/ProfileCard';
 import {sp, hp, fp, iconSize} from '../utils/responsive';
+
+// UTF-8 바이트 길이 계산 (한글 3바이트, 영문/숫자 1바이트)
+const getByteLength = (str: string): number => {
+  let byteLength = 0;
+  for (let i = 0; i < str.length; i++) {
+    const charCode = str.charCodeAt(i);
+    if (charCode <= 0x7f) {
+      byteLength += 1; // ASCII (영문, 숫자, 특수문자)
+    } else if (charCode <= 0x7ff) {
+      byteLength += 2; // 2바이트 문자
+    } else if (charCode <= 0xffff) {
+      byteLength += 3; // 3바이트 문자 (한글 등)
+    } else {
+      byteLength += 4; // 4바이트 문자 (이모지 등)
+    }
+  }
+  return byteLength;
+};
+
+const MAX_NICKNAME_BYTES = 30;
 
 // 뱃지 데이터 (칭호 + 획득 뱃지 통합)
 type BadgeCategory = 'basic' | 'special';
@@ -35,6 +58,26 @@ const TIER_DATA = [
   {name: '중학생', icon: 'pencil', color: '#78909C', minRP: 300, desc: '세상이 궁금해지는 단계입니다'},
   {name: '초등학생', icon: 'pencil', color: '#A1887F', minRP: 0, desc: '여정이 시작되는 단계입니다'},
 ];
+
+// 백엔드 tier 코드를 한글 이름으로 변환
+const TIER_CODE_MAP: Record<string, string> = {
+  elementary: '초등학생',
+  middle: '중학생',
+  high: '고등학생',
+  bachelor_1: '학사 I',
+  bachelor_2: '학사 II',
+  bachelor_3: '학사 III',
+  master_1: '석사 I',
+  master_2: '석사 II',
+  master_3: '석사 III',
+  doctor: '박사',
+  doctor_emeritus: '명예박사',
+};
+
+const getTierDisplayName = (tierCode: string | null | undefined): string => {
+  if (!tierCode) return '초등학생';
+  return TIER_CODE_MAP[tierCode] || '초등학생';
+};
 
 // 레벨 데이터 (10레벨마다 아바타 테두리 변경) - AVATAR_FRAME_DATA와 연동 (11개)
 const LEVEL_EXP_DATA = [
@@ -81,8 +124,6 @@ const ProfileScreen: React.FC<{onBack: () => void}> = ({onBack}) => {
   const [showBlockUsersModal, setShowBlockUsersModal] = useState(false);
   const [showFrameModal, setShowFrameModal] = useState(false);
   const [showBadgeModal, setShowBadgeModal] = useState(false);
-  const [nickname, setNickname] = useState('타이미유저');
-  const [statusMessage, setStatusMessage] = useState(t('settings.studying'));
   const [selectedFrame, setSelectedFrame] = useState<CardFrameType>('default');
   const [previewFrame, setPreviewFrame] = useState<CardFrameType | null>(null);
   const [selectedBadges, setSelectedBadges] = useState<string[]>(['steady']);
@@ -90,11 +131,32 @@ const ProfileScreen: React.FC<{onBack: () => void}> = ({onBack}) => {
   const [badgeTab, setBadgeTab] = useState<BadgeCategory>('basic');
   const [ownedFrames, _setOwnedFrames] = useState<CardFrameType[]>(['default', 'gold', 'bronze', 'space']);
   const [ownedBadges, _setOwnedBadges] = useState<string[]>(['beginner', 'steady', 'focused', 'level10', 'streak7']);
-  const [bio, setBio] = useState('매일 조금씩 성장하는 중입니다 🌱');
   const [showBioModal, setShowBioModal] = useState(false);
-  const [tempBio, setTempBio] = useState(bio);
   const [showLevelModal, setShowLevelModal] = useState(false);
   const [showTierModal, setShowTierModal] = useState(false);
+
+  // Auth Store
+  const {user, logout, updateProfile, withdrawAccount, isLoading} = useAuthStore();
+
+  // 닉네임, 자기소개 상태 (서버에서 가져온 값으로 초기화)
+  const [nickname, setNickname] = useState(user?.nickname || '타이미유저');
+  const [tempNickname, setTempNickname] = useState(nickname);
+  const [bio, setBio] = useState(user?.bio || '');
+  const [tempBio, setTempBio] = useState(bio);
+  const [statusMessage, setStatusMessage] = useState(t('settings.studying'));
+  const [isSaving, setIsSaving] = useState(false);
+  const [isCheckingNickname, setIsCheckingNickname] = useState(false);
+  const [nicknameStatus, setNicknameStatus] = useState<'idle' | 'available' | 'taken' | 'same' | 'invalid'>('idle');
+
+  // user가 변경되면 닉네임, 자기소개 업데이트
+  useEffect(() => {
+    if (user) {
+      setNickname(user.nickname || '타이미유저');
+      setTempNickname(user.nickname || '타이미유저');
+      setBio(user.bio || '');
+      setTempBio(user.bio || '');
+    }
+  }, [user]);
 
   useEffect(() => {
     const task = InteractionManager.runAfterInteractions(() => {
@@ -121,7 +183,13 @@ const ProfileScreen: React.FC<{onBack: () => void}> = ({onBack}) => {
   const handleLogout = () => {
     Alert.alert(t('profile.logout'), t('profile.logoutConfirm'), [
       {text: t('common.cancel'), style: 'cancel'},
-      {text: t('profile.logout'), style: 'destructive', onPress: () => console.log('로그아웃')},
+      {
+        text: t('profile.logout'),
+        style: 'destructive',
+        onPress: async () => {
+          await logout();
+        },
+      },
     ]);
   };
 
@@ -131,9 +199,114 @@ const ProfileScreen: React.FC<{onBack: () => void}> = ({onBack}) => {
       t('profile.deleteConfirm'),
       [
         {text: t('common.cancel'), style: 'cancel'},
-        {text: t('profile.deleteAccount'), style: 'destructive', onPress: () => console.log('탈퇴')},
+        {
+          text: t('profile.deleteAccount'),
+          style: 'destructive',
+          onPress: async () => {
+            const success = await withdrawAccount();
+            if (success) {
+              Alert.alert('알림', '회원 탈퇴가 완료되었습니다.');
+            } else {
+              Alert.alert('오류', '회원 탈퇴에 실패했습니다. 다시 시도해주세요.');
+            }
+          },
+        },
       ]
     );
+  };
+
+  // 현재 닉네임 바이트 길이
+  const currentNicknameBytes = getByteLength(tempNickname.trim());
+  const isNicknameBytesValid = currentNicknameBytes >= 1 && currentNicknameBytes <= MAX_NICKNAME_BYTES;
+
+  // 닉네임 중복 체크
+  const handleCheckNickname = async () => {
+    const trimmed = tempNickname.trim();
+    const byteLength = getByteLength(trimmed);
+
+    // 유효성 검사 (바이트 기준)
+    if (byteLength < 1 || byteLength > MAX_NICKNAME_BYTES) {
+      setNicknameStatus('invalid');
+      return;
+    }
+
+    // 현재 닉네임과 동일한 경우
+    if (trimmed === nickname) {
+      setNicknameStatus('same');
+      return;
+    }
+
+    setIsCheckingNickname(true);
+    try {
+      const isTaken = await checkNickname(trimmed);
+      setNicknameStatus(isTaken ? 'taken' : 'available');
+    } catch (error) {
+      console.error('Nickname check failed:', error);
+      Alert.alert('오류', '닉네임 확인에 실패했습니다.');
+    } finally {
+      setIsCheckingNickname(false);
+    }
+  };
+
+  // 닉네임 입력 변경 시 상태 초기화
+  const handleNicknameChange = (text: string) => {
+    // 30바이트 초과 시 입력 차단
+    if (getByteLength(text) > MAX_NICKNAME_BYTES) {
+      return;
+    }
+    setTempNickname(text);
+    setNicknameStatus('idle');
+  };
+
+  // 닉네임 저장
+  const handleSaveNickname = async () => {
+    const trimmed = tempNickname.trim();
+    const byteLength = getByteLength(trimmed);
+
+    if (byteLength < 1 || byteLength > MAX_NICKNAME_BYTES) {
+      Alert.alert('오류', `닉네임은 1~${MAX_NICKNAME_BYTES}바이트 이하여야 합니다. (현재: ${byteLength}바이트)`);
+      return;
+    }
+
+    // 현재 닉네임과 동일한 경우 바로 닫기
+    if (trimmed === nickname) {
+      setShowNicknameModal(false);
+      return;
+    }
+
+    // 중복 체크를 안 했거나 사용 불가능한 경우
+    if (nicknameStatus !== 'available') {
+      Alert.alert('알림', '닉네임 중복 확인을 먼저 해주세요.');
+      return;
+    }
+
+    setIsSaving(true);
+    const success = await updateProfile({nickname: trimmed});
+    setIsSaving(false);
+
+    if (success) {
+      setNickname(trimmed);
+      setShowNicknameModal(false);
+      setNicknameStatus('idle');
+      Alert.alert('성공', '닉네임이 변경되었습니다.');
+    } else {
+      Alert.alert('오류', '닉네임 변경에 실패했습니다.');
+    }
+  };
+
+  // 자기소개 저장
+  const handleSaveBio = async () => {
+    setIsSaving(true);
+    const success = await updateProfile({bio: tempBio.trim()});
+    setIsSaving(false);
+
+    if (success) {
+      setBio(tempBio.trim());
+      setShowBioModal(false);
+      Alert.alert('성공', '자기소개가 변경되었습니다.');
+    } else {
+      Alert.alert('오류', '자기소개 변경에 실패했습니다.');
+    }
   };
 
   const styles = getStyles(isDark);
@@ -155,7 +328,10 @@ const ProfileScreen: React.FC<{onBack: () => void}> = ({onBack}) => {
       title: t('profile.nickname'),
       icon: 'person-outline',
       value: nickname,
-      onPress: () => setShowNicknameModal(true),
+      onPress: () => {
+        setTempNickname(nickname);
+        setShowNicknameModal(true);
+      },
     },
     {
       id: 'bio',
@@ -202,8 +378,11 @@ const ProfileScreen: React.FC<{onBack: () => void}> = ({onBack}) => {
               isDark={isDark}
               size="small"
               user={{
-                ...defaultUser,
+                nickname: nickname,
+                level: user?.level || 1,
+                tier: getTierDisplayName(user?.tier),
                 bio: bio,
+                profileImageUrl: undefined, // TODO: 프로필 이미지 URL 연동
                 cardFrame: selectedFrame,
                 badges: getSelectedBadgesList().map((b: any) => ({id: b.id, icon: b.icon, color: b.color})),
               }}
@@ -362,24 +541,105 @@ const ProfileScreen: React.FC<{onBack: () => void}> = ({onBack}) => {
               </TouchableOpacity>
             </View>
             <View style={{padding: sp(16)}}>
-              <TextInput
-                style={[
-                  styles.centerModalInput,
+              {/* 닉네임 입력 + 중복확인 버튼 */}
+              <View style={styles.nicknameInputRow}>
+                <TextInput
+                  style={[
+                    styles.nicknameInput,
+                    {
+                      backgroundColor: isDark ? '#2A2A2A' : '#F5F5F5',
+                      color: isDark ? '#FFFFFF' : '#1A1A1A',
+                      borderColor: nicknameStatus === 'available' ? '#4CAF50' :
+                                   nicknameStatus === 'taken' ? '#F44336' :
+                                   nicknameStatus === 'invalid' ? '#FF9800' :
+                                   !isNicknameBytesValid ? '#FF9800' :
+                                   isDark ? '#3A3A3A' : '#E0E0E0',
+                    },
+                  ]}
+                  value={tempNickname}
+                  onChangeText={handleNicknameChange}
+                  placeholder="닉네임 입력"
+                  placeholderTextColor={isDark ? '#666666' : '#999999'}
+                />
+                <TouchableOpacity
+                  style={[
+                    styles.checkButton,
+                    {
+                      backgroundColor: isCheckingNickname ? (isDark ? '#3A3A3A' : '#E0E0E0') : '#007AFF',
+                      opacity: !isNicknameBytesValid ? 0.5 : 1,
+                    },
+                  ]}
+                  onPress={handleCheckNickname}
+                  disabled={isCheckingNickname || !isNicknameBytesValid}>
+                  {isCheckingNickname ? (
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                  ) : (
+                    <Text style={styles.checkButtonText}>중복확인</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+
+              {/* 바이트 카운터 */}
+              <View style={styles.byteCounterRow}>
+                <Text style={[
+                  styles.byteCounterText,
                   {
-                    backgroundColor: isDark ? '#2A2A2A' : '#F5F5F5',
-                    color: isDark ? '#FFFFFF' : '#1A1A1A',
+                    color: currentNicknameBytes > MAX_NICKNAME_BYTES ? '#F44336' :
+                           currentNicknameBytes > MAX_NICKNAME_BYTES * 0.8 ? '#FF9800' :
+                           isDark ? '#888888' : '#666666',
+                  },
+                ]}>
+                  {currentNicknameBytes} / {MAX_NICKNAME_BYTES} 바이트
+                </Text>
+                <Text style={[styles.byteHintText, {color: isDark ? '#666666' : '#999999'}]}>
+                  한글 1자 = 3바이트, 영문/숫자 1자 = 1바이트
+                </Text>
+              </View>
+
+              {/* 상태 메시지 */}
+              {nicknameStatus !== 'idle' && (
+                <View style={styles.nicknameStatusRow}>
+                  <Icon
+                    name={nicknameStatus === 'available' ? 'checkmark-circle' :
+                          nicknameStatus === 'same' ? 'information-circle' :
+                          'close-circle'}
+                    size={iconSize(16)}
+                    color={nicknameStatus === 'available' ? '#4CAF50' :
+                           nicknameStatus === 'same' ? '#2196F3' :
+                           nicknameStatus === 'taken' ? '#F44336' : '#FF9800'}
+                  />
+                  <Text style={[
+                    styles.nicknameStatusText,
+                    {
+                      color: nicknameStatus === 'available' ? '#4CAF50' :
+                             nicknameStatus === 'same' ? '#2196F3' :
+                             nicknameStatus === 'taken' ? '#F44336' : '#FF9800',
+                    },
+                  ]}>
+                    {nicknameStatus === 'available' && '사용 가능한 닉네임입니다'}
+                    {nicknameStatus === 'taken' && '이미 사용 중인 닉네임입니다'}
+                    {nicknameStatus === 'same' && '현재 사용 중인 닉네임입니다'}
+                    {nicknameStatus === 'invalid' && '닉네임은 1~30바이트여야 합니다'}
+                  </Text>
+                </View>
+              )}
+
+              {/* 저장 버튼 */}
+              <TouchableOpacity
+                style={[
+                  styles.centerModalButton,
+                  {
+                    backgroundColor: nicknameStatus === 'available' ? '#4CAF50' : '#007AFF',
+                    opacity: (nicknameStatus !== 'available' && tempNickname.trim() !== nickname) ? 0.5 : 1,
                   },
                 ]}
-                value={nickname}
-                onChangeText={setNickname}
-                placeholder="닉네임을 입력하세요"
-                placeholderTextColor={isDark ? '#666666' : '#999999'}
-                maxLength={20}
-              />
-              <TouchableOpacity
-                style={[styles.centerModalButton, {backgroundColor: '#007AFF', opacity: 0.5}]}
-                disabled>
-                <Text style={styles.centerModalButtonText}>확인</Text>
+                onPress={handleSaveNickname}
+                disabled={isSaving}>
+                {isSaving ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.centerModalButtonText}>저장</Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -431,11 +691,13 @@ const ProfileScreen: React.FC<{onBack: () => void}> = ({onBack}) => {
               </Text>
               <TouchableOpacity
                 style={[styles.centerModalButton, {backgroundColor: '#007AFF'}]}
-                onPress={() => {
-                  setBio(tempBio);
-                  setShowBioModal(false);
-                }}>
-                <Text style={styles.centerModalButtonText}>저장</Text>
+                onPress={handleSaveBio}
+                disabled={isSaving}>
+                {isSaving ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.centerModalButtonText}>저장</Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -685,8 +947,11 @@ const ProfileScreen: React.FC<{onBack: () => void}> = ({onBack}) => {
                         isDark={isDark}
                         size="large"
                         user={{
-                          ...defaultUser,
+                          nickname: nickname,
+                          level: user?.level || 1,
+                          tier: getTierDisplayName(user?.tier),
                           bio: bio,
+                          profileImageUrl: undefined,
                           cardFrame: previewFrameKey,
                           badges: selectedBadges.map(id => {
                             const badge = BADGES.find(b => b.id === id);
@@ -1858,6 +2123,58 @@ const getStyles = (isDark: boolean) =>
       color: isDark ? '#FFFFFF' : '#1A1A1A',
       backgroundColor: isDark ? '#2A2A2A' : '#F8F8F8',
       marginBottom: hp(12),
+    },
+    // 닉네임 입력 행 (입력창 + 중복확인 버튼)
+    nicknameInputRow: {
+      flexDirection: 'row',
+      gap: sp(8),
+      marginBottom: hp(8),
+    },
+    nicknameInput: {
+      flex: 1,
+      borderWidth: 1.5,
+      borderRadius: sp(10),
+      paddingHorizontal: sp(14),
+      paddingVertical: hp(12),
+      fontSize: fp(15),
+    },
+    checkButton: {
+      paddingHorizontal: sp(14),
+      paddingVertical: hp(12),
+      borderRadius: sp(10),
+      justifyContent: 'center',
+      alignItems: 'center',
+      minWidth: sp(80),
+    },
+    checkButtonText: {
+      fontSize: fp(14),
+      fontWeight: '600',
+      color: '#FFFFFF',
+    },
+    nicknameStatusRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: sp(6),
+      marginBottom: hp(12),
+      paddingHorizontal: sp(4),
+    },
+    nicknameStatusText: {
+      fontSize: fp(13),
+      fontWeight: '500',
+    },
+    byteCounterRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: hp(8),
+      paddingHorizontal: sp(4),
+    },
+    byteCounterText: {
+      fontSize: fp(13),
+      fontWeight: '600',
+    },
+    byteHintText: {
+      fontSize: fp(11),
     },
     bioInput: {
       height: hp(80),

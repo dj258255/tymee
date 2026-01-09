@@ -23,6 +23,7 @@ import io.github.beom.user.domain.vo.OAuthProvider;
 import io.github.beom.user.domain.vo.UserStatus;
 import io.github.beom.user.repository.UserOAuthRepository;
 import io.github.beom.user.repository.UserRepository;
+import io.github.beom.user.service.UserSettingsService;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
@@ -38,6 +39,7 @@ class AuthServiceTest {
 
   @Mock private UserRepository userRepository;
   @Mock private UserOAuthRepository userOAuthRepository;
+  @Mock private UserSettingsService userSettingsService;
   @Mock private JwtUtil jwtUtil;
   @Mock private RedisTokenRepository tokenRepository;
   @Mock private OAuthVerifierFactory oAuthVerifierFactory;

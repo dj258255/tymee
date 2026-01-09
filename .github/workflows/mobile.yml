@@ -312,3 +312,70 @@ jobs:
 
       - name: Fastlane 배포
         run: fastlane ios release
+
+  # ===========================================
+  # Slack 알림
+  # ===========================================
+  notify-build:
+    name: 빌드 알림
+    needs: [lint]
+    if: always() && github.event_name == 'pull_request'
+    uses: ./.github/workflows/slack-notify.yml
+    with:
+      status: ${{ needs.lint.result }}
+      type: build
+      workflow_name: Mobile
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  notify-deploy-android-internal:
+    name: Android Internal 배포 알림
+    needs: [deploy-android-internal]
+    if: always() && needs.deploy-android-internal.result != 'skipped'
+    uses: ./.github/workflows/slack-notify.yml
+    with:
+      status: ${{ needs.deploy-android-internal.result }}
+      type: deploy
+      environment: Android Internal
+      workflow_name: Mobile
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  notify-deploy-ios-internal:
+    name: iOS TestFlight 배포 알림
+    needs: [deploy-ios-internal]
+    if: always() && needs.deploy-ios-internal.result != 'skipped'
+    uses: ./.github/workflows/slack-notify.yml
+    with:
+      status: ${{ needs.deploy-ios-internal.result }}
+      type: deploy
+      environment: iOS TestFlight
+      workflow_name: Mobile
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  notify-deploy-android-production:
+    name: Android Production 배포 알림
+    needs: [deploy-android-production]
+    if: always() && needs.deploy-android-production.result != 'skipped'
+    uses: ./.github/workflows/slack-notify.yml
+    with:
+      status: ${{ needs.deploy-android-production.result }}
+      type: deploy
+      environment: Android Production
+      workflow_name: Mobile
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  notify-deploy-ios-production:
+    name: iOS Production 배포 알림
+    needs: [deploy-ios-production]
+    if: always() && needs.deploy-ios-production.result != 'skipped'
+    uses: ./.github/workflows/slack-notify.yml
+    with:
+      status: ${{ needs.deploy-ios-production.result }}
+      type: deploy
+      environment: iOS Production
+      workflow_name: Mobile
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

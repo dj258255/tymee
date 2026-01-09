@@ -264,66 +264,40 @@ jobs:
   # ===========================================
   # Slack 알림
   # ===========================================
-  notify-success:
-    name: 성공 알림
+  notify-build:
+    name: 빌드 알림
     needs: [test]
-    runs-on: ubuntu-latest
-    if: success() && github.event_name == 'pull_request'
-
-    steps:
-      - name: Slack 알림 전송
-        uses: 8398a7/action-slack@v3
-        with:
-          status: success
-          fields: repo,message,commit,author,action,eventName,ref,workflow
-          text: '빌드 성공'
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-
-  notify-failure:
-    name: 실패 알림
-    needs: [test]
-    runs-on: ubuntu-latest
-    if: failure()
-
-    steps:
-      - name: Slack 알림 전송
-        uses: 8398a7/action-slack@v3
-        with:
-          status: failure
-          fields: repo,message,commit,author,action,eventName,ref,workflow
-          text: '빌드 실패 - 확인 필요'
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    if: always() && github.event_name == 'pull_request'
+    uses: ./.github/workflows/slack-notify.yml
+    with:
+      status: ${{ needs.test.result }}
+      type: build
+      workflow_name: Backend
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
   notify-deploy-staging:
     name: Staging 배포 알림
     needs: [deploy-staging]
-    runs-on: ubuntu-latest
-    if: always()
-
-    steps:
-      - name: Slack 알림 전송
-        uses: 8398a7/action-slack@v3
-        with:
-          status: ${{ needs.deploy-staging.result }}
-          fields: repo,message,commit,author,workflow
-          text: 'Staging 배포 ${{ needs.deploy-staging.result }}'
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    if: always() && needs.deploy-staging.result != 'skipped'
+    uses: ./.github/workflows/slack-notify.yml
+    with:
+      status: ${{ needs.deploy-staging.result }}
+      type: deploy
+      environment: Staging
+      workflow_name: Backend
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
   notify-deploy-production:
     name: Production 배포 알림
     needs: [deploy-production]
-    runs-on: ubuntu-latest
-    if: always()
-
-    steps:
-      - name: Slack 알림 전송
-        uses: 8398a7/action-slack@v3
-        with:
-          status: ${{ needs.deploy-production.result }}
-          fields: repo,message,commit,author,workflow
-          text: 'Production 배포 ${{ needs.deploy-production.result }}'
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    if: always() && needs.deploy-production.result != 'skipped'
+    uses: ./.github/workflows/slack-notify.yml
+    with:
+      status: ${{ needs.deploy-production.result }}
+      type: deploy
+      environment: Production
+      workflow_name: Backend
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

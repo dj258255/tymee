@@ -3,9 +3,7 @@ package io.github.beom.user.domain.vo;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 
-/**
- * 닉네임 Value Object. null 허용 (미설정 시 이메일로 표시). 바이트 기준 제한: 1~30바이트 (한글 3바이트, 영문/숫자 1바이트)
- */
+/** 닉네임 Value Object. null 허용 (미설정 시 이메일로 표시). 바이트 기준 제한: 1~30바이트 (한글 3바이트, 영문/숫자 1바이트) */
 public record Nickname(String value) {
 
   private static final int MIN_BYTES = 1;
@@ -25,13 +23,13 @@ public record Nickname(String value) {
     if (value != null) {
       // 공백만 있는 경우 체크
       if (value.isBlank()) {
-        throw new IllegalArgumentException(
-            String.format("닉네임은 %d바이트 이상이어야 합니다", MIN_BYTES));
+        throw new IllegalArgumentException(String.format("닉네임은 %d바이트 이상이어야 합니다", MIN_BYTES));
       }
       int byteLength = getByteLength(value);
       if (byteLength < MIN_BYTES || byteLength > MAX_BYTES) {
         throw new IllegalArgumentException(
-            String.format("닉네임은 %d바이트 이상 %d바이트 이하여야 합니다 (현재: %d바이트)", MIN_BYTES, MAX_BYTES, byteLength));
+            String.format(
+                "닉네임은 %d바이트 이상 %d바이트 이하여야 합니다 (현재: %d바이트)", MIN_BYTES, MAX_BYTES, byteLength));
       }
     }
   }

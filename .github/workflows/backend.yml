@@ -260,3 +260,48 @@ jobs:
 
             echo "Production 배포 완료!"
           DEPLOY_SCRIPT
+
+  # ===========================================
+  # Slack 알림
+  # ===========================================
+  notify-build:
+    name: 빌드 알림
+    needs: [test]
+    if: always() && github.event_name == 'pull_request'
+    uses: ./.github/workflows/slack-notify.yml
+    with:
+      status: ${{ needs.test.result }}
+      type: build
+      workflow_name: Backend
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  notify-deploy-staging:
+    name: Staging 배포 알림
+    needs: [deploy-staging]
+    if: always() && needs.deploy-staging.result != 'skipped'
+    uses: ./.github/workflows/slack-notify.yml
+    with:
+      status: ${{ needs.deploy-staging.result }}
+      type: deploy
+      environment: Staging
+      workflow_name: Backend
+      docker_image: ghcr.io/${{ github.repository }}/tymee-backend:staging
+      app_url: https://staging-api.studywithtymee.com
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  notify-deploy-production:
+    name: Production 배포 알림
+    needs: [deploy-production]
+    if: always() && needs.deploy-production.result != 'skipped'
+    uses: ./.github/workflows/slack-notify.yml
+    with:
+      status: ${{ needs.deploy-production.result }}
+      type: deploy
+      environment: Production
+      workflow_name: Backend
+      docker_image: ghcr.io/${{ github.repository }}/tymee-backend:latest
+      app_url: https://api.studywithtymee.com
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

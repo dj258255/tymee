@@ -7,6 +7,9 @@ import io.github.beom.auth.oauth.OAuthVerifier;
 import io.github.beom.auth.oauth.OAuthVerifierFactory;
 import io.github.beom.auth.repository.RedisTokenRepository;
 import io.github.beom.auth.util.JwtUtil;
+import io.github.beom.core.exception.BusinessException;
+import io.github.beom.core.exception.EntityNotFoundException;
+import io.github.beom.core.exception.ErrorCode;
 import io.github.beom.user.domain.User;
 import io.github.beom.user.domain.UserOAuth;
 import io.github.beom.user.domain.vo.Email;
@@ -14,6 +17,7 @@ import io.github.beom.user.domain.vo.Nickname;
 import io.github.beom.user.domain.vo.OAuthProvider;
 import io.github.beom.user.repository.UserOAuthRepository;
 import io.github.beom.user.repository.UserRepository;
+import io.github.beom.user.service.UserSettingsService;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +32,7 @@ public class AuthService {
 
   private final UserRepository userRepository;
   private final UserOAuthRepository userOAuthRepository;
+  private final UserSettingsService userSettingsService;
   private final JwtUtil jwtUtil;
   private final RedisTokenRepository tokenRepository;
   private final OAuthVerifierFactory oAuthVerifierFactory;
@@ -35,64 +40,67 @@ public class AuthService {
   /** 소셜 로그인. 토큰 검증 후 신규 사용자는 자동 가입, 기존 사용자는 토큰 발급. */
   @Transactional
   public TokenPair oAuthLogin(OAuthProvider provider, String token, String deviceId) {
-    // 1. OAuth 토큰 검증 및 사용자 정보 추출
     OAuthVerifier verifier = oAuthVerifierFactory.getVerifier(provider);
     OAuthUserInfo userInfo = verifier.verify(token);
 
-    // 2. 기존 OAuth 연동 확인
     Optional<UserOAuth> existingOAuth =
         userOAuthRepository.findByProviderAndProviderId(provider, userInfo.providerId());
 
-    User user;
+    User user =
+        existingOAuth.isPresent()
+            ? findUserByOAuth(existingOAuth.get())
+            : findOrCreateUserByEmail(userInfo, provider);
 
-    if (existingOAuth.isPresent()) {
-      UserOAuth oAuth = existingOAuth.get();
-      if (oAuth.isUnlinked()) {
-        throw new IllegalStateException("연동 해제된 계정입니다. 다시 연동해주세요");
-      }
+    validateAndUpdateLogin(user);
+    return generateAndSaveTokens(user, deviceId);
+  }
 
-      user =
-          userRepository
-              .findById(oAuth.getUserId())
-              .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다"));
-
-      // 탈퇴한 사용자가 재로그인 시 계정 복구
-      if (user.isDeleted()) {
-        user.activate();
-        user = userRepository.save(user);
-      }
-    } else {
-      // 3. 이메일로 기존 사용자 확인 또는 신규 생성
-      Optional<User> existingUser =
-          userInfo.email() != null
-              ? userRepository.findByEmail(userInfo.email())
-              : Optional.empty();
-
-      if (existingUser.isPresent()) {
-        user = existingUser.get();
-        // 탈퇴한 사용자가 재로그인 시 계정 복구
-        if (user.isDeleted()) {
-          user.activate();
-          user = userRepository.save(user);
-        }
-      } else {
-        user = createNewUserWithUniqueNickname(userInfo.email());
-      }
-
-      // 4. OAuth 연동 정보 저장
-      UserOAuth newOAuth = UserOAuth.create(user.getId(), provider, userInfo.providerId());
-      userOAuthRepository.save(newOAuth);
+  /** 기존 OAuth 연동으로 사용자 조회. */
+  private User findUserByOAuth(UserOAuth oAuth) {
+    if (oAuth.isUnlinked()) {
+      throw new BusinessException(ErrorCode.OAUTH_UNLINKED, "연동 해제된 계정입니다. 다시 연동해주세요");
     }
 
+    User user =
+        userRepository
+            .findById(oAuth.getUserId())
+            .orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND));
+
+    return reactivateIfDeleted(user);
+  }
+
+  /** 이메일로 기존 사용자 조회 또는 신규 생성 후 OAuth 연동. */
+  private User findOrCreateUserByEmail(OAuthUserInfo userInfo, OAuthProvider provider) {
+    Optional<User> existingUser =
+        userInfo.email() != null ? userRepository.findByEmail(userInfo.email()) : Optional.empty();
+
+    User user =
+        existingUser
+            .map(this::reactivateIfDeleted)
+            .orElseGet(() -> createNewUser(userInfo.email()));
+
+    UserOAuth newOAuth = UserOAuth.create(user.getId(), provider, userInfo.providerId());
+    userOAuthRepository.save(newOAuth);
+
+    return user;
+  }
+
+  /** 탈퇴한 사용자 계정 복구. */
+  private User reactivateIfDeleted(User user) {
+    if (user.isDeleted()) {
+      user.activate();
+      return userRepository.save(user);
+    }
+    return user;
+  }
+
+  /** 로그인 가능 여부 확인 및 로그인 시간 갱신. */
+  private void validateAndUpdateLogin(User user) {
     if (!user.canLogin()) {
-      throw new IllegalStateException("로그인할 수 없는 계정입니다");
+      throw new BusinessException(ErrorCode.LOGIN_NOT_ALLOWED);
     }
-
-    // 로그인 시간 갱신
     user.updateLastLogin();
     userRepository.save(user);
-
-    return generateAndSaveTokens(user, deviceId);
   }
 
   /** 토큰 갱신. Redis 저장된 토큰과 비교 후 새 토큰 쌍 발급. 토큰 탈취 감지 시 전체 로그아웃. */
@@ -103,26 +111,27 @@ public class AuthService {
     RefreshToken storedToken =
         tokenRepository
             .findRefreshToken(claims.userId(), deviceId)
-            .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 리프레시 토큰입니다"));
+            .orElseThrow(() -> new BusinessException(ErrorCode.REFRESH_TOKEN_NOT_FOUND));
 
     if (!storedToken.getToken().equals(refreshToken)) {
       tokenRepository.deleteAllRefreshTokens(claims.userId());
-      throw new IllegalArgumentException("토큰이 탈취되었을 수 있습니다. 모든 세션이 로그아웃됩니다");
+      throw new BusinessException(
+          ErrorCode.TOKEN_THEFT_DETECTED, "토큰이 탈취되었을 수 있습니다. 모든 세션이 로그아웃됩니다");
     }
 
     if (storedToken.isExpired()) {
       tokenRepository.deleteRefreshToken(claims.userId(), deviceId);
-      throw new IllegalArgumentException("리프레시 토큰이 만료되었습니다. 다시 로그인해주세요");
+      throw new BusinessException(ErrorCode.TOKEN_EXPIRED, "리프레시 토큰이 만료되었습니다. 다시 로그인해주세요");
     }
 
     User user =
         userRepository
             .findById(claims.userId())
-            .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+            .orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND));
 
     if (!user.canLogin()) {
       tokenRepository.deleteAllRefreshTokens(user.getId());
-      throw new IllegalStateException("로그인할 수 없는 계정입니다");
+      throw new BusinessException(ErrorCode.LOGIN_NOT_ALLOWED);
     }
 
     return generateAndSaveTokens(user, deviceId);
@@ -131,8 +140,7 @@ public class AuthService {
   /** 개발용 테스트 로그인. OAuth 검증 없이 바로 토큰 발급. */
   @Transactional
   public TokenPair devLogin(String email, String deviceId) {
-    User user =
-        userRepository.findByEmail(email).orElseGet(() -> createNewUserWithUniqueNickname(email));
+    User user = userRepository.findByEmail(email).orElseGet(() -> createNewUser(email));
 
     // 탈퇴한 사용자 복구
     if (user.isDeleted()) {
@@ -164,14 +172,18 @@ public class AuthService {
 
   private static final int MAX_NICKNAME_RETRY = 10;
 
-  /** 중복되지 않는 닉네임으로 신규 사용자 생성. */
-  private User createNewUserWithUniqueNickname(String email) {
+  /** 중복되지 않는 닉네임으로 신규 사용자 생성. 기본 설정도 함께 생성. */
+  private User createNewUser(String email) {
     Nickname uniqueNickname = generateUniqueNickname();
     Email userEmail = email != null ? new Email(email) : null;
 
     User newUser = User.builder().email(userEmail).nickname(uniqueNickname).build();
+    User savedUser = userRepository.save(newUser);
 
-    return userRepository.save(newUser);
+    // 신규 사용자의 기본 설정 생성
+    userSettingsService.createDefaultSettings(savedUser.getId());
+
+    return savedUser;
   }
 
   /** 중복되지 않는 랜덤 닉네임 생성. 최대 10회 재시도. */

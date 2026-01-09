@@ -1,9 +1,9 @@
 package io.github.beom.user.dto;
 
-import io.github.beom.user.domain.User;
 import java.time.LocalDateTime;
 import lombok.Builder;
 
+/** 사용자 정보 응답 DTO. */
 @Builder
 public record UserResponse(
     Long id,
@@ -18,22 +18,4 @@ public record UserResponse(
     String role,
     LocalDateTime lastLoginAt,
     LocalDateTime lastActiveAt,
-    LocalDateTime createdAt) {
-  public static UserResponse from(User user) {
-    return UserResponse.builder()
-        .id(user.getId())
-        .email(user.getEmail().value())
-        .nickname(user.getDisplayName())
-        .profileImageId(user.getProfileImageId())
-        .bio(user.getBio())
-        .level(user.getLevel())
-        .tier(user.getTier().name())
-        .totalStudyMinutes(user.getTotalStudyMinutes())
-        .status(user.getStatus().name())
-        .role(user.getRole().name())
-        .lastLoginAt(user.getLastLoginAt())
-        .lastActiveAt(user.getLastActiveAt())
-        .createdAt(user.getCreatedAt())
-        .build();
-  }
-}
+    LocalDateTime createdAt) {}

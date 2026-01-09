@@ -217,3 +217,31 @@ jobs:
           elif [ "${{ inputs.target }}" = "cache" ]; then
             ansible-playbook -i /tmp/ansible-inventory playbooks/setup-all.yml --limit cache_servers
           fi
+
+  # ===========================================
+  # Slack 알림
+  # ===========================================
+  notify-lint:
+    name: Lint 알림
+    needs: [lint]
+    if: always() && github.event_name == 'pull_request'
+    uses: ./.github/workflows/slack-notify.yml
+    with:
+      status: ${{ needs.lint.result }}
+      type: build
+      workflow_name: Infrastructure
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  notify-setup:
+    name: 서버 세팅 알림
+    needs: [setup]
+    if: always() && needs.setup.result != 'skipped'
+    uses: ./.github/workflows/slack-notify.yml
+    with:
+      status: ${{ needs.setup.result }}
+      type: deploy
+      environment: ${{ inputs.target }}
+      workflow_name: Infrastructure
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

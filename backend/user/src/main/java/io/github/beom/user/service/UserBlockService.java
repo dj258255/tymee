@@ -1,5 +1,6 @@
 package io.github.beom.user.service;
 
+import io.github.beom.core.exception.BusinessException;
 import io.github.beom.core.exception.EntityNotFoundException;
 import io.github.beom.core.exception.ErrorCode;
 import io.github.beom.user.domain.User;
@@ -29,7 +30,7 @@ public class UserBlockService {
   @Transactional
   public void blockUser(Long blockerId, Long blockedId, String reason) {
     if (blockerId.equals(blockedId)) {
-      throw new IllegalArgumentException("자기 자신을 차단할 수 없습니다");
+      throw new BusinessException(ErrorCode.SELF_BLOCK_NOT_ALLOWED);
     }
 
     if (!userRepository.existsById(blockedId)) {
@@ -37,7 +38,7 @@ public class UserBlockService {
     }
 
     if (userBlockRepository.existsByBlockerIdAndBlockedId(blockerId, blockedId)) {
-      throw new IllegalStateException("이미 차단한 사용자입니다");
+      throw new BusinessException(ErrorCode.ALREADY_BLOCKED);
     }
 
     UserBlock userBlock = UserBlock.create(blockerId, blockedId, reason);

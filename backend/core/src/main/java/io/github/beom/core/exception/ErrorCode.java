@@ -20,6 +20,9 @@ public enum ErrorCode {
   TOKEN_INVALID(401, "A003", "유효하지 않은 토큰입니다"),
   REFRESH_TOKEN_NOT_FOUND(401, "A004", "리프레시 토큰을 찾을 수 없습니다"),
   UNAUTHORIZED(401, "A005", "인증이 필요합니다"),
+  OAUTH_UNLINKED(400, "A006", "연동 해제된 계정입니다"),
+  TOKEN_THEFT_DETECTED(401, "A007", "토큰이 탈취되었을 수 있습니다"),
+  LOGIN_NOT_ALLOWED(403, "A008", "로그인할 수 없는 계정입니다"),
 
   // User
   USER_NOT_FOUND(404, "U001", "사용자를 찾을 수 없습니다"),
@@ -28,6 +31,10 @@ public enum ErrorCode {
   USER_ALREADY_WITHDRAWN(400, "U004", "이미 탈퇴한 사용자입니다"),
   USER_SUSPENDED(403, "U005", "정지된 사용자입니다"),
   USER_BANNED(403, "U006", "차단된 사용자입니다"),
+  SELF_BLOCK_NOT_ALLOWED(400, "U007", "자기 자신을 차단할 수 없습니다"),
+  ALREADY_BLOCKED(409, "U008", "이미 차단한 사용자입니다"),
+  SELF_REPORT_NOT_ALLOWED(400, "U009", "자기 자신을 신고할 수 없습니다"),
+  ALREADY_REPORTED(409, "U010", "이미 신고한 대상입니다"),
 
   // Upload
   FILE_NOT_FOUND(404, "F001", "파일을 찾을 수 없습니다"),

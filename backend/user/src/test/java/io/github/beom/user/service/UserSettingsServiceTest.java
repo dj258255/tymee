@@ -163,8 +163,26 @@ class UserSettingsServiceTest {
       var settings = UserSettings.createDefault(1L);
       var request =
           new UserSettingsUpdateRequest(
-              null, null, null, null, null, null, null, null, null, null, LocalTime.of(9, 30),
-              null, null, null, null, null, null, null, null, null);
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              LocalTime.of(9, 30),
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null);
 
       given(userSettingsRepository.findOrCreateByUserId(1L)).willReturn(settings);
       given(userSettingsRepository.save(any(UserSettings.class)))
@@ -205,8 +223,26 @@ class UserSettingsServiceTest {
       var settings = UserSettings.createDefault(1L);
       var request =
           new UserSettingsUpdateRequest(
-              "DARK", "EN", false, true, true, true, true, true, true, true, LocalTime.of(9, 0),
-              true, 15, false, false, true, 8, 300, 2100, true);
+              "DARK",
+              "EN",
+              false,
+              true,
+              true,
+              true,
+              true,
+              true,
+              true,
+              true,
+              LocalTime.of(9, 0),
+              true,
+              15,
+              false,
+              false,
+              true,
+              8,
+              300,
+              2100,
+              true);
 
       given(userSettingsRepository.findOrCreateByUserId(1L)).willReturn(settings);
       given(userSettingsRepository.save(any(UserSettings.class)))
@@ -396,8 +432,26 @@ class UserSettingsServiceTest {
       var settings = UserSettings.createDefault(1L);
       var request =
           new UserSettingsUpdateRequest(
-              null, null, null, null, null, null, null, null, null, null, LocalTime.of(0, 0), null,
-              null, null, null, null, null, null, null, null);
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              LocalTime.of(0, 0),
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null);
 
       given(userSettingsRepository.findOrCreateByUserId(1L)).willReturn(settings);
       given(userSettingsRepository.save(any(UserSettings.class)))
@@ -417,8 +471,26 @@ class UserSettingsServiceTest {
       var settings = UserSettings.createDefault(1L);
       var request =
           new UserSettingsUpdateRequest(
-              null, null, null, null, null, null, null, null, null, null, LocalTime.of(23, 59),
-              null, null, null, null, null, null, null, null, null);
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              LocalTime.of(23, 59),
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null);
 
       given(userSettingsRepository.findOrCreateByUserId(1L)).willReturn(settings);
       given(userSettingsRepository.save(any(UserSettings.class)))

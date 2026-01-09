@@ -136,7 +136,7 @@ const ProfileScreen: React.FC<{onBack: () => void}> = ({onBack}) => {
   const [showTierModal, setShowTierModal] = useState(false);
 
   // Auth Store
-  const {user, logout, updateProfile, withdrawAccount, isLoading} = useAuthStore();
+  const {user, logout, updateProfile, withdrawAccount} = useAuthStore();
 
   // 닉네임, 자기소개 상태 (서버에서 가져온 값으로 초기화)
   const [nickname, setNickname] = useState(user?.nickname || '타이미유저');

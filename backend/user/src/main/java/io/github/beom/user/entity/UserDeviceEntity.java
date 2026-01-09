@@ -2,10 +2,10 @@ package io.github.beom.user.entity;
 
 import io.github.beom.user.domain.UserDevice;
 import io.github.beom.user.domain.vo.DevicePlatform;
-import io.github.beom.user.entity.converter.DevicePlatformConverter;
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -48,8 +48,8 @@ public class UserDeviceEntity {
   @Column(name = "device_id", nullable = false)
   private String deviceId;
 
+  @Enumerated(EnumType.STRING)
   @Column(name = "device_type", nullable = false, length = 20)
-  @Convert(converter = DevicePlatformConverter.class)
   private DevicePlatform deviceType;
 
   @Column(name = "push_token", length = 500)

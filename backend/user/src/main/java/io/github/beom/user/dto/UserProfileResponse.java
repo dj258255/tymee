@@ -19,7 +19,7 @@ public record UserProfileResponse(
         .profileImageId(user.getProfileImageId())
         .bio(user.getBio())
         .level(user.getLevel())
-        .tier(user.getTier().getCode())
+        .tier(user.getTier().name())
         .totalStudyMinutes(user.getTotalStudyMinutes())
         .build();
   }

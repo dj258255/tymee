@@ -7,6 +7,9 @@ import io.github.beom.auth.oauth.OAuthVerifier;
 import io.github.beom.auth.oauth.OAuthVerifierFactory;
 import io.github.beom.auth.repository.RedisTokenRepository;
 import io.github.beom.auth.util.JwtUtil;
+import io.github.beom.core.exception.BusinessException;
+import io.github.beom.core.exception.EntityNotFoundException;
+import io.github.beom.core.exception.ErrorCode;
 import io.github.beom.user.domain.User;
 import io.github.beom.user.domain.UserOAuth;
 import io.github.beom.user.domain.vo.Email;
@@ -55,13 +58,13 @@ public class AuthService {
   /** 기존 OAuth 연동으로 사용자 조회. */
   private User findUserByOAuth(UserOAuth oAuth) {
     if (oAuth.isUnlinked()) {
-      throw new IllegalStateException("연동 해제된 계정입니다. 다시 연동해주세요");
+      throw new BusinessException(ErrorCode.OAUTH_UNLINKED, "연동 해제된 계정입니다. 다시 연동해주세요");
     }
 
     User user =
         userRepository
             .findById(oAuth.getUserId())
-            .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다"));
+            .orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND));
 
     return reactivateIfDeleted(user);
   }
@@ -94,7 +97,7 @@ public class AuthService {
   /** 로그인 가능 여부 확인 및 로그인 시간 갱신. */
   private void validateAndUpdateLogin(User user) {
     if (!user.canLogin()) {
-      throw new IllegalStateException("로그인할 수 없는 계정입니다");
+      throw new BusinessException(ErrorCode.LOGIN_NOT_ALLOWED);
     }
     user.updateLastLogin();
     userRepository.save(user);
@@ -108,26 +111,27 @@ public class AuthService {
     RefreshToken storedToken =
         tokenRepository
             .findRefreshToken(claims.userId(), deviceId)
-            .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 리프레시 토큰입니다"));
+            .orElseThrow(() -> new BusinessException(ErrorCode.REFRESH_TOKEN_NOT_FOUND));
 
     if (!storedToken.getToken().equals(refreshToken)) {
       tokenRepository.deleteAllRefreshTokens(claims.userId());
-      throw new IllegalArgumentException("토큰이 탈취되었을 수 있습니다. 모든 세션이 로그아웃됩니다");
+      throw new BusinessException(
+          ErrorCode.TOKEN_THEFT_DETECTED, "토큰이 탈취되었을 수 있습니다. 모든 세션이 로그아웃됩니다");
     }
 
     if (storedToken.isExpired()) {
       tokenRepository.deleteRefreshToken(claims.userId(), deviceId);
-      throw new IllegalArgumentException("리프레시 토큰이 만료되었습니다. 다시 로그인해주세요");
+      throw new BusinessException(ErrorCode.TOKEN_EXPIRED, "리프레시 토큰이 만료되었습니다. 다시 로그인해주세요");
     }
 
     User user =
         userRepository
             .findById(claims.userId())
-            .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+            .orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND));
 
     if (!user.canLogin()) {
       tokenRepository.deleteAllRefreshTokens(user.getId());
-      throw new IllegalStateException("로그인할 수 없는 계정입니다");
+      throw new BusinessException(ErrorCode.LOGIN_NOT_ALLOWED);
     }
 
     return generateAndSaveTokens(user, deviceId);

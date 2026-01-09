@@ -15,6 +15,7 @@ import io.github.beom.auth.oauth.OAuthVerifier;
 import io.github.beom.auth.oauth.OAuthVerifierFactory;
 import io.github.beom.auth.repository.RedisTokenRepository;
 import io.github.beom.auth.util.JwtUtil;
+import io.github.beom.core.exception.BusinessException;
 import io.github.beom.user.domain.User;
 import io.github.beom.user.domain.UserOAuth;
 import io.github.beom.user.domain.vo.Email;
@@ -192,8 +193,7 @@ class AuthServiceTest {
       // when & then
       assertThatThrownBy(
               () -> authService.oAuthLogin(OAuthProvider.GOOGLE, "google-id-token", DEVICE_ID))
-          .isInstanceOf(IllegalStateException.class)
-          .hasMessage("로그인할 수 없는 계정입니다");
+          .isInstanceOf(BusinessException.class);
     }
 
     @Test
@@ -213,7 +213,7 @@ class AuthServiceTest {
       // when & then
       assertThatThrownBy(
               () -> authService.oAuthLogin(OAuthProvider.GOOGLE, "google-id-token", DEVICE_ID))
-          .isInstanceOf(IllegalStateException.class)
+          .isInstanceOf(BusinessException.class)
           .hasMessage("연동 해제된 계정입니다. 다시 연동해주세요");
     }
 
@@ -303,7 +303,7 @@ class AuthServiceTest {
 
       // when & then
       assertThatThrownBy(() -> authService.refresh(REFRESH_TOKEN, DEVICE_ID))
-          .isInstanceOf(IllegalArgumentException.class)
+          .isInstanceOf(BusinessException.class)
           .hasMessageContaining("토큰이 탈취되었을 수 있습니다");
 
       verify(tokenRepository).deleteAllRefreshTokens(1L);
@@ -324,7 +324,7 @@ class AuthServiceTest {
 
       // when & then
       assertThatThrownBy(() -> authService.refresh(REFRESH_TOKEN, DEVICE_ID))
-          .isInstanceOf(IllegalArgumentException.class)
+          .isInstanceOf(BusinessException.class)
           .hasMessage("리프레시 토큰이 만료되었습니다. 다시 로그인해주세요");
 
       verify(tokenRepository).deleteRefreshToken(1L, DEVICE_ID);
@@ -342,8 +342,7 @@ class AuthServiceTest {
 
       // when & then
       assertThatThrownBy(() -> authService.refresh(REFRESH_TOKEN, DEVICE_ID))
-          .isInstanceOf(IllegalArgumentException.class)
-          .hasMessage("유효하지 않은 리프레시 토큰입니다");
+          .isInstanceOf(BusinessException.class);
     }
 
     @Test
@@ -369,8 +368,7 @@ class AuthServiceTest {
 
       // when & then
       assertThatThrownBy(() -> authService.refresh(REFRESH_TOKEN, DEVICE_ID))
-          .isInstanceOf(IllegalStateException.class)
-          .hasMessage("로그인할 수 없는 계정입니다");
+          .isInstanceOf(BusinessException.class);
 
       verify(tokenRepository).deleteAllRefreshTokens(1L);
     }

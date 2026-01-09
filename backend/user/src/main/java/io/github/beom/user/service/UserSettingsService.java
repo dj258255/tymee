@@ -50,10 +50,6 @@ public class UserSettingsService {
    */
   @Transactional
   public UserSettings createDefaultSettings(Long userId) {
-    if (userSettingsRepository.existsByUserId(userId)) {
-      return userSettingsRepository.findByUserId(userId).orElseThrow();
-    }
-    UserSettings defaultSettings = UserSettings.createDefault(userId);
-    return userSettingsRepository.save(defaultSettings);
+    return userSettingsRepository.findOrCreateByUserId(userId);
   }
 }

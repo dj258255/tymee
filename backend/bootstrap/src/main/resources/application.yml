@@ -31,6 +31,16 @@ oauth:
   apple:
     bundle-id: ${APPLE_BUNDLE_ID}
 
+# Cloudflare R2 설정
+cloudflare:
+  r2:
+    account-id: ${R2_ACCOUNT_ID}
+    access-key-id: ${R2_ACCESS_KEY_ID}
+    secret-access-key: ${R2_SECRET_ACCESS_KEY}
+    bucket-name: ${R2_BUCKET_NAME}
+    path-prefix: ${spring.profiles.active}
+    public-url: ${R2_PUBLIC_URL}
+
 # Springdoc OpenAPI 공통 설정
 springdoc:
   api-docs:

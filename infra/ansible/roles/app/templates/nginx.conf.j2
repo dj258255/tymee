@@ -41,6 +41,18 @@ http {
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';" always;
+
+    # Rate Limiting 설정
+    # 로그인/회원가입: 분당 10회
+    limit_req_zone $binary_remote_addr zone=auth:10m rate=10r/m;
+    # 일반 API: 초당 20회
+    limit_req_zone $binary_remote_addr zone=api:10m rate=20r/s;
+    # 파일 업로드: 분당 30회
+    limit_req_zone $binary_remote_addr zone=upload:10m rate=30r/m;
+
+    # Rate Limit 초과 시 429 반환
+    limit_req_status 429;
 
     # 클라이언트 요청 크기
     client_max_body_size 50M;

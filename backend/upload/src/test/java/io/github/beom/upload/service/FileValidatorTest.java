@@ -19,58 +19,46 @@ class FileValidatorTest {
   class ValidateMimeType {
 
     @ParameterizedTest
-    @ValueSource(strings = {
-        "image/jpeg",
-        "image/png",
-        "image/gif",
-        "image/webp",
-        "image/heic",
-        "image/heif"
-    })
+    @ValueSource(
+        strings = {
+          "image/jpeg",
+          "image/png",
+          "image/gif",
+          "image/webp",
+          "image/heic",
+          "image/heif"
+        })
     @DisplayName("성공: 허용된 이미지 타입")
     void validateMimeType_allowedImageTypes_success(String mimeType) {
-      assertThatCode(() -> fileValidator.validateMimeType(mimeType))
-          .doesNotThrowAnyException();
+      assertThatCode(() -> fileValidator.validateMimeType(mimeType)).doesNotThrowAnyException();
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-        "video/mp4",
-        "video/quicktime",
-        "video/webm",
-        "video/x-m4v"
-    })
+    @ValueSource(strings = {"video/mp4", "video/quicktime", "video/webm", "video/x-m4v"})
     @DisplayName("성공: 허용된 비디오 타입")
     void validateMimeType_allowedVideoTypes_success(String mimeType) {
-      assertThatCode(() -> fileValidator.validateMimeType(mimeType))
-          .doesNotThrowAnyException();
+      assertThatCode(() -> fileValidator.validateMimeType(mimeType)).doesNotThrowAnyException();
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-        "audio/mpeg",
-        "audio/mp4",
-        "audio/aac",
-        "audio/wav",
-        "audio/x-m4a",
-        "audio/m4a"
-    })
+    @ValueSource(
+        strings = {"audio/mpeg", "audio/mp4", "audio/aac", "audio/wav", "audio/x-m4a", "audio/m4a"})
     @DisplayName("성공: 허용된 오디오 타입")
     void validateMimeType_allowedAudioTypes_success(String mimeType) {
-      assertThatCode(() -> fileValidator.validateMimeType(mimeType))
-          .doesNotThrowAnyException();
+      assertThatCode(() -> fileValidator.validateMimeType(mimeType)).doesNotThrowAnyException();
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-        "application/pdf",
-        "application/zip",
-        "text/plain",
-        "text/html",
-        "application/octet-stream",
-        "image/svg+xml",
-        "image/bmp"
-    })
+    @ValueSource(
+        strings = {
+          "application/pdf",
+          "application/zip",
+          "text/plain",
+          "text/html",
+          "application/octet-stream",
+          "image/svg+xml",
+          "image/bmp"
+        })
     @DisplayName("실패: 허용되지 않은 MIME 타입")
     void validateMimeType_notAllowedTypes_fails(String mimeType) {
       assertThatThrownBy(() -> fileValidator.validateMimeType(mimeType))

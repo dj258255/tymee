@@ -16,58 +16,62 @@ class FileTypeTest {
   class FromMimeType {
 
     @ParameterizedTest
-    @ValueSource(strings = {
-        "image/jpeg",
-        "image/png",
-        "image/gif",
-        "image/webp",
-        "image/heic",
-        "image/heif",
-        "image/svg+xml",
-        "image/bmp"
-    })
+    @ValueSource(
+        strings = {
+          "image/jpeg",
+          "image/png",
+          "image/gif",
+          "image/webp",
+          "image/heic",
+          "image/heif",
+          "image/svg+xml",
+          "image/bmp"
+        })
     @DisplayName("성공: image/* -> IMAGE")
     void fromMimeType_image(String mimeType) {
       assertThat(FileType.fromMimeType(mimeType)).isEqualTo(FileType.IMAGE);
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-        "video/mp4",
-        "video/quicktime",
-        "video/webm",
-        "video/x-m4v",
-        "video/avi",
-        "video/mpeg"
-    })
+    @ValueSource(
+        strings = {
+          "video/mp4",
+          "video/quicktime",
+          "video/webm",
+          "video/x-m4v",
+          "video/avi",
+          "video/mpeg"
+        })
     @DisplayName("성공: video/* -> VIDEO")
     void fromMimeType_video(String mimeType) {
       assertThat(FileType.fromMimeType(mimeType)).isEqualTo(FileType.VIDEO);
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-        "audio/mpeg",
-        "audio/mp4",
-        "audio/aac",
-        "audio/wav",
-        "audio/x-m4a",
-        "audio/m4a",
-        "audio/ogg"
-    })
+    @ValueSource(
+        strings = {
+          "audio/mpeg",
+          "audio/mp4",
+          "audio/aac",
+          "audio/wav",
+          "audio/x-m4a",
+          "audio/m4a",
+          "audio/ogg"
+        })
     @DisplayName("성공: audio/* -> AUDIO")
     void fromMimeType_audio(String mimeType) {
       assertThat(FileType.fromMimeType(mimeType)).isEqualTo(FileType.AUDIO);
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-        "application/pdf",
-        "application/zip",
-        "text/plain",
-        "text/html",
-        "application/json"
-    })
+    @ValueSource(
+        strings = {
+          "application/pdf",
+          "application/zip",
+          "text/plain",
+          "text/html",
+          "application/json"
+        })
     @DisplayName("실패: 지원하지 않는 MIME 타입")
     void fromMimeType_unsupported(String mimeType) {
       assertThatThrownBy(() -> FileType.fromMimeType(mimeType))

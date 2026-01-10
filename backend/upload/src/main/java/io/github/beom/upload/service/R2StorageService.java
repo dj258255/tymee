@@ -132,7 +132,14 @@ public class R2StorageService {
     String uuid = UUID.randomUUID().toString();
     // 구조: {env}/{category}/{fileType}s/{uuid}.{ext}
     // 예: prod/profiles/images/abc-123.jpg, staging/posts/videos/def-456.mp4
-    return pathPrefix + "/" + category.getPath() + "/" + fileType.getCode() + "s/" + uuid + extension;
+    return pathPrefix
+        + "/"
+        + category.getPath()
+        + "/"
+        + fileType.getCode()
+        + "s/"
+        + uuid
+        + extension;
   }
 
   private String extractExtension(String fileName) {

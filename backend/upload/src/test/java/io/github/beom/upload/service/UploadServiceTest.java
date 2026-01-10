@@ -46,21 +46,18 @@ class UploadServiceTest {
     @DisplayName("성공: 이미지 파일 Presigned URL 발급")
     void generatePresignedUrl_image_success() {
       // given
-      var request = new PresignedUrlRequest(
-          UploadCategory.PROFILE,
-          "profile.jpg",
-          "image/jpeg",
-          1024L * 1024L // 1MB
-      );
+      var request =
+          new PresignedUrlRequest(
+              UploadCategory.PROFILE, "profile.jpg", "image/jpeg", 1024L * 1024L // 1MB
+              );
 
-      var presignedResult = new PresignedUrlResult(
-          "https://r2.example.com/presigned-url",
-          "prod/profiles/images/uuid-123.jpg",
-          900L
-      );
+      var presignedResult =
+          new PresignedUrlResult(
+              "https://r2.example.com/presigned-url", "prod/profiles/images/uuid-123.jpg", 900L);
 
-      given(r2StorageService.generateUploadUrl(
-          UploadCategory.PROFILE, FileType.IMAGE, "image/jpeg", "profile.jpg"))
+      given(
+              r2StorageService.generateUploadUrl(
+                  UploadCategory.PROFILE, FileType.IMAGE, "image/jpeg", "profile.jpg"))
           .willReturn(presignedResult);
       given(snowflakeIdGenerator.nextId()).willReturn(7321847264891904001L);
 
@@ -80,21 +77,18 @@ class UploadServiceTest {
     @DisplayName("성공: 비디오 파일 Presigned URL 발급")
     void generatePresignedUrl_video_success() {
       // given
-      var request = new PresignedUrlRequest(
-          UploadCategory.POST,
-          "video.mp4",
-          "video/mp4",
-          50L * 1024L * 1024L // 50MB
-      );
+      var request =
+          new PresignedUrlRequest(
+              UploadCategory.POST, "video.mp4", "video/mp4", 50L * 1024L * 1024L // 50MB
+              );
 
-      var presignedResult = new PresignedUrlResult(
-          "https://r2.example.com/video-presigned",
-          "prod/posts/videos/uuid-456.mp4",
-          900L
-      );
+      var presignedResult =
+          new PresignedUrlResult(
+              "https://r2.example.com/video-presigned", "prod/posts/videos/uuid-456.mp4", 900L);
 
-      given(r2StorageService.generateUploadUrl(
-          UploadCategory.POST, FileType.VIDEO, "video/mp4", "video.mp4"))
+      given(
+              r2StorageService.generateUploadUrl(
+                  UploadCategory.POST, FileType.VIDEO, "video/mp4", "video.mp4"))
           .willReturn(presignedResult);
       given(snowflakeIdGenerator.nextId()).willReturn(7321847264891904002L);
 
@@ -110,21 +104,18 @@ class UploadServiceTest {
     @DisplayName("성공: 오디오 파일 Presigned URL 발급")
     void generatePresignedUrl_audio_success() {
       // given
-      var request = new PresignedUrlRequest(
-          UploadCategory.CHAT,
-          "voice.m4a",
-          "audio/m4a",
-          5L * 1024L * 1024L // 5MB
-      );
+      var request =
+          new PresignedUrlRequest(
+              UploadCategory.CHAT, "voice.m4a", "audio/m4a", 5L * 1024L * 1024L // 5MB
+              );
 
-      var presignedResult = new PresignedUrlResult(
-          "https://r2.example.com/audio-presigned",
-          "prod/chat/audios/uuid-789.m4a",
-          900L
-      );
+      var presignedResult =
+          new PresignedUrlResult(
+              "https://r2.example.com/audio-presigned", "prod/chat/audios/uuid-789.m4a", 900L);
 
-      given(r2StorageService.generateUploadUrl(
-          UploadCategory.CHAT, FileType.AUDIO, "audio/m4a", "voice.m4a"))
+      given(
+              r2StorageService.generateUploadUrl(
+                  UploadCategory.CHAT, FileType.AUDIO, "audio/m4a", "voice.m4a"))
           .willReturn(presignedResult);
       given(snowflakeIdGenerator.nextId()).willReturn(7321847264891904003L);
 
@@ -144,30 +135,31 @@ class UploadServiceTest {
     @DisplayName("성공: 이미지 업로드 완료 - 썸네일 생성 트리거")
     void completeUpload_image_success() {
       // given
-      var request = new UploadCompleteRequest(
-          7321847264891904001L,
-          "prod/profiles/images/uuid-123.jpg",
-          "profile.jpg",
-          "image/jpeg",
-          1024L * 1024L,
-          null
-      );
+      var request =
+          new UploadCompleteRequest(
+              7321847264891904001L,
+              "prod/profiles/images/uuid-123.jpg",
+              "profile.jpg",
+              "image/jpeg",
+              1024L * 1024L,
+              null);
 
       given(r2StorageService.fileExists("prod/profiles/images/uuid-123.jpg")).willReturn(true);
       given(uploadRepository.save(any(Upload.class)))
-          .willAnswer(invocation -> {
-            Upload upload = invocation.getArgument(0);
-            return Upload.builder()
-                .id(1L)
-                .publicId(upload.getPublicId())
-                .uploaderId(upload.getUploaderId())
-                .fileType(upload.getFileType())
-                .mimeType(upload.getMimeType())
-                .originalName(upload.getOriginalName())
-                .storedPath(upload.getStoredPath())
-                .fileSize(upload.getFileSize())
-                .build();
-          });
+          .willAnswer(
+              invocation -> {
+                Upload upload = invocation.getArgument(0);
+                return Upload.builder()
+                    .id(1L)
+                    .publicId(upload.getPublicId())
+                    .uploaderId(upload.getUploaderId())
+                    .fileType(upload.getFileType())
+                    .mimeType(upload.getMimeType())
+                    .originalName(upload.getOriginalName())
+                    .storedPath(upload.getStoredPath())
+                    .fileSize(upload.getFileSize())
+                    .build();
+              });
       given(r2StorageService.generateDownloadUrl(anyString()))
           .willReturn("https://cdn.example.com/image.jpg");
       given(imageResizeService.getThumbnailPath(anyString()))
@@ -190,31 +182,33 @@ class UploadServiceTest {
     @DisplayName("성공: 비디오 업로드 완료 - 썸네일 생성 안함")
     void completeUpload_video_noThumbnail() {
       // given
-      var request = new UploadCompleteRequest(
-          7321847264891904002L,
-          "prod/posts/videos/uuid-456.mp4",
-          "video.mp4",
-          "video/mp4",
-          50L * 1024L * 1024L,
-          120 // 2분
-      );
+      var request =
+          new UploadCompleteRequest(
+              7321847264891904002L,
+              "prod/posts/videos/uuid-456.mp4",
+              "video.mp4",
+              "video/mp4",
+              50L * 1024L * 1024L,
+              120 // 2분
+              );
 
       given(r2StorageService.fileExists("prod/posts/videos/uuid-456.mp4")).willReturn(true);
       given(uploadRepository.save(any(Upload.class)))
-          .willAnswer(invocation -> {
-            Upload upload = invocation.getArgument(0);
-            return Upload.builder()
-                .id(2L)
-                .publicId(upload.getPublicId())
-                .uploaderId(upload.getUploaderId())
-                .fileType(upload.getFileType())
-                .mimeType(upload.getMimeType())
-                .originalName(upload.getOriginalName())
-                .storedPath(upload.getStoredPath())
-                .fileSize(upload.getFileSize())
-                .duration(upload.getDuration())
-                .build();
-          });
+          .willAnswer(
+              invocation -> {
+                Upload upload = invocation.getArgument(0);
+                return Upload.builder()
+                    .id(2L)
+                    .publicId(upload.getPublicId())
+                    .uploaderId(upload.getUploaderId())
+                    .fileType(upload.getFileType())
+                    .mimeType(upload.getMimeType())
+                    .originalName(upload.getOriginalName())
+                    .storedPath(upload.getStoredPath())
+                    .fileSize(upload.getFileSize())
+                    .duration(upload.getDuration())
+                    .build();
+              });
       given(r2StorageService.generateDownloadUrl(anyString()))
           .willReturn("https://cdn.example.com/video.mp4");
 
@@ -232,17 +226,16 @@ class UploadServiceTest {
     @DisplayName("실패: R2에 파일이 존재하지 않음")
     void completeUpload_fileNotExistsInR2_fails() {
       // given
-      var request = new UploadCompleteRequest(
-          7321847264891904001L,
-          "prod/profiles/images/not-uploaded.jpg",
-          "profile.jpg",
-          "image/jpeg",
-          1024L * 1024L,
-          null
-      );
+      var request =
+          new UploadCompleteRequest(
+              7321847264891904001L,
+              "prod/profiles/images/not-uploaded.jpg",
+              "profile.jpg",
+              "image/jpeg",
+              1024L * 1024L,
+              null);
 
-      given(r2StorageService.fileExists("prod/profiles/images/not-uploaded.jpg"))
-          .willReturn(false);
+      given(r2StorageService.fileExists("prod/profiles/images/not-uploaded.jpg")).willReturn(false);
 
       // when & then
       assertThatThrownBy(() -> uploadService.completeUpload(100L, request))
@@ -260,16 +253,17 @@ class UploadServiceTest {
     @DisplayName("성공: publicId로 파일 조회")
     void getUpload_success() {
       // given
-      var upload = Upload.builder()
-          .id(1L)
-          .publicId(7321847264891904001L)
-          .uploaderId(100L)
-          .fileType(FileType.IMAGE)
-          .mimeType("image/jpeg")
-          .originalName("profile.jpg")
-          .storedPath("prod/profiles/images/uuid-123.jpg")
-          .fileSize(1024L * 1024L)
-          .build();
+      var upload =
+          Upload.builder()
+              .id(1L)
+              .publicId(7321847264891904001L)
+              .uploaderId(100L)
+              .fileType(FileType.IMAGE)
+              .mimeType("image/jpeg")
+              .originalName("profile.jpg")
+              .storedPath("prod/profiles/images/uuid-123.jpg")
+              .fileSize(1024L * 1024L)
+              .build();
 
       given(uploadRepository.findActiveByPublicId(7321847264891904001L))
           .willReturn(Optional.of(upload));
@@ -323,16 +317,17 @@ class UploadServiceTest {
     @DisplayName("성공: 본인 파일 삭제 (Soft Delete)")
     void deleteUpload_success() {
       // given
-      var upload = Upload.builder()
-          .id(1L)
-          .publicId(7321847264891904001L)
-          .uploaderId(100L)
-          .fileType(FileType.IMAGE)
-          .mimeType("image/jpeg")
-          .originalName("profile.jpg")
-          .storedPath("prod/profiles/images/uuid-123.jpg")
-          .fileSize(1024L * 1024L)
-          .build();
+      var upload =
+          Upload.builder()
+              .id(1L)
+              .publicId(7321847264891904001L)
+              .uploaderId(100L)
+              .fileType(FileType.IMAGE)
+              .mimeType("image/jpeg")
+              .originalName("profile.jpg")
+              .storedPath("prod/profiles/images/uuid-123.jpg")
+              .fileSize(1024L * 1024L)
+              .build();
 
       given(uploadRepository.findActiveByPublicId(7321847264891904001L))
           .willReturn(Optional.of(upload));
@@ -350,16 +345,17 @@ class UploadServiceTest {
     @DisplayName("실패: 다른 사용자의 파일 삭제 시도")
     void deleteUpload_notOwner_fails() {
       // given
-      var upload = Upload.builder()
-          .id(1L)
-          .publicId(7321847264891904001L)
-          .uploaderId(100L) // 원래 업로더
-          .fileType(FileType.IMAGE)
-          .mimeType("image/jpeg")
-          .originalName("profile.jpg")
-          .storedPath("prod/profiles/images/uuid-123.jpg")
-          .fileSize(1024L * 1024L)
-          .build();
+      var upload =
+          Upload.builder()
+              .id(1L)
+              .publicId(7321847264891904001L)
+              .uploaderId(100L) // 원래 업로더
+              .fileType(FileType.IMAGE)
+              .mimeType("image/jpeg")
+              .originalName("profile.jpg")
+              .storedPath("prod/profiles/images/uuid-123.jpg")
+              .fileSize(1024L * 1024L)
+              .build();
 
       given(uploadRepository.findActiveByPublicId(7321847264891904001L))
           .willReturn(Optional.of(upload));

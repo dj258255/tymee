@@ -17,15 +17,15 @@ class UploadTest {
     @DisplayName("성공: 이미지 업로드 생성")
     void create_image_success() {
       // when
-      var upload = Upload.create(
-          7321847264891904001L,
-          100L,
-          "image/jpeg",
-          "profile.jpg",
-          "prod/profiles/images/uuid-123.jpg",
-          1024L * 1024L,
-          null
-      );
+      var upload =
+          Upload.create(
+              7321847264891904001L,
+              100L,
+              "image/jpeg",
+              "profile.jpg",
+              "prod/profiles/images/uuid-123.jpg",
+              1024L * 1024L,
+              null);
 
       // then
       assertThat(upload.getPublicId()).isEqualTo(7321847264891904001L);
@@ -44,15 +44,16 @@ class UploadTest {
     @DisplayName("성공: 비디오 업로드 생성 (duration 포함)")
     void create_video_withDuration() {
       // when
-      var upload = Upload.create(
-          7321847264891904002L,
-          100L,
-          "video/mp4",
-          "video.mp4",
-          "prod/posts/videos/uuid-456.mp4",
-          50L * 1024L * 1024L,
-          120 // 2분
-      );
+      var upload =
+          Upload.create(
+              7321847264891904002L,
+              100L,
+              "video/mp4",
+              "video.mp4",
+              "prod/posts/videos/uuid-456.mp4",
+              50L * 1024L * 1024L,
+              120 // 2분
+              );
 
       // then
       assertThat(upload.getFileType()).isEqualTo(FileType.VIDEO);
@@ -64,15 +65,16 @@ class UploadTest {
     @DisplayName("성공: 오디오 업로드 생성")
     void create_audio_success() {
       // when
-      var upload = Upload.create(
-          7321847264891904003L,
-          100L,
-          "audio/mpeg",
-          "music.mp3",
-          "prod/chat/audios/uuid-789.mp3",
-          5L * 1024L * 1024L,
-          180 // 3분
-      );
+      var upload =
+          Upload.create(
+              7321847264891904003L,
+              100L,
+              "audio/mpeg",
+              "music.mp3",
+              "prod/chat/audios/uuid-789.mp3",
+              5L * 1024L * 1024L,
+              180 // 3분
+              );
 
       // then
       assertThat(upload.getFileType()).isEqualTo(FileType.AUDIO);
@@ -124,9 +126,7 @@ class UploadTest {
     @Test
     @DisplayName("duration이 있으면 hasMediaDuration true")
     void hasMediaDuration_withDuration_true() {
-      var upload = Upload.create(
-          1L, 100L, "video/mp4", "video.mp4", "path", 1024L, 60
-      );
+      var upload = Upload.create(1L, 100L, "video/mp4", "video.mp4", "path", 1024L, 60);
 
       assertThat(upload.hasMediaDuration()).isTrue();
     }
@@ -134,9 +134,7 @@ class UploadTest {
     @Test
     @DisplayName("duration이 null이면 hasMediaDuration false")
     void hasMediaDuration_nullDuration_false() {
-      var upload = Upload.create(
-          1L, 100L, "image/jpeg", "image.jpg", "path", 1024L, null
-      );
+      var upload = Upload.create(1L, 100L, "image/jpeg", "image.jpg", "path", 1024L, null);
 
       assertThat(upload.hasMediaDuration()).isFalse();
     }
@@ -144,9 +142,7 @@ class UploadTest {
     @Test
     @DisplayName("duration이 0이면 hasMediaDuration false")
     void hasMediaDuration_zeroDuration_false() {
-      var upload = Upload.create(
-          1L, 100L, "video/mp4", "video.mp4", "path", 1024L, 0
-      );
+      var upload = Upload.create(1L, 100L, "video/mp4", "video.mp4", "path", 1024L, 0);
 
       assertThat(upload.hasMediaDuration()).isFalse();
     }
@@ -154,9 +150,7 @@ class UploadTest {
     @Test
     @DisplayName("duration이 음수면 hasMediaDuration false")
     void hasMediaDuration_negativeDuration_false() {
-      var upload = Upload.create(
-          1L, 100L, "video/mp4", "video.mp4", "path", 1024L, -1
-      );
+      var upload = Upload.create(1L, 100L, "video/mp4", "video.mp4", "path", 1024L, -1);
 
       assertThat(upload.hasMediaDuration()).isFalse();
     }
@@ -198,13 +192,6 @@ class UploadTest {
 
   private Upload createUpload(String mimeType) {
     return Upload.create(
-        7321847264891904001L,
-        100L,
-        mimeType,
-        "test-file",
-        "prod/test/path",
-        1024L,
-        null
-    );
+        7321847264891904001L, 100L, mimeType, "test-file", "prod/test/path", 1024L, null);
   }
 }

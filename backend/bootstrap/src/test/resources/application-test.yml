@@ -39,4 +39,5 @@ cloudflare:
     access-key-id: test-access-key
     secret-access-key: test-secret-key
     bucket-name: test-bucket
+    path-prefix: test
     public-url: https://test-cdn.example.com

@@ -1,6 +1,7 @@
 package io.github.beom.upload.service;
 
 import io.github.beom.upload.domain.FileType;
+import io.github.beom.upload.domain.UploadCategory;
 import java.time.Duration;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -30,20 +31,24 @@ public class R2StorageService {
   @Value("${cloudflare.r2.bucket-name}")
   private String bucketName;
 
+  @Value("${cloudflare.r2.path-prefix:local}")
+  private String pathPrefix;
+
   @Value("${cloudflare.r2.public-url:}")
   private String publicUrl;
 
   /**
    * 업로드용 Presigned URL 생성.
    *
+   * @param category 업로드 용도
    * @param fileType 파일 타입
    * @param mimeType MIME 타입
    * @param originalFileName 원본 파일명
    * @return Presigned URL 정보
    */
   public PresignedUrlResult generateUploadUrl(
-      FileType fileType, String mimeType, String originalFileName) {
-    String storedPath = generateStoredPath(fileType, originalFileName);
+      UploadCategory category, FileType fileType, String mimeType, String originalFileName) {
+    String storedPath = generateStoredPath(category, fileType, originalFileName);
 
     PutObjectPresignRequest presignRequest =
         PutObjectPresignRequest.builder()
@@ -121,10 +126,13 @@ public class R2StorageService {
     s3Client.deleteObject(deleteRequest);
   }
 
-  private String generateStoredPath(FileType fileType, String originalFileName) {
+  private String generateStoredPath(
+      UploadCategory category, FileType fileType, String originalFileName) {
     String extension = extractExtension(originalFileName);
     String uuid = UUID.randomUUID().toString();
-    return fileType.getCode() + "s/" + uuid + extension;
+    // 구조: {env}/{category}/{fileType}s/{uuid}.{ext}
+    // 예: prod/profiles/images/abc-123.jpg, staging/posts/videos/def-456.mp4
+    return pathPrefix + "/" + category.getPath() + "/" + fileType.getCode() + "s/" + uuid + extension;
   }
 
   private String extractExtension(String fileName) {

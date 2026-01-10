@@ -37,7 +37,8 @@ public class UploadService {
 
     FileType fileType = FileType.fromMimeType(request.mimeType());
     PresignedUrlResult result =
-        r2StorageService.generateUploadUrl(fileType, request.mimeType(), request.fileName());
+        r2StorageService.generateUploadUrl(
+            request.category(), fileType, request.mimeType(), request.fileName());
 
     long publicId = snowflakeIdGenerator.nextId();
 

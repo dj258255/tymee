@@ -28,6 +28,10 @@ dependencies {
 
     // Image Processing
     implementation(libs.thumbnailator)
+
+    // Test
+    testImplementation(libs.spring.boot.starter.test)
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 dependencyManagement {

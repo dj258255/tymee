@@ -35,6 +35,8 @@ include("core")
 include("user")
 include("auth")
 include("upload")
+include("category")
+include("timeblock")
 
 // Bootstrap module (실행 진입점)
 include("bootstrap")

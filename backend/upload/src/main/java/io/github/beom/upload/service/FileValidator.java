@@ -15,7 +15,14 @@ public class FileValidator {
   private static final long AUDIO_MAX_SIZE = 50 * 1024 * 1024; // 50MB
 
   private static final Set<String> ALLOWED_IMAGE_TYPES =
-      Set.of("image/jpeg", "image/png", "image/gif", "image/webp", "image/heic", "image/heif");
+      Set.of(
+          "image/jpeg",
+          "image/jpg",
+          "image/png",
+          "image/gif",
+          "image/webp",
+          "image/heic",
+          "image/heif");
 
   private static final Set<String> ALLOWED_VIDEO_TYPES =
       Set.of("video/mp4", "video/quicktime", "video/webm", "video/x-m4v");

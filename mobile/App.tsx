@@ -5,6 +5,7 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {InteractionManager, ActivityIndicator, View} from 'react-native';
 import {useTranslation} from 'react-i18next';
+import Toast from 'react-native-toast-message';
 
 // Import i18n
 import './src/i18n';
@@ -193,6 +194,7 @@ function App(): React.JSX.Element {
           />
         </Stack.Navigator>
       </NavigationContainer>
+      <Toast />
     </GestureHandlerRootView>
   );
 }

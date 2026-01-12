@@ -20,6 +20,14 @@ import {checkNickname} from '../services/authService';
 import {safeGetColorScheme, safeAddAppearanceListener} from '../utils/appearance';
 import ProfileCard, {CARD_FRAMES, CardFrameType, AVATAR_FRAME_DATA} from '../components/ProfileCard';
 import {sp, hp, fp, iconSize} from '../utils/responsive';
+import {
+  pickImageFromGallery,
+  takePhoto,
+  uploadProfileImage,
+  createUploadController,
+  MAX_FILE_SIZE_MB,
+  type UploadController,
+} from '../services/uploadService';
 
 // UTF-8 바이트 길이 계산 (한글 3바이트, 영문/숫자 1바이트)
 const getByteLength = (str: string): number => {
@@ -147,16 +155,109 @@ const ProfileScreen: React.FC<{onBack: () => void}> = ({onBack}) => {
   const [isSaving, setIsSaving] = useState(false);
   const [isCheckingNickname, setIsCheckingNickname] = useState(false);
   const [nicknameStatus, setNicknameStatus] = useState<'idle' | 'available' | 'taken' | 'same' | 'invalid'>('idle');
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadController, setUploadController] = useState<UploadController | null>(null);
+  const [profileImageUrl, setProfileImageUrl] = useState<string | undefined>(user?.profileImageUrl);
 
-  // user가 변경되면 닉네임, 자기소개 업데이트
+  // user가 변경되면 닉네임, 자기소개, 프로필 이미지 업데이트
   useEffect(() => {
     if (user) {
       setNickname(user.nickname || '타이미유저');
       setTempNickname(user.nickname || '타이미유저');
       setBio(user.bio || '');
       setTempBio(user.bio || '');
+      setProfileImageUrl(user.profileImageUrl);
     }
   }, [user]);
+
+  // 갤러리에서 프로필 사진 선택 및 업로드
+  // 업로드 취소 핸들러
+  const handleCancelUpload = () => {
+    if (uploadController) {
+      uploadController.abort();
+      setUploadController(null);
+      setIsUploadingPhoto(false);
+      setUploadProgress(0);
+    }
+  };
+
+  const handlePickFromGallery = async () => {
+    try {
+      const asset = await pickImageFromGallery();
+      if (!asset?.uri) return;
+
+      // 업로드 컨트롤러 생성
+      const controller = createUploadController();
+      setUploadController(controller);
+      setIsUploadingPhoto(true);
+      setUploadProgress(0);
+      setShowProfilePhotoModal(false);
+
+      const uploadResult = await uploadProfileImage(
+        asset.uri,
+        asset.type || 'image/jpeg',
+        {
+          onProgress: setUploadProgress,
+          controller,
+        },
+      );
+
+      // 프로필 업데이트 (publicId를 profileImageId로 전송)
+      await updateProfile({profileImageId: uploadResult.publicId});
+      setProfileImageUrl(uploadResult.url);
+
+      Alert.alert('성공', '프로필 사진이 변경되었습니다.');
+    } catch (error: any) {
+      if (error.message !== '업로드가 취소되었습니다.') {
+        console.error('Profile photo upload failed:', error);
+        Alert.alert('오류', error.message || '프로필 사진 업로드에 실패했습니다.');
+      }
+    } finally {
+      setIsUploadingPhoto(false);
+      setUploadProgress(0);
+      setUploadController(null);
+    }
+  };
+
+  // 카메라로 프로필 사진 촬영 및 업로드
+  const handleTakePhoto = async () => {
+    try {
+      const asset = await takePhoto();
+      if (!asset?.uri) return;
+
+      // 업로드 컨트롤러 생성
+      const controller = createUploadController();
+      setUploadController(controller);
+      setIsUploadingPhoto(true);
+      setUploadProgress(0);
+      setShowProfilePhotoModal(false);
+
+      const uploadResult = await uploadProfileImage(
+        asset.uri,
+        asset.type || 'image/jpeg',
+        {
+          onProgress: setUploadProgress,
+          controller,
+        },
+      );
+
+      // 프로필 업데이트 (publicId를 profileImageId로 전송)
+      await updateProfile({profileImageId: uploadResult.publicId});
+      setProfileImageUrl(uploadResult.url);
+
+      Alert.alert('성공', '프로필 사진이 변경되었습니다.');
+    } catch (error: any) {
+      if (error.message !== '업로드가 취소되었습니다.') {
+        console.error('Profile photo upload failed:', error);
+        Alert.alert('오류', error.message || '프로필 사진 업로드에 실패했습니다.');
+      }
+    } finally {
+      setIsUploadingPhoto(false);
+      setUploadProgress(0);
+      setUploadController(null);
+    }
+  };
 
   useEffect(() => {
     const task = InteractionManager.runAfterInteractions(() => {
@@ -382,7 +483,7 @@ const ProfileScreen: React.FC<{onBack: () => void}> = ({onBack}) => {
                 level: user?.level || 1,
                 tier: getTierDisplayName(user?.tier),
                 bio: bio,
-                profileImageUrl: undefined, // TODO: 프로필 이미지 URL 연동
+                profileImageUrl: profileImageUrl,
                 cardFrame: selectedFrame,
                 badges: getSelectedBadgesList().map((b: any) => ({id: b.id, icon: b.icon, color: b.color})),
               }}
@@ -704,7 +805,7 @@ const ProfileScreen: React.FC<{onBack: () => void}> = ({onBack}) => {
         </View>
       </Modal>
 
-      {/* Profile Photo Modal - 중앙 모달 */}
+      {/* Profile Photo Modal - 중앙 모달 (개선된 UI) */}
       <Modal
         visible={showProfilePhotoModal}
         transparent
@@ -716,33 +817,106 @@ const ProfileScreen: React.FC<{onBack: () => void}> = ({onBack}) => {
             activeOpacity={1}
             onPress={() => setShowProfilePhotoModal(false)}
           />
-          <View style={[styles.centerModalContent, {backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF'}]}>
-            <View style={styles.centerModalHeader}>
-              <Text style={[styles.centerModalTitle, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
-                {t('profile.profilePhoto')}
+          <View style={[styles.photoModalContent, {backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF'}]}>
+            {/* 헤더 */}
+            <View style={styles.photoModalHeader}>
+              <Text style={[styles.photoModalTitle, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
+                프로필 사진
               </Text>
-              <TouchableOpacity onPress={() => setShowProfilePhotoModal(false)} style={styles.centerModalCloseBtn}>
-                <Icon name="close" size={iconSize(22)} color={isDark ? '#AAAAAA' : '#666666'} />
+              <TouchableOpacity onPress={() => setShowProfilePhotoModal(false)} style={styles.photoModalCloseBtn}>
+                <Icon name="close" size={iconSize(24)} color={isDark ? '#AAAAAA' : '#666666'} />
               </TouchableOpacity>
             </View>
-            <View style={{padding: sp(16)}}>
+
+            {/* 안내 문구 */}
+            <View style={[styles.photoModalInfo, {backgroundColor: isDark ? '#2A2A2A' : '#F0F7FF'}]}>
+              <Icon name="information-circle-outline" size={iconSize(18)} color={isDark ? '#64B5F6' : '#1976D2'} />
+              <Text style={[styles.photoModalInfoText, {color: isDark ? '#AAAAAA' : '#666666'}]}>
+                최대 {MAX_FILE_SIZE_MB}MB의 이미지를 업로드할 수 있습니다.{'\n'}
+                JPEG, PNG, GIF, WebP 형식을 지원합니다.
+              </Text>
+            </View>
+
+            {/* 옵션 버튼들 */}
+            <View style={styles.photoModalOptions}>
               <TouchableOpacity
-                style={[styles.centerModalOption, {backgroundColor: isDark ? '#2A2A2A' : '#F5F5F5'}]}
-                disabled>
-                <Icon name="camera-outline" size={iconSize(22)} color={isDark ? '#FFFFFF' : '#1A1A1A'} />
-                <Text style={[styles.centerModalOptionText, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
+                style={[
+                  styles.photoModalOptionBtn,
+                  {backgroundColor: isDark ? '#2A2A2A' : '#F5F5F5'},
+                ]}
+                onPress={handleTakePhoto}
+                disabled={isUploadingPhoto}>
+                <View style={[styles.photoModalOptionIcon, {backgroundColor: isDark ? '#3A3A3A' : '#E8E8E8'}]}>
+                  <Icon name="camera" size={iconSize(28)} color="#007AFF" />
+                </View>
+                <Text style={[styles.photoModalOptionTitle, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
                   카메라로 촬영
                 </Text>
+                <Text style={[styles.photoModalOptionDesc, {color: isDark ? '#888888' : '#999999'}]}>
+                  새로운 사진을 촬영합니다
+                </Text>
               </TouchableOpacity>
+
               <TouchableOpacity
-                style={[styles.centerModalOption, {backgroundColor: isDark ? '#2A2A2A' : '#F5F5F5'}]}
-                disabled>
-                <Icon name="images-outline" size={iconSize(22)} color={isDark ? '#FFFFFF' : '#1A1A1A'} />
-                <Text style={[styles.centerModalOptionText, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
+                style={[
+                  styles.photoModalOptionBtn,
+                  {backgroundColor: isDark ? '#2A2A2A' : '#F5F5F5'},
+                ]}
+                onPress={handlePickFromGallery}
+                disabled={isUploadingPhoto}>
+                <View style={[styles.photoModalOptionIcon, {backgroundColor: isDark ? '#3A3A3A' : '#E8E8E8'}]}>
+                  <Icon name="images" size={iconSize(28)} color="#34C759" />
+                </View>
+                <Text style={[styles.photoModalOptionTitle, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
                   갤러리에서 선택
+                </Text>
+                <Text style={[styles.photoModalOptionDesc, {color: isDark ? '#888888' : '#999999'}]}>
+                  저장된 사진 중에서 선택합니다
                 </Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Upload Progress Modal - 업로드 진행률 모달 */}
+      <Modal
+        visible={isUploadingPhoto}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCancelUpload}>
+        <View style={styles.centerModalOverlay}>
+          <View style={[styles.uploadProgressModal, {backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF'}]}>
+            <Text style={[styles.uploadProgressTitle, {color: isDark ? '#FFFFFF' : '#1A1A1A'}]}>
+              프로필 사진 업로드 중...
+            </Text>
+
+            {/* 진행률 바 */}
+            <View style={[styles.uploadProgressBarContainer, {backgroundColor: isDark ? '#3A3A3A' : '#E8E8E8'}]}>
+              <View
+                style={[
+                  styles.uploadProgressBar,
+                  {
+                    width: `${uploadProgress}%`,
+                    backgroundColor: '#007AFF',
+                  },
+                ]}
+              />
+            </View>
+
+            {/* 진행률 텍스트 */}
+            <Text style={[styles.uploadProgressText, {color: isDark ? '#AAAAAA' : '#666666'}]}>
+              {uploadProgress}%
+            </Text>
+
+            {/* 취소 버튼 */}
+            <TouchableOpacity
+              style={[styles.uploadCancelBtn, {backgroundColor: isDark ? '#3A3A3A' : '#F5F5F5'}]}
+              onPress={handleCancelUpload}>
+              <Text style={[styles.uploadCancelText, {color: isDark ? '#FF6B6B' : '#FF3B30'}]}>
+                취소
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -951,7 +1125,7 @@ const ProfileScreen: React.FC<{onBack: () => void}> = ({onBack}) => {
                           level: user?.level || 1,
                           tier: getTierDisplayName(user?.tier),
                           bio: bio,
-                          profileImageUrl: undefined,
+                          profileImageUrl: profileImageUrl,
                           cardFrame: previewFrameKey,
                           badges: selectedBadges.map(id => {
                             const badge = BADGES.find(b => b.id === id);
@@ -2669,6 +2843,109 @@ const getStyles = (isDark: boolean) =>
     },
     currentBadge: {
       marginLeft: sp(8),
+    },
+    // 프로필 사진 모달 (개선된 UI)
+    photoModalContent: {
+      width: '85%',
+      maxWidth: sp(340),
+      backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF',
+      borderRadius: sp(20),
+      overflow: 'hidden',
+    },
+    photoModalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: sp(20),
+      paddingTop: sp(20),
+      paddingBottom: sp(12),
+    },
+    photoModalTitle: {
+      fontSize: fp(18),
+      fontWeight: '700',
+    },
+    photoModalCloseBtn: {
+      padding: sp(4),
+    },
+    photoModalInfo: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      paddingHorizontal: sp(16),
+      paddingVertical: sp(12),
+      marginHorizontal: sp(16),
+      borderRadius: sp(12),
+      gap: sp(10),
+    },
+    photoModalInfoText: {
+      flex: 1,
+      fontSize: fp(12),
+      lineHeight: fp(18),
+    },
+    photoModalOptions: {
+      padding: sp(16),
+      gap: sp(12),
+    },
+    photoModalOptionBtn: {
+      flexDirection: 'column',
+      alignItems: 'center',
+      paddingVertical: sp(20),
+      paddingHorizontal: sp(16),
+      borderRadius: sp(16),
+    },
+    photoModalOptionIcon: {
+      width: sp(56),
+      height: sp(56),
+      borderRadius: sp(28),
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: sp(10),
+    },
+    photoModalOptionTitle: {
+      fontSize: fp(15),
+      fontWeight: '700',
+      marginBottom: sp(4),
+    },
+    photoModalOptionDesc: {
+      fontSize: fp(12),
+      fontWeight: '400',
+    },
+    // 업로드 진행률 모달
+    uploadProgressModal: {
+      width: '80%',
+      maxWidth: sp(300),
+      padding: sp(24),
+      borderRadius: sp(20),
+      alignItems: 'center',
+    },
+    uploadProgressTitle: {
+      fontSize: fp(16),
+      fontWeight: '700',
+      marginBottom: sp(20),
+    },
+    uploadProgressBarContainer: {
+      width: '100%',
+      height: hp(8),
+      borderRadius: sp(4),
+      overflow: 'hidden',
+      marginBottom: sp(12),
+    },
+    uploadProgressBar: {
+      height: '100%',
+      borderRadius: sp(4),
+    },
+    uploadProgressText: {
+      fontSize: fp(14),
+      fontWeight: '600',
+      marginBottom: sp(20),
+    },
+    uploadCancelBtn: {
+      paddingHorizontal: sp(24),
+      paddingVertical: sp(10),
+      borderRadius: sp(8),
+    },
+    uploadCancelText: {
+      fontSize: fp(14),
+      fontWeight: '600',
     },
   });
 

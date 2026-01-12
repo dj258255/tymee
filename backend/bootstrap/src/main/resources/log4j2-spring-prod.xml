@@ -2,7 +2,7 @@
 <Configuration status="WARN" monitorInterval="60">
     <Properties>
         <Property name="LOG_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n</Property>
-        <Property name="LOG_PATH">${sys:LOG_PATH:-/var/log/tymee}</Property>
+        <Property name="LOG_PATH">${env:LOG_PATH}</Property>
         <Property name="APP_NAME">tymee</Property>
     </Properties>
 

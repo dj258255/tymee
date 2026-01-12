@@ -49,7 +49,7 @@ export interface UserInfo {
   id: number;
   email: string | null;
   nickname: string;
-  profileImageId: number | null;
+  profileImageUrl: string | null;
   bio: string | null;
   level: number | null;
   tier: string;
@@ -162,6 +162,7 @@ export const isAuthenticated = async (): Promise<boolean> => {
 export interface UpdateProfileRequest {
   nickname?: string;
   bio?: string;
+  profileImageId?: number;
 }
 
 /**

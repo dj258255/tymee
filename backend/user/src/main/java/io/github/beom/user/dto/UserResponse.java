@@ -9,7 +9,7 @@ public record UserResponse(
     Long id,
     String email,
     String nickname,
-    Long profileImageId,
+    String profileImageUrl,
     String bio,
     Integer level,
     String tier,

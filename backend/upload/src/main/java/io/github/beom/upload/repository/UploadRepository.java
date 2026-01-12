@@ -3,6 +3,7 @@ package io.github.beom.upload.repository;
 import io.github.beom.upload.domain.FileType;
 import io.github.beom.upload.domain.Upload;
 import io.github.beom.upload.entity.UploadEntity;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,13 @@ public class UploadRepository {
 
   public List<Upload> findAllActiveByUploaderIdAndFileType(Long uploaderId, FileType fileType) {
     return uploadJpaRepository.findAllActiveByUploaderIdAndFileType(uploaderId, fileType).stream()
+        .map(UploadEntity::toDomain)
+        .toList();
+  }
+
+  /** 삭제된 지 특정 기간이 지난 파일 조회 (Hard Delete 대상). */
+  public List<Upload> findDeletedBefore(LocalDateTime before) {
+    return uploadJpaRepository.findDeletedBefore(before).stream()
         .map(UploadEntity::toDomain)
         .toList();
   }

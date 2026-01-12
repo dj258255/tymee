@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Platform} from 'react-native';
 import Config from 'react-native-config';
+import {showErrorToast} from '../utils/toast';
 
 // API Base URL (.env의 API_URL 사용)
 const API_BASE_URL = `${Config.API_URL}/api/v1.0`;
@@ -47,9 +48,15 @@ export class ApiError extends Error {
     public status: number,
     public code: string,
     message: string,
+    showToast = true,
   ) {
     super(message);
     this.name = 'ApiError';
+
+    // 전역 에러 토스트 표시 (401은 로그인 화면으로 이동하므로 제외)
+    if (showToast && status !== 401) {
+      showErrorToast(message);
+    }
   }
 }
 

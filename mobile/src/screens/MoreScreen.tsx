@@ -99,7 +99,7 @@ const MoreScreen: React.FC = () => {
     level: user.level || 1,
     tier: getTierDisplayName(user.tier),
     bio: user.bio || undefined,
-    profileImageUrl: undefined, // TODO: 프로필 이미지 URL
+    profileImageUrl: user.profileImageUrl || undefined,
     cardFrame: 'default' as const,
   } : undefined;
 

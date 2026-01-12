@@ -1,5 +1,6 @@
 package io.github.beom.user.controller;
 
+import io.github.beom.core.file.FileUrlResolver;
 import io.github.beom.core.security.CurrentUser;
 import io.github.beom.core.security.UserPrincipal;
 import io.github.beom.core.web.ApiResponse;
@@ -34,6 +35,7 @@ public class UserController {
 
   private final UserService userService;
   private final UserMapper userMapper;
+  private final FileUrlResolver fileUrlResolver;
 
   /** GET /users/{id} - 내 정보 조회 (전체 필드). 본인만 조회 가능. */
   @Operation(summary = "내 정보 조회", description = "본인의 전체 정보를 조회합니다. 인증 필요, 본인만 조회 가능.")
@@ -44,7 +46,8 @@ public class UserController {
       @Parameter(description = "사용자 ID", example = "1") @PathVariable Long id) {
     validateOwner(currentUser, id);
     User user = userService.getById(id);
-    return ApiResponse.success(userMapper.toResponse(user));
+    String profileImageUrl = resolveProfileImageUrl(user.getProfileImageId());
+    return ApiResponse.success(userMapper.toResponse(user, profileImageUrl));
   }
 
   /** GET /users/{id}/profile - 타인 프로필 조회 (공개 필드만) */
@@ -56,8 +59,10 @@ public class UserController {
     return ApiResponse.success(userMapper.toProfileResponse(user));
   }
 
-  /** PATCH /users/{id} - 프로필 수정. 본인만 수정 가능. */
-  @Operation(summary = "프로필 수정", description = "본인의 프로필(닉네임, 소개글)을 수정합니다. 인증 필요, 본인만 수정 가능.")
+  /** PATCH /users/{id} - 프로필 수정. 본인만 수정 가능. PATCH이므로 제공된 필드만 업데이트됨 (null인 필드는 무시). */
+  @Operation(
+      summary = "프로필 수정",
+      description = "본인의 프로필을 수정합니다. PATCH 요청이므로 변경할 필드만 전송하면 됩니다. " + "인증 필요, 본인만 수정 가능.")
   @PatchMapping("/{id}")
   @PreAuthorize("isAuthenticated()")
   public ApiResponse<UserResponse> updateProfile(
@@ -65,8 +70,10 @@ public class UserController {
       @Parameter(description = "사용자 ID", example = "1") @PathVariable Long id,
       @Valid @RequestBody UpdateProfileRequest request) {
     validateOwner(currentUser, id);
-    User updated = userService.updateProfile(id, request.nickname(), request.bio());
-    return ApiResponse.success(userMapper.toResponse(updated));
+    User updated =
+        userService.updateProfile(id, request.nickname(), request.bio(), request.profileImageId());
+    String profileImageUrl = resolveProfileImageUrl(updated.getProfileImageId());
+    return ApiResponse.success(userMapper.toResponse(updated, profileImageUrl));
   }
 
   /** DELETE /users/{id} - 회원 탈퇴 (소프트 삭제). 본인만 탈퇴 가능. */
@@ -93,5 +100,12 @@ public class UserController {
     if (!currentUser.userId().equals(targetUserId)) {
       throw new AccessDeniedException("본인의 정보만 접근할 수 있습니다");
     }
+  }
+
+  private String resolveProfileImageUrl(Long profileImageId) {
+    if (profileImageId == null) {
+      return null;
+    }
+    return fileUrlResolver.resolveUrl(profileImageId).orElse(null);
   }
 }

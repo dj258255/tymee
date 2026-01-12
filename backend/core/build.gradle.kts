@@ -32,8 +32,8 @@ dependencies {
     // Redis
     implementation(libs.spring.boot.starter.data.redis)
 
-    // Swagger Annotations (API 문서화) - api로 선언하여 의존 모듈에서 사용 가능
-    api(libs.swagger.annotations)
+    // Swagger/OpenAPI (API 문서화) - springdoc이 swagger-annotations를 전이 의존성으로 가져옴
+    api(libs.springdoc.openapi.starter.webmvc.ui)
 }
 
 dependencyManagement {

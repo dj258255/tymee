@@ -1,5 +1,6 @@
 package io.github.beom.user.service;
 
+import io.github.beom.core.event.ProfileImageChangedEvent;
 import io.github.beom.core.exception.BusinessException;
 import io.github.beom.core.exception.EntityNotFoundException;
 import io.github.beom.core.exception.ErrorCode;
@@ -7,6 +8,7 @@ import io.github.beom.user.domain.User;
 import io.github.beom.user.domain.vo.Nickname;
 import io.github.beom.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
   private final UserRepository userRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   /** ID로 활성 사용자 조회. 탈퇴한 사용자는 조회되지 않는다. */
   public User getById(Long id) {
@@ -45,17 +48,35 @@ public class UserService {
     return userRepository.existsByNickname(nickname);
   }
 
-  /** 프로필 수정. 닉네임 변경 시 중복 검증한다. */
+  /**
+   * 프로필 수정. PATCH 방식으로 null이 아닌 필드만 업데이트된다.
+   *
+   * @param userId 사용자 ID
+   * @param nickname 닉네임 (null이면 변경 안함)
+   * @param bio 자기소개 (null이면 변경 안함)
+   * @param profileImageId 프로필 이미지 ID (null이면 변경 안함)
+   */
   @Transactional
-  public User updateProfile(Long userId, String nickname, String bio) {
+  public User updateProfile(Long userId, String nickname, String bio, Long profileImageId) {
     User user = getById(userId);
 
-    // 닉네임이 변경되는 경우에만 중복 검사
-    if (!user.getNickname().value().equals(nickname)) {
+    // 닉네임이 제공되고 변경되는 경우에만 중복 검사
+    if (nickname != null && !nickname.isBlank() && !user.getNickname().value().equals(nickname)) {
       validateDuplicateNickname(nickname);
+      user.updateProfile(new Nickname(nickname), bio != null ? bio : user.getBio());
+    } else if (bio != null) {
+      user.updateProfile(user.getNickname(), bio);
     }
 
-    user.updateProfile(new Nickname(nickname), bio);
+    // 프로필 이미지 업데이트 (이전 이미지가 있으면 이벤트 발행하여 soft delete)
+    if (profileImageId != null) {
+      Long oldProfileImageId = user.getProfileImageId();
+      if (oldProfileImageId != null && !oldProfileImageId.equals(profileImageId)) {
+        eventPublisher.publishEvent(new ProfileImageChangedEvent(oldProfileImageId));
+      }
+      user.updateProfileImage(profileImageId);
+    }
+
     return userRepository.save(user);
   }
 

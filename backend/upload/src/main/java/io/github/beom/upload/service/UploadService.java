@@ -24,7 +24,6 @@ public class UploadService {
   private final R2StorageService r2StorageService;
   private final FileValidator fileValidator;
   private final SnowflakeIdGenerator snowflakeIdGenerator;
-  private final ImageResizeService imageResizeService;
 
   /**
    * Presigned URL 발급.
@@ -71,14 +70,9 @@ public class UploadService {
 
     Upload savedUpload = uploadRepository.save(upload);
 
-    if (savedUpload.isImage()) {
-      imageResizeService.createThumbnailAsync(savedUpload);
-    }
-
     String url = r2StorageService.generateDownloadUrl(savedUpload.getStoredPath());
-    String thumbnailUrl = savedUpload.isImage() ? getThumbnailUrl(savedUpload) : null;
 
-    return UploadResponse.from(savedUpload, url, thumbnailUrl);
+    return UploadResponse.from(savedUpload, url, null);
   }
 
   /**
@@ -95,9 +89,8 @@ public class UploadService {
             .orElseThrow(() -> new EntityNotFoundException(ErrorCode.FILE_NOT_FOUND));
 
     String url = r2StorageService.generateDownloadUrl(upload.getStoredPath());
-    String thumbnailUrl = upload.isImage() ? getThumbnailUrl(upload) : null;
 
-    return UploadResponse.from(upload, url, thumbnailUrl);
+    return UploadResponse.from(upload, url, null);
   }
 
   /**
@@ -121,11 +114,19 @@ public class UploadService {
     uploadRepository.save(upload);
   }
 
-  private String getThumbnailUrl(Upload upload) {
-    String thumbnailPath = imageResizeService.getThumbnailPath(upload.getStoredPath());
-    if (r2StorageService.fileExists(thumbnailPath)) {
-      return r2StorageService.generateDownloadUrl(thumbnailPath);
-    }
-    return null;
+  /**
+   * 파일 Soft Delete (내부용). 소유자 검증 없이 publicId로 삭제 마킹.
+   *
+   * @param publicId 파일 Public ID
+   */
+  @Transactional
+  public void softDeleteByPublicId(Long publicId) {
+    uploadRepository
+        .findActiveByPublicId(publicId)
+        .ifPresent(
+            upload -> {
+              upload.delete();
+              uploadRepository.save(upload);
+            });
   }
 }

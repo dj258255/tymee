@@ -34,7 +34,6 @@ class UploadServiceTest {
   @Mock private R2StorageService r2StorageService;
   @Mock private FileValidator fileValidator;
   @Mock private SnowflakeIdGenerator snowflakeIdGenerator;
-  @Mock private ImageResizeService imageResizeService;
 
   @InjectMocks private UploadService uploadService;
 
@@ -132,7 +131,7 @@ class UploadServiceTest {
   class CompleteUpload {
 
     @Test
-    @DisplayName("성공: 이미지 업로드 완료 - 썸네일 생성 트리거")
+    @DisplayName("성공: 이미지 업로드 완료")
     void completeUpload_image_success() {
       // given
       var request =
@@ -162,10 +161,6 @@ class UploadServiceTest {
               });
       given(r2StorageService.generateDownloadUrl(anyString()))
           .willReturn("https://cdn.example.com/image.jpg");
-      given(imageResizeService.getThumbnailPath(anyString()))
-          .willReturn("prod/profiles/images/uuid-123_thumb.jpg");
-      given(r2StorageService.fileExists("prod/profiles/images/uuid-123_thumb.jpg"))
-          .willReturn(false);
 
       // when
       var result = uploadService.completeUpload(100L, request);
@@ -174,13 +169,11 @@ class UploadServiceTest {
       assertThat(result.publicId()).isEqualTo(7321847264891904001L);
       assertThat(result.originalName()).isEqualTo("profile.jpg");
       assertThat(result.mimeType()).isEqualTo("image/jpeg");
-
-      verify(imageResizeService).createThumbnailAsync(any(Upload.class));
     }
 
     @Test
-    @DisplayName("성공: 비디오 업로드 완료 - 썸네일 생성 안함")
-    void completeUpload_video_noThumbnail() {
+    @DisplayName("성공: 비디오 업로드 완료")
+    void completeUpload_video_success() {
       // given
       var request =
           new UploadCompleteRequest(
@@ -218,8 +211,6 @@ class UploadServiceTest {
       // then
       assertThat(result.fileType()).isEqualTo(FileType.VIDEO);
       assertThat(result.duration()).isEqualTo(120);
-
-      verify(imageResizeService, never()).createThumbnailAsync(any(Upload.class));
     }
 
     @Test
@@ -269,12 +260,6 @@ class UploadServiceTest {
           .willReturn(Optional.of(upload));
       given(r2StorageService.generateDownloadUrl("prod/profiles/images/uuid-123.jpg"))
           .willReturn("https://cdn.example.com/image.jpg");
-      given(imageResizeService.getThumbnailPath("prod/profiles/images/uuid-123.jpg"))
-          .willReturn("prod/profiles/images/uuid-123_thumb.jpg");
-      given(r2StorageService.fileExists("prod/profiles/images/uuid-123_thumb.jpg"))
-          .willReturn(true);
-      given(r2StorageService.generateDownloadUrl("prod/profiles/images/uuid-123_thumb.jpg"))
-          .willReturn("https://cdn.example.com/thumb.jpg");
 
       // when
       var result = uploadService.getUpload(7321847264891904001L);
@@ -282,7 +267,6 @@ class UploadServiceTest {
       // then
       assertThat(result.publicId()).isEqualTo(7321847264891904001L);
       assertThat(result.url()).isEqualTo("https://cdn.example.com/image.jpg");
-      assertThat(result.thumbnailUrl()).isEqualTo("https://cdn.example.com/thumb.jpg");
     }
 
     @Test
@@ -376,6 +360,94 @@ class UploadServiceTest {
       // when & then
       assertThatThrownBy(() -> uploadService.deleteUpload(100L, 999L))
           .isInstanceOf(EntityNotFoundException.class);
+    }
+  }
+
+  @Nested
+  @DisplayName("내부용 Soft Delete (softDeleteByPublicId)")
+  class SoftDeleteByPublicId {
+
+    @Test
+    @DisplayName("성공: publicId로 파일 Soft Delete")
+    void softDeleteByPublicId_success() {
+      // given
+      var upload =
+          Upload.builder()
+              .id(1L)
+              .publicId(7321847264891904001L)
+              .uploaderId(100L)
+              .fileType(FileType.IMAGE)
+              .mimeType("image/jpeg")
+              .originalName("profile.jpg")
+              .storedPath("prod/profiles/images/uuid-123.jpg")
+              .fileSize(1024L * 1024L)
+              .build();
+
+      given(uploadRepository.findActiveByPublicId(7321847264891904001L))
+          .willReturn(Optional.of(upload));
+      given(uploadRepository.save(any(Upload.class)))
+          .willAnswer(invocation -> invocation.getArgument(0));
+
+      // when
+      uploadService.softDeleteByPublicId(7321847264891904001L);
+
+      // then
+      verify(uploadRepository).save(any(Upload.class));
+    }
+
+    @Test
+    @DisplayName("성공: 존재하지 않는 파일은 무시 (예외 발생 안함)")
+    void softDeleteByPublicId_notFound_noException() {
+      // given
+      given(uploadRepository.findActiveByPublicId(999L)).willReturn(Optional.empty());
+
+      // when - 예외가 발생하지 않아야 함
+      uploadService.softDeleteByPublicId(999L);
+
+      // then
+      verify(uploadRepository, never()).save(any(Upload.class));
+    }
+
+    @Test
+    @DisplayName("성공: 소유자 검증 없이 삭제 (내부용)")
+    void softDeleteByPublicId_noOwnerCheck() {
+      // given - 업로더가 100L인 파일
+      var upload =
+          Upload.builder()
+              .id(1L)
+              .publicId(7321847264891904001L)
+              .uploaderId(100L)
+              .fileType(FileType.IMAGE)
+              .mimeType("image/jpeg")
+              .originalName("profile.jpg")
+              .storedPath("prod/profiles/images/uuid-123.jpg")
+              .fileSize(1024L * 1024L)
+              .build();
+
+      given(uploadRepository.findActiveByPublicId(7321847264891904001L))
+          .willReturn(Optional.of(upload));
+      given(uploadRepository.save(any(Upload.class)))
+          .willAnswer(invocation -> invocation.getArgument(0));
+
+      // when - 소유자 ID를 전달하지 않음 (내부용 메서드)
+      uploadService.softDeleteByPublicId(7321847264891904001L);
+
+      // then - 소유자 검증 없이 삭제됨
+      verify(uploadRepository).save(any(Upload.class));
+    }
+
+    @Test
+    @DisplayName("성공: 이미 삭제된 파일은 조회되지 않음")
+    void softDeleteByPublicId_alreadyDeleted_notFound() {
+      // given - findActiveByPublicId는 deletedAt이 null인 것만 반환
+      given(uploadRepository.findActiveByPublicId(7321847264891904001L))
+          .willReturn(Optional.empty());
+
+      // when
+      uploadService.softDeleteByPublicId(7321847264891904001L);
+
+      // then - save 호출되지 않음
+      verify(uploadRepository, never()).save(any(Upload.class));
     }
   }
 }

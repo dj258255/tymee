@@ -41,7 +41,12 @@ public enum ErrorCode {
   FILE_SIZE_EXCEEDED(400, "F002", "파일 크기가 제한을 초과했습니다"),
   UNSUPPORTED_FILE_TYPE(400, "F003", "지원하지 않는 파일 형식입니다"),
   FILE_UPLOAD_FAILED(500, "F004", "파일 업로드에 실패했습니다"),
-  FILE_ALREADY_DELETED(400, "F005", "이미 삭제된 파일입니다");
+  FILE_ALREADY_DELETED(400, "F005", "이미 삭제된 파일입니다"),
+
+  // TimeBlock
+  TIME_BLOCK_NOT_FOUND(404, "T001", "타임블록을 찾을 수 없습니다"),
+  INVALID_TIME_RANGE(400, "T002", "종료 시간은 시작 시간 이후여야 합니다"),
+  SUBJECT_NOT_FOUND(404, "T003", "과목을 찾을 수 없습니다");
 
   private final int status;
   private final String code;

@@ -1,4 +1,4 @@
-package io.github.beom.user.domain.vo;
+package io.github.beom.timeblock.domain.vo;
 
 /**
  * 타임블록 상태.

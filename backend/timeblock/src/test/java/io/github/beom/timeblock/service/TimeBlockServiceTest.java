@@ -1,4 +1,4 @@
-package io.github.beom.user.service;
+package io.github.beom.timeblock.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -8,12 +8,12 @@ import static org.mockito.Mockito.verify;
 
 import io.github.beom.core.exception.BusinessException;
 import io.github.beom.core.exception.EntityNotFoundException;
-import io.github.beom.user.domain.TimeBlock;
-import io.github.beom.user.domain.vo.TimeBlockStatus;
-import io.github.beom.user.dto.TimeBlockCreateRequest;
-import io.github.beom.user.dto.TimeBlockResponse;
-import io.github.beom.user.dto.TimeBlockUpdateRequest;
-import io.github.beom.user.repository.TimeBlockRepository;
+import io.github.beom.timeblock.domain.TimeBlock;
+import io.github.beom.timeblock.domain.vo.TimeBlockStatus;
+import io.github.beom.timeblock.dto.TimeBlockCreateRequest;
+import io.github.beom.timeblock.dto.TimeBlockResponse;
+import io.github.beom.timeblock.dto.TimeBlockUpdateRequest;
+import io.github.beom.timeblock.repository.TimeBlockRepository;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;

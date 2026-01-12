@@ -14,6 +14,8 @@ dependencies {
     implementation(project(":user"))
     implementation(project(":auth"))
     implementation(project(":upload"))
+    implementation(project(":category"))
+    implementation(project(":timeblock"))
 
     // Spring Boot Starters
     implementation(libs.spring.boot.starter.web)

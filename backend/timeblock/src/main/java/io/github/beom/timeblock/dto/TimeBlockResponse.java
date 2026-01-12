@@ -1,6 +1,6 @@
-package io.github.beom.user.dto;
+package io.github.beom.timeblock.dto;
 
-import io.github.beom.user.domain.TimeBlock;
+import io.github.beom.timeblock.domain.TimeBlock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;

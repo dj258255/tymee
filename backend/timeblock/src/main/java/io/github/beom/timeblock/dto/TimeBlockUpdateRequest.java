@@ -1,4 +1,4 @@
-package io.github.beom.user.dto;
+package io.github.beom.timeblock.dto;
 
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;

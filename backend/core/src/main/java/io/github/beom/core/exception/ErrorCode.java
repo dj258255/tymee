@@ -46,7 +46,13 @@ public enum ErrorCode {
   // TimeBlock
   TIME_BLOCK_NOT_FOUND(404, "T001", "타임블록을 찾을 수 없습니다"),
   INVALID_TIME_RANGE(400, "T002", "종료 시간은 시작 시간 이후여야 합니다"),
-  SUBJECT_NOT_FOUND(404, "T003", "과목을 찾을 수 없습니다");
+  SUBJECT_NOT_FOUND(404, "T003", "과목을 찾을 수 없습니다"),
+
+  // Category
+  CATEGORY_NOT_FOUND(404, "CAT001", "카테고리를 찾을 수 없습니다"),
+  DUPLICATE_CATEGORY_NAME(409, "CAT002", "이미 존재하는 카테고리명입니다"),
+  INVALID_PARENT_CATEGORY(400, "CAT003", "유효하지 않은 상위 카테고리입니다"),
+  CIRCULAR_CATEGORY_REFERENCE(400, "CAT004", "순환 참조가 발생합니다");
 
   private final int status;
   private final String code;

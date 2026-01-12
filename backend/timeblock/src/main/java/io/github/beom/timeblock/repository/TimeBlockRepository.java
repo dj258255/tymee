@@ -1,7 +1,7 @@
-package io.github.beom.user.repository;
+package io.github.beom.timeblock.repository;
 
-import io.github.beom.user.domain.TimeBlock;
-import io.github.beom.user.entity.TimeBlockEntity;
+import io.github.beom.timeblock.domain.TimeBlock;
+import io.github.beom.timeblock.entity.TimeBlockEntity;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;

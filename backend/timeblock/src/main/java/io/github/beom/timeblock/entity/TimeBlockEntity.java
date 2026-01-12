@@ -1,7 +1,7 @@
-package io.github.beom.user.entity;
+package io.github.beom.timeblock.entity;
 
-import io.github.beom.user.domain.TimeBlock;
-import io.github.beom.user.domain.vo.TimeBlockStatus;
+import io.github.beom.timeblock.domain.TimeBlock;
+import io.github.beom.timeblock.domain.vo.TimeBlockStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

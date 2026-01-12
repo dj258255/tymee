@@ -1,6 +1,6 @@
-package io.github.beom.user.domain;
+package io.github.beom.timeblock.domain;
 
-import io.github.beom.user.domain.vo.TimeBlockStatus;
+import io.github.beom.timeblock.domain.vo.TimeBlockStatus;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;

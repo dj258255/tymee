@@ -1,12 +1,12 @@
-package io.github.beom.user.controller;
+package io.github.beom.timeblock.controller;
 
 import io.github.beom.core.security.CurrentUser;
 import io.github.beom.core.security.UserPrincipal;
 import io.github.beom.core.web.ApiResponse;
-import io.github.beom.user.dto.TimeBlockCreateRequest;
-import io.github.beom.user.dto.TimeBlockResponse;
-import io.github.beom.user.dto.TimeBlockUpdateRequest;
-import io.github.beom.user.service.TimeBlockService;
+import io.github.beom.timeblock.dto.TimeBlockCreateRequest;
+import io.github.beom.timeblock.dto.TimeBlockResponse;
+import io.github.beom.timeblock.dto.TimeBlockUpdateRequest;
+import io.github.beom.timeblock.service.TimeBlockService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

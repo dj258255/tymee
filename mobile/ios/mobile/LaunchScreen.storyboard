@@ -16,31 +16,20 @@
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <!-- App Icon Image -->
+                            <!-- App Icon Image - 정중앙 -->
                             <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="LaunchLogo" translatesAutoresizingMaskIntoConstraints="NO" id="tnd-TN-LcK">
-                                <rect key="frame" x="137.5" y="258.5" width="100" height="100"/>
+                                <rect key="frame" x="137.5" y="283.5" width="100" height="100"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="100" id="8qL-cg-9bM"/>
                                     <constraint firstAttribute="height" constant="100" id="cYo-OD-dEj"/>
                                 </constraints>
                             </imageView>
-                            <!-- App Name Label -->
-                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Tymee" textAlignment="center" lineBreakMode="middleTruncation" baselineAdjustment="alignBaselines" minimumFontSize="18" translatesAutoresizingMaskIntoConstraints="NO" id="GJd-Yh-RWb">
-                                <rect key="frame" x="0.0" y="378.5" width="375" height="40"/>
-                                <fontDescription key="fontDescription" type="system" weight="semibold" pointSize="32"/>
-                                <color key="textColor" red="0.2588235294" green="0.6470588235" blue="0.9607843137" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                <nil key="highlightedColor"/>
-                            </label>
                         </subviews>
-                        <!-- Blue Gradient Background -->
+                        <!-- Background Color: #F3F8FF -->
                         <color key="backgroundColor" red="0.9529411765" green="0.9725490196" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
                             <constraint firstItem="tnd-TN-LcK" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="2hL-uK-gZd"/>
-                            <constraint firstItem="tnd-TN-LcK" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" constant="-25" id="3rT-9c-fhL"/>
-                            <constraint firstItem="GJd-Yh-RWb" firstAttribute="top" secondItem="tnd-TN-LcK" secondAttribute="bottom" constant="20" id="Kzm-2d-3fK"/>
-                            <constraint firstItem="GJd-Yh-RWb" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="h7Y-IC-dZb"/>
-                            <constraint firstItem="GJd-Yh-RWb" firstAttribute="leading" secondItem="Bcu-3y-fUS" secondAttribute="leading" id="lPz-Kg-hby"/>
-                            <constraint firstItem="GJd-Yh-RWb" firstAttribute="trailing" secondItem="Bcu-3y-fUS" secondAttribute="trailing" id="yCq-8F-dKe"/>
+                            <constraint firstItem="tnd-TN-LcK" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="3rT-9c-fhL"/>
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="Bcu-3y-fUS"/>
                     </view>

@@ -4,8 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+import io.github.beom.core.event.ProfileImageChangedEvent;
 import io.github.beom.core.exception.BusinessException;
 import io.github.beom.core.exception.EntityNotFoundException;
 import io.github.beom.user.domain.User;
@@ -19,14 +21,17 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
   @Mock private UserRepository userRepository;
+  @Mock private ApplicationEventPublisher eventPublisher;
 
   @InjectMocks private UserService userService;
 
@@ -98,7 +103,7 @@ class UserServiceTest {
           .willAnswer(invocation -> invocation.getArgument(0));
 
       // when
-      var result = userService.updateProfile(1L, "newnk", "Hello!");
+      var result = userService.updateProfile(1L, "newnk", "Hello!", null);
 
       // then
       assertThat(result.getNickname().value()).isEqualTo("newnk");
@@ -121,7 +126,7 @@ class UserServiceTest {
           .willAnswer(invocation -> invocation.getArgument(0));
 
       // when
-      var result = userService.updateProfile(1L, "samenick", "Updated bio");
+      var result = userService.updateProfile(1L, "samenick", "Updated bio", null);
 
       // then
       assertThat(result.getBio()).isEqualTo("Updated bio");
@@ -142,13 +147,13 @@ class UserServiceTest {
       given(userRepository.existsByNickname("takenn")).willReturn(true);
 
       // when & then
-      assertThatThrownBy(() -> userService.updateProfile(1L, "takenn", "bio"))
+      assertThatThrownBy(() -> userService.updateProfile(1L, "takenn", "bio", null))
           .isInstanceOf(BusinessException.class);
     }
 
     @Test
-    @DisplayName("실패: 닉네임 빈 문자열")
-    void updateProfile_nicknameEmpty_fails() {
+    @DisplayName("성공: 닉네임 빈 문자열이면 닉네임 변경 안함 (bio만 변경)")
+    void updateProfile_nicknameEmpty_onlyBioUpdated() {
       // given
       var user =
           User.builder()
@@ -158,12 +163,15 @@ class UserServiceTest {
               .build();
 
       given(userRepository.findActiveById(1L)).willReturn(Optional.of(user));
-      given(userRepository.existsByNickname("")).willReturn(false);
+      given(userRepository.save(any(User.class)))
+          .willAnswer(invocation -> invocation.getArgument(0));
 
-      // when & then
-      assertThatThrownBy(() -> userService.updateProfile(1L, "", "bio"))
-          .isInstanceOf(IllegalArgumentException.class)
-          .hasMessageContaining("바이트");
+      // when - 빈 문자열은 무시되고 bio만 변경
+      var result = userService.updateProfile(1L, "", "new bio", null);
+
+      // then
+      assertThat(result.getNickname().value()).isEqualTo("oldnk"); // 닉네임 유지
+      assertThat(result.getBio()).isEqualTo("new bio"); // bio만 변경
     }
 
     @Test
@@ -183,9 +191,112 @@ class UserServiceTest {
       given(userRepository.existsByNickname(longNickname)).willReturn(false);
 
       // when & then
-      assertThatThrownBy(() -> userService.updateProfile(1L, longNickname, "bio"))
+      assertThatThrownBy(() -> userService.updateProfile(1L, longNickname, "bio", null))
           .isInstanceOf(IllegalArgumentException.class)
           .hasMessageContaining("바이트");
+    }
+  }
+
+  @Nested
+  @DisplayName("프로필 이미지 변경")
+  class UpdateProfileImage {
+
+    @Test
+    @DisplayName("성공: 프로필 이미지 변경 시 이전 이미지 삭제 이벤트 발행")
+    void updateProfileImage_publishesEventForOldImage() {
+      // given
+      var user =
+          User.builder()
+              .id(1L)
+              .email(new Email("test@gmail.com"))
+              .nickname(new Nickname("tester"))
+              .profileImageId(1000L) // 이전 이미지 ID
+              .build();
+
+      given(userRepository.findActiveById(1L)).willReturn(Optional.of(user));
+      given(userRepository.save(any(User.class)))
+          .willAnswer(invocation -> invocation.getArgument(0));
+
+      // when
+      userService.updateProfile(1L, null, null, 2000L); // 새 이미지 ID
+
+      // then
+      ArgumentCaptor<ProfileImageChangedEvent> eventCaptor =
+          ArgumentCaptor.forClass(ProfileImageChangedEvent.class);
+      verify(eventPublisher).publishEvent(eventCaptor.capture());
+
+      ProfileImageChangedEvent capturedEvent = eventCaptor.getValue();
+      assertThat(capturedEvent.oldProfileImageId()).isEqualTo(1000L);
+    }
+
+    @Test
+    @DisplayName("성공: 이전 이미지 없으면 이벤트 발행 안함")
+    void updateProfileImage_noOldImage_noEvent() {
+      // given
+      var user =
+          User.builder()
+              .id(1L)
+              .email(new Email("test@gmail.com"))
+              .nickname(new Nickname("tester"))
+              .profileImageId(null) // 이전 이미지 없음
+              .build();
+
+      given(userRepository.findActiveById(1L)).willReturn(Optional.of(user));
+      given(userRepository.save(any(User.class)))
+          .willAnswer(invocation -> invocation.getArgument(0));
+
+      // when
+      userService.updateProfile(1L, null, null, 2000L);
+
+      // then
+      verify(eventPublisher, never()).publishEvent(any(ProfileImageChangedEvent.class));
+    }
+
+    @Test
+    @DisplayName("성공: 동일한 이미지 ID면 이벤트 발행 안함")
+    void updateProfileImage_sameImageId_noEvent() {
+      // given
+      var user =
+          User.builder()
+              .id(1L)
+              .email(new Email("test@gmail.com"))
+              .nickname(new Nickname("tester"))
+              .profileImageId(1000L)
+              .build();
+
+      given(userRepository.findActiveById(1L)).willReturn(Optional.of(user));
+      given(userRepository.save(any(User.class)))
+          .willAnswer(invocation -> invocation.getArgument(0));
+
+      // when - 같은 이미지 ID로 업데이트
+      userService.updateProfile(1L, null, null, 1000L);
+
+      // then
+      verify(eventPublisher, never()).publishEvent(any(ProfileImageChangedEvent.class));
+    }
+
+    @Test
+    @DisplayName("성공: profileImageId가 null이면 이미지 변경 안함")
+    void updateProfile_nullProfileImageId_noImageChange() {
+      // given
+      var user =
+          User.builder()
+              .id(1L)
+              .email(new Email("test@gmail.com"))
+              .nickname(new Nickname("tester"))
+              .profileImageId(1000L) // 기존 이미지
+              .build();
+
+      given(userRepository.findActiveById(1L)).willReturn(Optional.of(user));
+      given(userRepository.save(any(User.class)))
+          .willAnswer(invocation -> invocation.getArgument(0));
+
+      // when - profileImageId를 null로 전달
+      var result = userService.updateProfile(1L, null, "new bio", null);
+
+      // then
+      verify(eventPublisher, never()).publishEvent(any(ProfileImageChangedEvent.class));
+      assertThat(result.getProfileImageId()).isEqualTo(1000L); // 기존 이미지 유지
     }
   }
 

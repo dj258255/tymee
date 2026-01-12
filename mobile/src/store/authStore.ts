@@ -73,7 +73,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         id: 0,
         nickname: userData.name,
         email: userData.email,
-        profileImageId: null,
+        profileImageUrl: null,
         bio: null,
         level: null,
         tier: 'elementary',

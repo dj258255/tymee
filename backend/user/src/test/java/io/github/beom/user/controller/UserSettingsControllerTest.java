@@ -14,7 +14,6 @@ import io.github.beom.user.dto.UserSettingsResponse;
 import io.github.beom.user.dto.UserSettingsUpdateRequest;
 import io.github.beom.user.mapper.UserSettingsMapper;
 import io.github.beom.user.service.UserSettingsService;
-import java.time.LocalTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -43,27 +42,7 @@ class UserSettingsControllerTest {
   void setUp() {
     defaultSettings = UserSettings.createDefault(1L);
     defaultResponse =
-        new UserSettingsResponse(
-            "SYSTEM",
-            "KO",
-            true,
-            true,
-            true,
-            true,
-            true,
-            true,
-            true,
-            true,
-            LocalTime.of(8, 0),
-            true,
-            10,
-            true,
-            true,
-            true,
-            6,
-            180,
-            1260,
-            false);
+        new UserSettingsResponse("SYSTEM", "KO", true, true, true, 6, 180, 1260, false);
     ownerPrincipal = new UserPrincipal(1L, "owner@example.com", "ROLE_USER");
     otherPrincipal = new UserPrincipal(2L, "other@example.com", "ROLE_USER");
   }
@@ -109,31 +88,9 @@ class UserSettingsControllerTest {
     void themeModeUpdated() {
       // given
       var request =
-          new UserSettingsUpdateRequest(
-              "DARK", null, null, null, null, null, null, null, null, null, null, null, null, null,
-              null, null, null, null, null, null);
+          new UserSettingsUpdateRequest("DARK", null, null, null, null, null, null, null, null);
       var updatedResponse =
-          new UserSettingsResponse(
-              "DARK",
-              "KO",
-              true,
-              true,
-              true,
-              true,
-              true,
-              true,
-              true,
-              true,
-              LocalTime.of(8, 0),
-              true,
-              10,
-              true,
-              true,
-              true,
-              6,
-              180,
-              1260,
-              false);
+          new UserSettingsResponse("DARK", "KO", true, true, true, 6, 180, 1260, false);
 
       given(userSettingsService.updateSettings(eq(1L), any(UserSettingsUpdateRequest.class)))
           .willReturn(defaultSettings);
@@ -152,31 +109,9 @@ class UserSettingsControllerTest {
     void languageUpdated() {
       // given
       var request =
-          new UserSettingsUpdateRequest(
-              null, "EN", null, null, null, null, null, null, null, null, null, null, null, null,
-              null, null, null, null, null, null);
+          new UserSettingsUpdateRequest(null, "EN", null, null, null, null, null, null, null);
       var updatedResponse =
-          new UserSettingsResponse(
-              "SYSTEM",
-              "EN",
-              true,
-              true,
-              true,
-              true,
-              true,
-              true,
-              true,
-              true,
-              LocalTime.of(8, 0),
-              true,
-              10,
-              true,
-              true,
-              true,
-              6,
-              180,
-              1260,
-              false);
+          new UserSettingsResponse("SYSTEM", "EN", true, true, true, 6, 180, 1260, false);
 
       given(userSettingsService.updateSettings(eq(1L), any(UserSettingsUpdateRequest.class)))
           .willReturn(defaultSettings);
@@ -195,31 +130,9 @@ class UserSettingsControllerTest {
     void plannerStartHourUpdated() {
       // given
       var request =
-          new UserSettingsUpdateRequest(
-              null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-              null, null, 9, null, null, null);
+          new UserSettingsUpdateRequest(null, null, null, null, null, 9, null, null, null);
       var updatedResponse =
-          new UserSettingsResponse(
-              "SYSTEM",
-              "KO",
-              true,
-              true,
-              true,
-              true,
-              true,
-              true,
-              true,
-              true,
-              LocalTime.of(8, 0),
-              true,
-              10,
-              true,
-              true,
-              true,
-              9,
-              180,
-              1260,
-              false);
+          new UserSettingsResponse("SYSTEM", "KO", true, true, true, 9, 180, 1260, false);
 
       given(userSettingsService.updateSettings(eq(1L), any(UserSettingsUpdateRequest.class)))
           .willReturn(defaultSettings);
@@ -234,78 +147,13 @@ class UserSettingsControllerTest {
     }
 
     @Test
-    @DisplayName("성공: 푸시 알림 전체 off")
-    void pushDisabled() {
-      // given
-      var request =
-          new UserSettingsUpdateRequest(
-              null, null, false, null, null, null, null, null, null, null, null, null, null, null,
-              null, null, null, null, null, null);
-      var updatedResponse =
-          new UserSettingsResponse(
-              "SYSTEM",
-              "KO",
-              false,
-              true,
-              true,
-              true,
-              true,
-              true,
-              true,
-              true,
-              LocalTime.of(8, 0),
-              true,
-              10,
-              true,
-              true,
-              true,
-              6,
-              180,
-              1260,
-              false);
-
-      given(userSettingsService.updateSettings(eq(1L), any(UserSettingsUpdateRequest.class)))
-          .willReturn(defaultSettings);
-      given(userSettingsMapper.toResponse(any())).willReturn(updatedResponse);
-
-      // when
-      var response = controller.updateSettings(1L, ownerPrincipal, request);
-
-      // then
-      assertThat(response.isSuccess()).isTrue();
-      assertThat(response.getData().pushEnabled()).isFalse();
-    }
-
-    @Test
     @DisplayName("성공: 개인정보 공개 설정 모두 off")
     void privacySettingsUpdated() {
       // given
       var request =
-          new UserSettingsUpdateRequest(
-              null, null, null, null, null, null, null, null, null, null, null, null, null, false,
-              false, false, null, null, null, null);
+          new UserSettingsUpdateRequest(null, null, false, false, false, null, null, null, null);
       var updatedResponse =
-          new UserSettingsResponse(
-              "SYSTEM",
-              "KO",
-              true,
-              true,
-              true,
-              true,
-              true,
-              true,
-              true,
-              true,
-              LocalTime.of(8, 0),
-              true,
-              10,
-              false,
-              false,
-              false,
-              6,
-              180,
-              1260,
-              false);
+          new UserSettingsResponse("SYSTEM", "KO", false, false, false, 6, 180, 1260, false);
 
       given(userSettingsService.updateSettings(eq(1L), any(UserSettingsUpdateRequest.class)))
           .willReturn(defaultSettings);
@@ -326,9 +174,7 @@ class UserSettingsControllerTest {
     void otherUserSettingsUpdateThrowsException() {
       // given
       var request =
-          new UserSettingsUpdateRequest(
-              "DARK", null, null, null, null, null, null, null, null, null, null, null, null, null,
-              null, null, null, null, null, null);
+          new UserSettingsUpdateRequest("DARK", null, null, null, null, null, null, null, null);
 
       // when & then
       assertThatThrownBy(() -> controller.updateSettings(1L, otherPrincipal, request))
@@ -343,9 +189,7 @@ class UserSettingsControllerTest {
     void emptyRequestDoesNothing() {
       // given
       var request =
-          new UserSettingsUpdateRequest(
-              null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-              null, null, null, null, null, null);
+          new UserSettingsUpdateRequest(null, null, null, null, null, null, null, null, null);
 
       given(userSettingsService.updateSettings(eq(1L), any(UserSettingsUpdateRequest.class)))
           .willReturn(defaultSettings);

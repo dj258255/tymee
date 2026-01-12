@@ -11,7 +11,6 @@ import io.github.beom.user.domain.vo.ThemeMode;
 import io.github.beom.user.dto.UserSettingsUpdateRequest;
 import io.github.beom.user.mapper.UserSettingsMapper;
 import io.github.beom.user.repository.UserSettingsRepository;
-import java.time.LocalTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -59,7 +58,6 @@ class UserSettingsServiceTest {
       var result = userSettingsService.getSettings(1L);
 
       // then
-      assertThat(result.isPushEnabled()).isTrue();
       assertThat(result.getPlannerStartHour()).isEqualTo(6);
       assertThat(result.getDailyGoalMinutes()).isEqualTo(180);
     }
@@ -75,9 +73,7 @@ class UserSettingsServiceTest {
       // given
       var settings = UserSettings.createDefault(1L);
       var request =
-          new UserSettingsUpdateRequest(
-              "DARK", null, null, null, null, null, null, null, null, null, null, null, null, null,
-              null, null, null, null, null, null);
+          new UserSettingsUpdateRequest("DARK", null, null, null, null, null, null, null, null);
 
       given(userSettingsRepository.findOrCreateByUserId(1L)).willReturn(settings);
       given(userSettingsRepository.save(any(UserSettings.class)))
@@ -97,9 +93,7 @@ class UserSettingsServiceTest {
       // given
       var settings = UserSettings.createDefault(1L);
       var request =
-          new UserSettingsUpdateRequest(
-              null, "EN", null, null, null, null, null, null, null, null, null, null, null, null,
-              null, null, null, null, null, null);
+          new UserSettingsUpdateRequest(null, "EN", null, null, null, null, null, null, null);
 
       given(userSettingsRepository.findOrCreateByUserId(1L)).willReturn(settings);
       given(userSettingsRepository.save(any(UserSettings.class)))
@@ -117,70 +111,7 @@ class UserSettingsServiceTest {
     void plannerSettingsPartiallyUpdated() {
       // given
       var settings = UserSettings.createDefault(1L);
-      var request =
-          new UserSettingsUpdateRequest(
-              null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-              null, null, 8, 240, null, null);
-
-      given(userSettingsRepository.findOrCreateByUserId(1L)).willReturn(settings);
-      given(userSettingsRepository.save(any(UserSettings.class)))
-          .willAnswer(inv -> inv.getArgument(0));
-
-      // when
-      userSettingsService.updateSettings(1L, request);
-
-      // then
-      verify(userSettingsMapper).updateFromRequest(request, settings);
-    }
-
-    @Test
-    @DisplayName("성공: 푸시 알림 전체 off")
-    void pushDisabled() {
-      // given
-      var settings = UserSettings.createDefault(1L);
-      var request =
-          new UserSettingsUpdateRequest(
-              null, null, false, null, null, null, null, null, null, null, null, null, null, null,
-              null, null, null, null, null, null);
-
-      given(userSettingsRepository.findOrCreateByUserId(1L)).willReturn(settings);
-      given(userSettingsRepository.save(any(UserSettings.class)))
-          .willAnswer(inv -> inv.getArgument(0));
-
-      // when
-      userSettingsService.updateSettings(1L, request);
-
-      // then
-      verify(userSettingsMapper).updateFromRequest(request, settings);
-    }
-
-    @Test
-    @DisplayName("성공: 일일 할일 알림 시간 변경")
-    void dailyTaskTimeUpdated() {
-      // given
-      var settings = UserSettings.createDefault(1L);
-      var request =
-          new UserSettingsUpdateRequest(
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              LocalTime.of(9, 30),
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null);
+      var request = new UserSettingsUpdateRequest(null, null, null, null, null, 8, 240, null, null);
 
       given(userSettingsRepository.findOrCreateByUserId(1L)).willReturn(settings);
       given(userSettingsRepository.save(any(UserSettings.class)))
@@ -199,9 +130,7 @@ class UserSettingsServiceTest {
       // given
       var settings = UserSettings.createDefault(1L);
       var request =
-          new UserSettingsUpdateRequest(
-              null, null, null, null, null, null, null, null, null, null, null, null, null, false,
-              false, false, null, null, null, null);
+          new UserSettingsUpdateRequest(null, null, false, false, false, null, null, null, null);
 
       given(userSettingsRepository.findOrCreateByUserId(1L)).willReturn(settings);
       given(userSettingsRepository.save(any(UserSettings.class)))
@@ -220,27 +149,7 @@ class UserSettingsServiceTest {
       // given
       var settings = UserSettings.createDefault(1L);
       var request =
-          new UserSettingsUpdateRequest(
-              "DARK",
-              "EN",
-              false,
-              true,
-              true,
-              true,
-              true,
-              true,
-              true,
-              true,
-              LocalTime.of(9, 0),
-              true,
-              15,
-              false,
-              false,
-              true,
-              8,
-              300,
-              2100,
-              true);
+          new UserSettingsUpdateRequest("DARK", "EN", false, false, true, 8, 300, 2100, true);
 
       given(userSettingsRepository.findOrCreateByUserId(1L)).willReturn(settings);
       given(userSettingsRepository.save(any(UserSettings.class)))
@@ -260,9 +169,7 @@ class UserSettingsServiceTest {
       // given
       var settings = UserSettings.createDefault(1L);
       var request =
-          new UserSettingsUpdateRequest(
-              null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-              null, null, null, null, null, null);
+          new UserSettingsUpdateRequest(null, null, null, null, null, null, null, null, null);
 
       given(userSettingsRepository.findOrCreateByUserId(1L)).willReturn(settings);
       given(userSettingsRepository.save(any(UserSettings.class)))
@@ -282,9 +189,7 @@ class UserSettingsServiceTest {
       // given
       var settings = UserSettings.createDefault(1L);
       var request =
-          new UserSettingsUpdateRequest(
-              null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-              null, null, 0, null, null, null);
+          new UserSettingsUpdateRequest(null, null, null, null, null, 0, null, null, null);
 
       given(userSettingsRepository.findOrCreateByUserId(1L)).willReturn(settings);
       given(userSettingsRepository.save(any(UserSettings.class)))
@@ -303,30 +208,7 @@ class UserSettingsServiceTest {
       // given
       var settings = UserSettings.createDefault(1L);
       var request =
-          new UserSettingsUpdateRequest(
-              null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-              null, null, 23, null, null, null);
-
-      given(userSettingsRepository.findOrCreateByUserId(1L)).willReturn(settings);
-      given(userSettingsRepository.save(any(UserSettings.class)))
-          .willAnswer(inv -> inv.getArgument(0));
-
-      // when
-      userSettingsService.updateSettings(1L, request);
-
-      // then
-      verify(userSettingsMapper).updateFromRequest(request, settings);
-    }
-
-    @Test
-    @DisplayName("성공: dailyGoalMinutes 경계값 0")
-    void dailyGoalMinutesMinBoundary() {
-      // given
-      var settings = UserSettings.createDefault(1L);
-      var request =
-          new UserSettingsUpdateRequest(
-              null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-              null, null, null, 0, null, null);
+          new UserSettingsUpdateRequest(null, null, null, null, null, 23, null, null, null);
 
       given(userSettingsRepository.findOrCreateByUserId(1L)).willReturn(settings);
       given(userSettingsRepository.save(any(UserSettings.class)))
@@ -345,9 +227,7 @@ class UserSettingsServiceTest {
       // given
       var settings = UserSettings.createDefault(1L);
       var request =
-          new UserSettingsUpdateRequest(
-              null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-              null, null, null, 1440, null, null);
+          new UserSettingsUpdateRequest(null, null, null, null, null, null, 1440, null, null);
 
       given(userSettingsRepository.findOrCreateByUserId(1L)).willReturn(settings);
       given(userSettingsRepository.save(any(UserSettings.class)))
@@ -366,129 +246,7 @@ class UserSettingsServiceTest {
       // given
       var settings = UserSettings.createDefault(1L);
       var request =
-          new UserSettingsUpdateRequest(
-              null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-              null, null, null, null, 10080, null);
-
-      given(userSettingsRepository.findOrCreateByUserId(1L)).willReturn(settings);
-      given(userSettingsRepository.save(any(UserSettings.class)))
-          .willAnswer(inv -> inv.getArgument(0));
-
-      // when
-      userSettingsService.updateSettings(1L, request);
-
-      // then
-      verify(userSettingsMapper).updateFromRequest(request, settings);
-    }
-
-    @Test
-    @DisplayName("성공: pushTimeBlockMinutesBefore 경계값 0")
-    void pushTimeBlockMinutesBeforeMinBoundary() {
-      // given
-      var settings = UserSettings.createDefault(1L);
-      var request =
-          new UserSettingsUpdateRequest(
-              null, null, null, null, null, null, null, null, null, null, null, null, 0, null, null,
-              null, null, null, null, null);
-
-      given(userSettingsRepository.findOrCreateByUserId(1L)).willReturn(settings);
-      given(userSettingsRepository.save(any(UserSettings.class)))
-          .willAnswer(inv -> inv.getArgument(0));
-
-      // when
-      userSettingsService.updateSettings(1L, request);
-
-      // then
-      verify(userSettingsMapper).updateFromRequest(request, settings);
-    }
-
-    @Test
-    @DisplayName("성공: pushTimeBlockMinutesBefore 경계값 60")
-    void pushTimeBlockMinutesBeforeMaxBoundary() {
-      // given
-      var settings = UserSettings.createDefault(1L);
-      var request =
-          new UserSettingsUpdateRequest(
-              null, null, null, null, null, null, null, null, null, null, null, null, 60, null,
-              null, null, null, null, null, null);
-
-      given(userSettingsRepository.findOrCreateByUserId(1L)).willReturn(settings);
-      given(userSettingsRepository.save(any(UserSettings.class)))
-          .willAnswer(inv -> inv.getArgument(0));
-
-      // when
-      userSettingsService.updateSettings(1L, request);
-
-      // then
-      verify(userSettingsMapper).updateFromRequest(request, settings);
-    }
-
-    @Test
-    @DisplayName("성공: pushDailyTaskTime 자정 (00:00)")
-    void pushDailyTaskTimeMidnight() {
-      // given
-      var settings = UserSettings.createDefault(1L);
-      var request =
-          new UserSettingsUpdateRequest(
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              LocalTime.of(0, 0),
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null);
-
-      given(userSettingsRepository.findOrCreateByUserId(1L)).willReturn(settings);
-      given(userSettingsRepository.save(any(UserSettings.class)))
-          .willAnswer(inv -> inv.getArgument(0));
-
-      // when
-      userSettingsService.updateSettings(1L, request);
-
-      // then
-      verify(userSettingsMapper).updateFromRequest(request, settings);
-    }
-
-    @Test
-    @DisplayName("성공: pushDailyTaskTime 23:59")
-    void pushDailyTaskTimeEndOfDay() {
-      // given
-      var settings = UserSettings.createDefault(1L);
-      var request =
-          new UserSettingsUpdateRequest(
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              LocalTime.of(23, 59),
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null);
+          new UserSettingsUpdateRequest(null, null, null, null, null, null, null, 10080, null);
 
       given(userSettingsRepository.findOrCreateByUserId(1L)).willReturn(settings);
       given(userSettingsRepository.save(any(UserSettings.class)))
@@ -507,9 +265,7 @@ class UserSettingsServiceTest {
       // given
       var settings = UserSettings.createDefault(1L);
       var request =
-          new UserSettingsUpdateRequest(
-              "dark", null, null, null, null, null, null, null, null, null, null, null, null, null,
-              null, null, null, null, null, null);
+          new UserSettingsUpdateRequest("dark", null, null, null, null, null, null, null, null);
 
       given(userSettingsRepository.findOrCreateByUserId(1L)).willReturn(settings);
       given(userSettingsRepository.save(any(UserSettings.class)))
@@ -528,9 +284,7 @@ class UserSettingsServiceTest {
       // given
       var settings = UserSettings.createDefault(1L);
       var request =
-          new UserSettingsUpdateRequest(
-              null, "en", null, null, null, null, null, null, null, null, null, null, null, null,
-              null, null, null, null, null, null);
+          new UserSettingsUpdateRequest(null, "en", null, null, null, null, null, null, null);
 
       given(userSettingsRepository.findOrCreateByUserId(1L)).willReturn(settings);
       given(userSettingsRepository.save(any(UserSettings.class)))
@@ -562,7 +316,6 @@ class UserSettingsServiceTest {
       assertThat(result.getUserId()).isEqualTo(1L);
       assertThat(result.getThemeMode()).isEqualTo(ThemeMode.SYSTEM);
       assertThat(result.getLanguage()).isEqualTo(Language.KO);
-      assertThat(result.isPushEnabled()).isTrue();
       verify(userSettingsRepository).findOrCreateByUserId(1L);
     }
 

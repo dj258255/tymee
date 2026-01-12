@@ -3,11 +3,10 @@ package io.github.beom.user.domain;
 import io.github.beom.user.domain.vo.Language;
 import io.github.beom.user.domain.vo.ThemeMode;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import lombok.Builder;
 import lombok.Getter;
 
-/** 사용자 설정 도메인. */
+/** 사용자 설정 도메인 (알림 설정 제외). */
 @Getter
 public class UserSettings {
 
@@ -16,23 +15,6 @@ public class UserSettings {
   // 앱 설정
   private ThemeMode themeMode;
   private Language language;
-
-  // 푸시 알림 설정
-  private boolean pushEnabled;
-  private boolean pushFriendRequest;
-  private boolean pushChatMessage;
-  private boolean pushPostComment;
-  private boolean pushLike;
-  private boolean pushGroupActivity;
-  private boolean pushPopularPost;
-
-  // 일일 할일 알림 설정
-  private boolean pushDailyTaskEnabled;
-  private LocalTime pushDailyTaskTime;
-
-  // 시간표 알림 설정
-  private boolean pushTimeBlockEnabled;
-  private int pushTimeBlockMinutesBefore;
 
   // 개인정보 설정
   private boolean privacyProfilePublic;
@@ -53,17 +35,6 @@ public class UserSettings {
       Long userId,
       ThemeMode themeMode,
       Language language,
-      Boolean pushEnabled,
-      Boolean pushFriendRequest,
-      Boolean pushChatMessage,
-      Boolean pushPostComment,
-      Boolean pushLike,
-      Boolean pushGroupActivity,
-      Boolean pushPopularPost,
-      Boolean pushDailyTaskEnabled,
-      LocalTime pushDailyTaskTime,
-      Boolean pushTimeBlockEnabled,
-      Integer pushTimeBlockMinutesBefore,
       Boolean privacyProfilePublic,
       Boolean privacyStudyPublic,
       Boolean privacyAllowFriendRequest,
@@ -76,18 +47,6 @@ public class UserSettings {
     this.userId = userId;
     this.themeMode = themeMode != null ? themeMode : ThemeMode.SYSTEM;
     this.language = language != null ? language : Language.KO;
-    this.pushEnabled = pushEnabled != null ? pushEnabled : true;
-    this.pushFriendRequest = pushFriendRequest != null ? pushFriendRequest : true;
-    this.pushChatMessage = pushChatMessage != null ? pushChatMessage : true;
-    this.pushPostComment = pushPostComment != null ? pushPostComment : true;
-    this.pushLike = pushLike != null ? pushLike : true;
-    this.pushGroupActivity = pushGroupActivity != null ? pushGroupActivity : true;
-    this.pushPopularPost = pushPopularPost != null ? pushPopularPost : true;
-    this.pushDailyTaskEnabled = pushDailyTaskEnabled != null ? pushDailyTaskEnabled : true;
-    this.pushDailyTaskTime = pushDailyTaskTime != null ? pushDailyTaskTime : LocalTime.of(8, 0);
-    this.pushTimeBlockEnabled = pushTimeBlockEnabled != null ? pushTimeBlockEnabled : true;
-    this.pushTimeBlockMinutesBefore =
-        pushTimeBlockMinutesBefore != null ? pushTimeBlockMinutesBefore : 10;
     this.privacyProfilePublic = privacyProfilePublic != null ? privacyProfilePublic : true;
     this.privacyStudyPublic = privacyStudyPublic != null ? privacyStudyPublic : true;
     this.privacyAllowFriendRequest =
@@ -114,43 +73,6 @@ public class UserSettings {
   /** 언어 변경. */
   public void updateLanguage(Language language) {
     this.language = language;
-    this.updatedAt = LocalDateTime.now();
-  }
-
-  /** 푸시 알림 전체 on/off. */
-  public void updatePushEnabled(boolean enabled) {
-    this.pushEnabled = enabled;
-    this.updatedAt = LocalDateTime.now();
-  }
-
-  /** 푸시 알림 개별 설정 업데이트. */
-  public void updatePushSettings(
-      boolean friendRequest,
-      boolean chatMessage,
-      boolean postComment,
-      boolean like,
-      boolean groupActivity,
-      boolean popularPost) {
-    this.pushFriendRequest = friendRequest;
-    this.pushChatMessage = chatMessage;
-    this.pushPostComment = postComment;
-    this.pushLike = like;
-    this.pushGroupActivity = groupActivity;
-    this.pushPopularPost = popularPost;
-    this.updatedAt = LocalDateTime.now();
-  }
-
-  /** 일일 할일 알림 설정 업데이트. */
-  public void updateDailyTaskPush(boolean enabled, LocalTime time) {
-    this.pushDailyTaskEnabled = enabled;
-    this.pushDailyTaskTime = time;
-    this.updatedAt = LocalDateTime.now();
-  }
-
-  /** 시간표 알림 설정 업데이트. */
-  public void updateTimeBlockPush(boolean enabled, int minutesBefore) {
-    this.pushTimeBlockEnabled = enabled;
-    this.pushTimeBlockMinutesBefore = minutesBefore;
     this.updatedAt = LocalDateTime.now();
   }
 

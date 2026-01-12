@@ -2,21 +2,19 @@ package io.github.beom.user.repository;
 
 import io.github.beom.user.domain.UserSettings;
 import io.github.beom.user.entity.UserSettingsEntity;
-import io.github.beom.user.mapper.UserSettingsMapper;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-/** 사용자 설정 레포지토리. */
+/** 사용자 설정 레포지토리 (알림 설정 제외). */
 @Repository
 @RequiredArgsConstructor
 public class UserSettingsRepository {
 
   private final UserSettingsJpaRepository userSettingsJpaRepository;
-  private final UserSettingsMapper userSettingsMapper;
 
   public Optional<UserSettings> findByUserId(Long userId) {
-    return userSettingsJpaRepository.findById(userId).map(userSettingsMapper::toDomain);
+    return userSettingsJpaRepository.findById(userId).map(UserSettingsEntity::toDomain);
   }
 
   public boolean existsByUserId(Long userId) {
@@ -24,9 +22,9 @@ public class UserSettingsRepository {
   }
 
   public UserSettings save(UserSettings settings) {
-    UserSettingsEntity entity = userSettingsMapper.toEntity(settings);
+    UserSettingsEntity entity = UserSettingsEntity.from(settings);
     UserSettingsEntity savedEntity = userSettingsJpaRepository.save(entity);
-    return userSettingsMapper.toDomain(savedEntity);
+    return savedEntity.toDomain();
   }
 
   public void deleteByUserId(Long userId) {

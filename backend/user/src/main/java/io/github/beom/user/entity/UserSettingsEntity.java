@@ -1,5 +1,7 @@
 package io.github.beom.user.entity;
 
+import io.github.beom.user.domain.UserSettings;
+import io.github.beom.user.domain.vo.Language;
 import io.github.beom.user.domain.vo.ThemeMode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,13 +12,13 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/** 사용자 설정 엔티티 (알림 설정 제외). */
 @Entity
 @Table(name = "user_settings")
 @Getter
@@ -37,39 +39,6 @@ public class UserSettingsEntity {
 
   @Column(length = 10)
   private String language;
-
-  @Column(name = "push_enabled")
-  private Boolean pushEnabled;
-
-  @Column(name = "push_friend_request")
-  private Boolean pushFriendRequest;
-
-  @Column(name = "push_chat_message")
-  private Boolean pushChatMessage;
-
-  @Column(name = "push_post_comment")
-  private Boolean pushPostComment;
-
-  @Column(name = "push_like")
-  private Boolean pushLike;
-
-  @Column(name = "push_group_activity")
-  private Boolean pushGroupActivity;
-
-  @Column(name = "push_popular_post")
-  private Boolean pushPopularPost;
-
-  @Column(name = "push_daily_task_enabled")
-  private Boolean pushDailyTaskEnabled;
-
-  @Column(name = "push_daily_task_time")
-  private LocalTime pushDailyTaskTime;
-
-  @Column(name = "push_time_block_enabled")
-  private Boolean pushTimeBlockEnabled;
-
-  @Column(name = "push_time_block_minutes_before")
-  private Integer pushTimeBlockMinutesBefore;
 
   @Column(name = "privacy_profile_public")
   private Boolean privacyProfilePublic;
@@ -117,39 +86,6 @@ public class UserSettingsEntity {
     if (this.language == null) {
       this.language = DEFAULT_LANGUAGE;
     }
-    if (this.pushEnabled == null) {
-      this.pushEnabled = true;
-    }
-    if (this.pushFriendRequest == null) {
-      this.pushFriendRequest = true;
-    }
-    if (this.pushChatMessage == null) {
-      this.pushChatMessage = true;
-    }
-    if (this.pushPostComment == null) {
-      this.pushPostComment = true;
-    }
-    if (this.pushLike == null) {
-      this.pushLike = true;
-    }
-    if (this.pushGroupActivity == null) {
-      this.pushGroupActivity = true;
-    }
-    if (this.pushPopularPost == null) {
-      this.pushPopularPost = true;
-    }
-    if (this.pushDailyTaskEnabled == null) {
-      this.pushDailyTaskEnabled = true;
-    }
-    if (this.pushDailyTaskTime == null) {
-      this.pushDailyTaskTime = LocalTime.of(8, 0);
-    }
-    if (this.pushTimeBlockEnabled == null) {
-      this.pushTimeBlockEnabled = true;
-    }
-    if (this.pushTimeBlockMinutesBefore == null) {
-      this.pushTimeBlockMinutesBefore = 10;
-    }
     if (this.privacyProfilePublic == null) {
       this.privacyProfilePublic = true;
     }
@@ -171,5 +107,41 @@ public class UserSettingsEntity {
     if (this.weeklyTimetableEnabled == null) {
       this.weeklyTimetableEnabled = false;
     }
+  }
+
+  /** Domain → Entity 변환. */
+  public static UserSettingsEntity from(UserSettings domain) {
+    return UserSettingsEntity.builder()
+        .userId(domain.getUserId())
+        .themeMode(domain.getThemeMode())
+        .language(domain.getLanguage().name())
+        .privacyProfilePublic(domain.isPrivacyProfilePublic())
+        .privacyStudyPublic(domain.isPrivacyStudyPublic())
+        .privacyAllowFriendRequest(domain.isPrivacyAllowFriendRequest())
+        .plannerStartHour(domain.getPlannerStartHour())
+        .dailyGoalMinutes(domain.getDailyGoalMinutes())
+        .weeklyGoalMinutes(domain.getWeeklyGoalMinutes())
+        .weeklyTimetableEnabled(domain.isWeeklyTimetableEnabled())
+        .createdAt(domain.getCreatedAt())
+        .updatedAt(domain.getUpdatedAt())
+        .build();
+  }
+
+  /** Entity → Domain 변환. */
+  public UserSettings toDomain() {
+    return UserSettings.builder()
+        .userId(this.userId)
+        .themeMode(this.themeMode)
+        .language(this.language != null ? Language.valueOf(this.language.toUpperCase()) : null)
+        .privacyProfilePublic(this.privacyProfilePublic)
+        .privacyStudyPublic(this.privacyStudyPublic)
+        .privacyAllowFriendRequest(this.privacyAllowFriendRequest)
+        .plannerStartHour(this.plannerStartHour)
+        .dailyGoalMinutes(this.dailyGoalMinutes)
+        .weeklyGoalMinutes(this.weeklyGoalMinutes)
+        .weeklyTimetableEnabled(this.weeklyTimetableEnabled)
+        .createdAt(this.createdAt)
+        .updatedAt(this.updatedAt)
+        .build();
   }
 }

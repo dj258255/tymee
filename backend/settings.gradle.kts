@@ -37,6 +37,7 @@ include("auth")
 include("upload")
 include("category")
 include("timeblock")
+include("notification")
 
 // Bootstrap module (실행 진입점)
 include("bootstrap")

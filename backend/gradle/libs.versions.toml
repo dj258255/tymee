@@ -78,6 +78,10 @@ flyway-mysql = { module = "org.flywaydb:flyway-mysql", version.ref = "flyway" }
 spring-boot-starter-data-redis = { module = "org.springframework.boot:spring-boot-starter-data-redis" }
 spring-boot-starter-data-mongodb = { module = "org.springframework.boot:spring-boot-starter-data-mongodb" }
 
+# Spring Boot AMQP (RabbitMQ)
+spring-boot-starter-amqp = { module = "org.springframework.boot:spring-boot-starter-amqp" }
+spring-rabbit-test = { module = "org.springframework.amqp:spring-rabbit-test" }
+
 # Validation
 jakarta-validation = { module = "jakarta.validation:jakarta.validation-api", version.ref = "jakarta-validation" }
 

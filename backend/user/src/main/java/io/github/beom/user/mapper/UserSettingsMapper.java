@@ -11,7 +11,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
 /**
- * UserSettings 매퍼.
+ * UserSettings 매퍼 (알림 설정 제외).
  *
  * <p>Domain ↔ Entity ↔ DTO 변환을 담당한다.
  */
@@ -50,39 +50,6 @@ public interface UserSettingsMapper {
       settings.updateLanguage(Language.valueOf(request.language().toUpperCase()));
     }
 
-    // 푸시 알림 전체 on/off
-    if (request.pushEnabled() != null) {
-      settings.updatePushEnabled(request.pushEnabled());
-    }
-
-    // 푸시 알림 개별 설정
-    if (hasPushSettingsUpdate(request)) {
-      settings.updatePushSettings(
-          getOrDefault(request.pushFriendRequest(), settings.isPushFriendRequest()),
-          getOrDefault(request.pushChatMessage(), settings.isPushChatMessage()),
-          getOrDefault(request.pushPostComment(), settings.isPushPostComment()),
-          getOrDefault(request.pushLike(), settings.isPushLike()),
-          getOrDefault(request.pushGroupActivity(), settings.isPushGroupActivity()),
-          getOrDefault(request.pushPopularPost(), settings.isPushPopularPost()));
-    }
-
-    // 일일 할일 알림 설정
-    if (request.pushDailyTaskEnabled() != null || request.pushDailyTaskTime() != null) {
-      settings.updateDailyTaskPush(
-          getOrDefault(request.pushDailyTaskEnabled(), settings.isPushDailyTaskEnabled()),
-          request.pushDailyTaskTime() != null
-              ? request.pushDailyTaskTime()
-              : settings.getPushDailyTaskTime());
-    }
-
-    // 시간표 알림 설정
-    if (request.pushTimeBlockEnabled() != null || request.pushTimeBlockMinutesBefore() != null) {
-      settings.updateTimeBlockPush(
-          getOrDefault(request.pushTimeBlockEnabled(), settings.isPushTimeBlockEnabled()),
-          getOrDefault(
-              request.pushTimeBlockMinutesBefore(), settings.getPushTimeBlockMinutesBefore()));
-    }
-
     // 개인정보 설정
     if (hasPrivacySettingsUpdate(request)) {
       settings.updatePrivacySettings(
@@ -100,15 +67,6 @@ public interface UserSettingsMapper {
           getOrDefault(request.weeklyGoalMinutes(), settings.getWeeklyGoalMinutes()),
           getOrDefault(request.weeklyTimetableEnabled(), settings.isWeeklyTimetableEnabled()));
     }
-  }
-
-  private static boolean hasPushSettingsUpdate(UserSettingsUpdateRequest request) {
-    return request.pushFriendRequest() != null
-        || request.pushChatMessage() != null
-        || request.pushPostComment() != null
-        || request.pushLike() != null
-        || request.pushGroupActivity() != null
-        || request.pushPopularPost() != null;
   }
 
   private static boolean hasPrivacySettingsUpdate(UserSettingsUpdateRequest request) {

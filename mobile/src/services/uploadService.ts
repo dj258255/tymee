@@ -1,4 +1,3 @@
-import {Platform, Alert} from 'react-native';
 import {launchImageLibrary, launchCamera, Asset} from 'react-native-image-picker';
 import apiClient from './api';
 

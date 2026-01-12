@@ -158,7 +158,7 @@ const ProfileScreen: React.FC<{onBack: () => void}> = ({onBack}) => {
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadController, setUploadController] = useState<UploadController | null>(null);
-  const [profileImageUrl, setProfileImageUrl] = useState<string | undefined>(user?.profileImageUrl);
+  const [profileImageUrl, setProfileImageUrl] = useState<string | undefined>(user?.profileImageUrl ?? undefined);
 
   // user가 변경되면 닉네임, 자기소개, 프로필 이미지 업데이트
   useEffect(() => {
@@ -167,7 +167,7 @@ const ProfileScreen: React.FC<{onBack: () => void}> = ({onBack}) => {
       setTempNickname(user.nickname || '타이미유저');
       setBio(user.bio || '');
       setTempBio(user.bio || '');
-      setProfileImageUrl(user.profileImageUrl);
+      setProfileImageUrl(user.profileImageUrl ?? undefined);
     }
   }, [user]);
 

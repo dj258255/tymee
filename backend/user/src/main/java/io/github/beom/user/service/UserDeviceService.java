@@ -50,8 +50,13 @@ public class UserDeviceService {
     userDeviceRepository.deleteAllByUserId(userId);
   }
 
-  /** 사용자의 모든 디바이스를 조회한다. 푸시 알림 발송 서비스에서 사용. */
+  /** 사용자의 모든 디바이스를 조회한다. */
   public List<UserDevice> getUserDevices(Long userId) {
     return userDeviceRepository.findAllByUserId(userId);
+  }
+
+  /** 사용자의 활성화된 디바이스만 조회한다. 푸시 알림 발송 시 사용. */
+  public List<UserDevice> getActiveUserDevices(Long userId) {
+    return userDeviceRepository.findAllActiveByUserId(userId);
   }
 }

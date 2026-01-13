@@ -16,6 +16,7 @@ dependencies {
     implementation(project(":upload"))
     implementation(project(":category"))
     implementation(project(":timeblock"))
+    implementation(project(":notification"))
 
     // Spring Boot Starters
     implementation(libs.spring.boot.starter.web)
@@ -25,6 +26,7 @@ dependencies {
     implementation(libs.spring.boot.starter.validation)
     implementation(libs.spring.boot.starter.security)
     implementation(libs.spring.boot.starter.log4j2)
+    implementation(libs.spring.boot.starter.amqp)
 
     // JWT
     implementation(libs.jjwt.api)

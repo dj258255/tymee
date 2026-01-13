@@ -17,6 +17,21 @@ spring:
       uuid: standard
       big-decimal: decimal128
 
+# RabbitMQ 공통 설정
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:tymee}
+    password: ${RABBITMQ_PASSWORD:password}
+    listener:
+      simple:
+        acknowledge-mode: manual
+        retry:
+          enabled: true
+          initial-interval: 1000
+          max-attempts: 3
+          multiplier: 2.0
+
 # JWT 설정
 jwt:
   secret: ${JWT_SECRET}

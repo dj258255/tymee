@@ -15,6 +15,9 @@ public interface UserDeviceJpaRepository extends JpaRepository<UserDeviceEntity,
   /** 사용자의 모든 디바이스를 조회한다. 푸시 알림 발송 시 사용. */
   List<UserDeviceEntity> findAllByUserId(Long userId);
 
+  /** 사용자의 활성화된 디바이스만 조회한다. 실제 푸시 알림 발송 시 사용. */
+  List<UserDeviceEntity> findAllByUserIdAndIsActiveTrue(Long userId);
+
   /** 사용자 ID와 디바이스 ID로 디바이스를 삭제한다. */
   @Modifying
   void deleteByUserIdAndDeviceId(Long userId, String deviceId);

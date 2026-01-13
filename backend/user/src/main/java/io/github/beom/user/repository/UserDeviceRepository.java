@@ -31,6 +31,12 @@ public class UserDeviceRepository {
     return jpaRepository.findAllByUserId(userId).stream().map(UserDeviceEntity::toDomain).toList();
   }
 
+  public List<UserDevice> findAllActiveByUserId(Long userId) {
+    return jpaRepository.findAllByUserIdAndIsActiveTrue(userId).stream()
+        .map(UserDeviceEntity::toDomain)
+        .toList();
+  }
+
   public void deleteByUserIdAndDeviceId(Long userId, String deviceId) {
     jpaRepository.deleteByUserIdAndDeviceId(userId, deviceId);
   }

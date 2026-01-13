@@ -30,10 +30,13 @@ import org.hibernate.annotations.UpdateTimestamp;
     name = "user_devices",
     uniqueConstraints = {
       @UniqueConstraint(
-          name = "uk_user_devices_user_device",
+          name = "idx_user_devices_unique",
           columnNames = {"user_id", "device_id"})
     },
-    indexes = {@Index(name = "idx_user_devices_user_id", columnList = "user_id")})
+    indexes = {
+      @Index(name = "idx_user_devices_active", columnList = "user_id, is_active"),
+      @Index(name = "idx_user_devices_token", columnList = "push_token")
+    })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserDeviceEntity {

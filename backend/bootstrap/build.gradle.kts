@@ -17,6 +17,7 @@ dependencies {
     implementation(project(":category"))
     implementation(project(":timeblock"))
     implementation(project(":notification"))
+    implementation(project(":dailytask"))
 
     // Spring Boot Starters
     implementation(libs.spring.boot.starter.web)

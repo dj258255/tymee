@@ -52,7 +52,10 @@ public enum ErrorCode {
   CATEGORY_NOT_FOUND(404, "CAT001", "카테고리를 찾을 수 없습니다"),
   DUPLICATE_CATEGORY_NAME(409, "CAT002", "이미 존재하는 카테고리명입니다"),
   INVALID_PARENT_CATEGORY(400, "CAT003", "유효하지 않은 상위 카테고리입니다"),
-  CIRCULAR_CATEGORY_REFERENCE(400, "CAT004", "순환 참조가 발생합니다");
+  CIRCULAR_CATEGORY_REFERENCE(400, "CAT004", "순환 참조가 발생합니다"),
+
+  // DailyTask
+  DAILY_TASK_NOT_FOUND(404, "DT001", "할일을 찾을 수 없습니다");
 
   private final int status;
   private final String code;

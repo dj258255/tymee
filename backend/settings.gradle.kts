@@ -38,6 +38,7 @@ include("upload")
 include("category")
 include("timeblock")
 include("notification")
+include("dailytask")
 
 // Bootstrap module (실행 진입점)
 include("bootstrap")

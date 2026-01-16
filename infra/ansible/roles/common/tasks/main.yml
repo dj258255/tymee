@@ -1,13 +1,13 @@
 # 공통 서버 세팅
 ---
 - name: 시스템 패키지 업데이트
-  apt:
+  dnf:
+    name: '*'
+    state: latest
     update_cache: yes
-    upgrade: dist
-    cache_valid_time: 3600
 
 - name: 필수 패키지 설치
-  apt:
+  dnf:
     name:
       - curl
       - wget
@@ -16,10 +16,8 @@
       - htop
       - net-tools
       - unzip
-      - apt-transport-https
       - ca-certificates
-      - gnupg
-      - lsb-release
+      - gnupg2
       - python3-pip
     state: present
 

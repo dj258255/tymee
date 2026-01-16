@@ -1,18 +1,30 @@
 # Docker 설치
 ---
-- name: Docker GPG 키 추가
-  apt_key:
-    url: https://download.docker.com/linux/ubuntu/gpg
-    state: present
+- name: 기존 Docker 패키지 제거
+  dnf:
+    name:
+      - docker
+      - docker-client
+      - docker-client-latest
+      - docker-common
+      - docker-latest
+      - docker-latest-logrotate
+      - docker-logrotate
+      - docker-engine
+    state: absent
 
 - name: Docker 저장소 추가
-  apt_repository:
-    repo: "deb [arch={{ 'arm64' if ansible_architecture == 'aarch64' else 'amd64' }}] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+  dnf:
+    name: dnf-plugins-core
     state: present
-    filename: docker
+
+- name: Docker CE 저장소 추가
+  command: dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+  args:
+    creates: /etc/yum.repos.d/docker-ce.repo
 
 - name: Docker 패키지 설치
-  apt:
+  dnf:
     name:
       - docker-ce
       - docker-ce-cli
@@ -20,7 +32,6 @@
       - docker-buildx-plugin
       - docker-compose-plugin
     state: present
-    update_cache: yes
 
 - name: Docker 서비스 시작 및 활성화
   systemd:

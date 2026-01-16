@@ -25,4 +25,7 @@ public interface UserDeviceJpaRepository extends JpaRepository<UserDeviceEntity,
   /** 사용자의 모든 디바이스를 삭제한다. 회원 탈퇴 시 사용. */
   @Modifying
   void deleteAllByUserId(Long userId);
+
+  /** 푸시 토큰으로 디바이스를 조회한다. 토큰 만료 시 비활성화를 위해 사용. */
+  Optional<UserDeviceEntity> findByPushToken(String pushToken);
 }

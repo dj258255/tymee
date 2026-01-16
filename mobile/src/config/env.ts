@@ -1,4 +1,13 @@
-import Config from 'react-native-config';
+import {
+  ENV as _ENV,
+  API_URL as _API_URL,
+  API_TIMEOUT as _API_TIMEOUT,
+  APP_NAME as _APP_NAME,
+  BUNDLE_ID as _BUNDLE_ID,
+  ENABLE_ANALYTICS as _ENABLE_ANALYTICS,
+  ENABLE_CRASHLYTICS as _ENABLE_CRASHLYTICS,
+  DEBUG_MODE as _DEBUG_MODE,
+} from '@env';
 
 export interface EnvConfig {
   ENV: 'development' | 'staging' | 'production';
@@ -16,14 +25,14 @@ const parseBoolean = (value: string | undefined): boolean => {
 };
 
 const env: EnvConfig = {
-  ENV: (Config.ENV as EnvConfig['ENV']) || 'development',
-  API_URL: Config.API_URL || 'http://localhost:8080',
-  API_TIMEOUT: parseInt(Config.API_TIMEOUT || '30000', 10),
-  APP_NAME: Config.APP_NAME || 'Tymee',
-  BUNDLE_ID: Config.BUNDLE_ID || 'app.tymee.mobile',
-  ENABLE_ANALYTICS: parseBoolean(Config.ENABLE_ANALYTICS),
-  ENABLE_CRASHLYTICS: parseBoolean(Config.ENABLE_CRASHLYTICS),
-  DEBUG_MODE: parseBoolean(Config.DEBUG_MODE),
+  ENV: (_ENV as EnvConfig['ENV']) || 'development',
+  API_URL: _API_URL || 'http://localhost:8080',
+  API_TIMEOUT: parseInt(_API_TIMEOUT || '30000', 10),
+  APP_NAME: _APP_NAME || 'Tymee',
+  BUNDLE_ID: _BUNDLE_ID || 'app.tymee.mobile',
+  ENABLE_ANALYTICS: parseBoolean(_ENABLE_ANALYTICS),
+  ENABLE_CRASHLYTICS: parseBoolean(_ENABLE_CRASHLYTICS),
+  DEBUG_MODE: parseBoolean(_DEBUG_MODE),
 };
 
 export const isDevelopment = env.ENV === 'development';

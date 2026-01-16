@@ -1,10 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Platform} from 'react-native';
-import Config from 'react-native-config';
+import env from '../config/env';
 import {showErrorToast} from '../utils/toast';
 
 // API Base URL (.env의 API_URL 사용)
-const API_BASE_URL = `${Config.API_URL}/api/v1.0`;
+const API_BASE_URL = `${env.API_URL}/api/v1.0`;
 
 // 토큰 저장 키
 const ACCESS_TOKEN_KEY = '@tymee_access_token';

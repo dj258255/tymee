@@ -38,6 +38,10 @@ local.properties
 .env.*
 !.env.example
 
+# Firebase Admin SDK (서버용 - 절대 커밋 금지)
+# firebase-admin-sdk*.json
+# serviceAccountKey.json
+
 # node.js
 #
 node_modules/

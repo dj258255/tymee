@@ -143,4 +143,9 @@ public class UserDeviceEntity {
     this.pushToken = pushToken;
     this.lastUsedAt = LocalDateTime.now();
   }
+
+  /** 디바이스를 비활성화한다. 토큰 만료 등으로 푸시 발송이 실패한 경우 호출. */
+  public void deactivate() {
+    this.isActive = false;
+  }
 }

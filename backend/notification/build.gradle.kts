@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     implementation(project(":core"))
+    implementation(project(":user"))
 
     // Spring Boot AMQP (RabbitMQ)
     implementation(libs.spring.boot.starter.amqp)
@@ -13,6 +14,9 @@ dependencies {
 
     // Spring Transaction
     implementation(libs.spring.tx)
+
+    // Firebase Admin SDK
+    implementation(libs.firebase.admin)
 
     // Test
     testImplementation(libs.spring.boot.starter.test)

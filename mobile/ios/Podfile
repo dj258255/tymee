@@ -19,11 +19,9 @@ setup_permissions([
   'Notifications',
 ])
 
-linkage = ENV['USE_FRAMEWORKS']
-if linkage != nil
-  Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
-  use_frameworks! :linkage => linkage.to_sym
-end
+# Firebase requires static frameworks (firebase-ios-sdk v9+)
+$RNFirebaseAsStaticFramework = true
+use_frameworks! :linkage => :static
 
 target 'mobile' do
   config = use_native_modules!
@@ -47,18 +45,5 @@ target 'mobile' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
-
-    # react-native-config: 환경별 .env 파일 설정
-    installer.pods_project.targets.each do |target|
-      if target.name == 'react-native-config'
-        target.build_configurations.each do |config|
-          if config.name == 'Debug'
-            config.build_settings['ENVFILE'] = '$(PODS_ROOT)/../../.env'
-          else
-            config.build_settings['ENVFILE'] = '$(PODS_ROOT)/../../.env.production'
-          end
-        end
-      end
-    end
   end
 end

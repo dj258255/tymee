@@ -2,6 +2,7 @@ import {create} from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {tokenManager} from '../services/api';
 import * as authService from '../services/authService';
+import fcmService from '../services/fcm';
 import type {UserInfo, OAuthProvider, UpdateProfileRequest} from '../services/authService';
 
 interface AuthState {
@@ -94,6 +95,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   logout: async () => {
     try {
       set({isLoading: true});
+
+      const {user} = get();
+
+      // FCM 디바이스 등록 해제
+      if (user?.id) {
+        await fcmService.unregisterDevice(user.id);
+      }
 
       // 백엔드 로그아웃 API 호출 및 토큰 삭제
       await authService.logout();

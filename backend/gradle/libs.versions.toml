@@ -25,6 +25,9 @@ aws-sdk = "2.29.51"
 # Image Processing
 thumbnailator = "0.4.20"
 
+# Firebase
+firebase-admin = "9.4.3"
+
 # Utilities
 commons-lang3 = "3.17.0"
 lombok = "1.18.36"
@@ -106,6 +109,9 @@ aws-s3 = { module = "software.amazon.awssdk:s3" }
 
 # Image Processing
 thumbnailator = { module = "net.coobird:thumbnailator", version.ref = "thumbnailator" }
+
+# Firebase
+firebase-admin = { module = "com.google.firebase:firebase-admin", version.ref = "firebase-admin" }
 
 # Code Quality
 spotbugs-annotations = { module = "com.github.spotbugs:spotbugs-annotations", version.ref = "spotbugs-annotations" }

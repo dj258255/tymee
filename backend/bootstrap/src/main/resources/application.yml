@@ -46,6 +46,10 @@ oauth:
   apple:
     bundle-id: ${APPLE_BUNDLE_ID}
 
+# Firebase FCM 설정
+firebase:
+  credentials-base64: ${FIREBASE_CREDENTIALS_BASE64}
+
 # Cloudflare R2 설정
 cloudflare:
   r2:

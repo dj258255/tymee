@@ -80,6 +80,14 @@ coverage/
 # Misc
 .cache/
 
+# Logs
+logs/
+*.log
+*.log.gz
+
+# Docs (개인 문서)
+docs/
+
 # Claude Code
 .claude/
 

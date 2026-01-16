@@ -58,4 +58,15 @@ public class UserDeviceRepository {
 
     return save(userDevice);
   }
+
+  /** 푸시 토큰으로 디바이스를 찾아 비활성화한다. 토큰 만료 시 호출. */
+  public void deactivateByPushToken(String pushToken) {
+    jpaRepository
+        .findByPushToken(pushToken)
+        .ifPresent(
+            entity -> {
+              entity.deactivate();
+              jpaRepository.save(entity);
+            });
+  }
 }

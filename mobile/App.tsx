@@ -29,6 +29,7 @@ import {useThemeStore} from './src/store/themeStore';
 import {useNavigationStore} from './src/store/navigationStore';
 import {useAuthStore} from './src/store/authStore';
 import {safeGetColorScheme, safeAddAppearanceListener} from './src/utils/appearance';
+import {usePushNotification} from './src/hooks/usePushNotification';
 import {TabName} from './src/types/pomodoro';
 
 const Tab = createBottomTabNavigator();
@@ -114,6 +115,9 @@ function App(): React.JSX.Element {
   const [systemColorScheme, setSystemColorScheme] = useState<'light' | 'dark'>('light');
   const {themeMode} = useThemeStore();
   const {isLoggedIn, isLoading, login, checkAuth} = useAuthStore();
+
+  // 푸시 알림 초기화
+  usePushNotification();
 
   useEffect(() => {
     // 앱 시작 시 인증 상태 확인

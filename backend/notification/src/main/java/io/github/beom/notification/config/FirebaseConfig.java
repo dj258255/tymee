@@ -29,7 +29,8 @@ public class FirebaseConfig {
       byte[] decodedCredentials = Base64.getDecoder().decode(credentialsBase64);
       ByteArrayInputStream credentialsStream =
           new ByteArrayInputStream(
-              new String(decodedCredentials, StandardCharsets.UTF_8).getBytes(StandardCharsets.UTF_8));
+              new String(decodedCredentials, StandardCharsets.UTF_8)
+                  .getBytes(StandardCharsets.UTF_8));
 
       FirebaseOptions options =
           FirebaseOptions.builder()
